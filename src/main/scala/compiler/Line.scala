@@ -5,7 +5,7 @@ import java.lang.Character.isWhitespace
 import compiler.SimpleTokens.allSimpleTokens
 
 import scala.annotation.tailrec
-import scala.util.matching.{Regex, UnanchoredRegex}
+import scala.util.matching.UnanchoredRegex
 
 class Line(val number: Int,
            val tokens: List[Token]) {
@@ -19,7 +19,7 @@ object Line {
       case Right(tokens) =>
         Right(new Line(number, Indentation(whitespaces.length) +: tokens))
       case Left(rest) =>
-        Left(new InvalidToken(number, string.length - rest.length, rest.take(50)))
+        Left(InvalidToken.apply(number, string, rest))
     }
   }
 
@@ -40,33 +40,21 @@ object Line {
 
   def parse(line: String): Option[Token] =
     findSimpleToken(line)
-      .orElse(findStringLiteral(line))
-      .orElse(findNumericLiteral(line))
-      .orElse(findLiteral(line))
+      .orElse(findRegexToken(line))
 
   def findSimpleToken(line: String): Option[Token] = allSimpleTokens.find(token => line.startsWith(token.value))
 
-  val stringRegex: UnanchoredRegex = "^\"(.+)\"".r.unanchored
-
-  def findStringLiteral(line: String): Option[Token] =
-    line match {
-      case stringRegex(str) => Some(StringLiteral(str))
-      case _ => None
-    }
-
+  val stringRegex: UnanchoredRegex = """^"((\\.|[^\\"])*)"""".r.unanchored
   val floatRegex: UnanchoredRegex = "^(\\d+)(\\.\\d+)?".r.unanchored
+  val literalRegex: UnanchoredRegex = "^([a-zA-Z]([0-9a-zA-Z_-]*[0-9a-zA-Z])?)".r.unanchored
 
-  def findNumericLiteral(line: String): Option[Token] =
+  def findRegexToken(line: String): Option[Token] =
     line match {
+      case stringRegex(str, _) => Some(StringLiteral(str))
       case floatRegex(a, null) => Some(Integer(a.toInt))
       case floatRegex(a, b) => Some(Floating(s"$a.$b".toDouble))
+      case literalRegex(literal, _) => Some(Identifier(literal))
       case _ => None
-    }
-
-  def findLiteral(line: String): Option[Token] =
-    line.takeWhile(char => char.isLetterOrDigit) match {
-      case "" => None
-      case matched => Some(Identifier(matched))
     }
 
 }
