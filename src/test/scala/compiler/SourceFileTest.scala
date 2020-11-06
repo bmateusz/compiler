@@ -1,20 +1,16 @@
 package compiler
 
-import org.scalatest.EitherValues
-import org.scalatest.flatspec.AnyFlatSpec
+import compiler.Errors.InvalidToken
 
-class SourceFileTest extends AnyFlatSpec with EitherValues {
+class SourceFileTest extends CompilerSpecs {
 
-  private def parseSuccess(string: String): SourceFile = SourceFile.parse(string).right.value
+  val example =
+    """
+       testIntegers = 23
+       testStrings = "hello"
 
-  private def parseError(string: String): List[CompilerError] = SourceFile.parse(string).left.value
-
-  val example = """
-    testIntegers = 23
-    testStrings = "hello"
-
-    def function(parameter: Int): String = ???
-  """
+       def function(parameter: Int): String = ???
+     """
 
   it should "be tokenized" in {
     val source = parseSuccess(example)

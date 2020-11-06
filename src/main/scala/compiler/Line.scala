@@ -2,7 +2,9 @@ package compiler
 
 import java.lang.Character.isWhitespace
 
-import compiler.SimpleTokens.allSimpleTokens
+import compiler.Errors.{CompilerError, InvalidToken}
+import compiler.Tokens.SimpleTokens.allSimpleTokens
+import compiler.Tokens._
 
 import scala.annotation.tailrec
 import scala.util.matching.UnanchoredRegex

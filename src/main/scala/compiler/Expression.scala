@@ -1,5 +1,7 @@
 package compiler
 
+import compiler.Tokens._
+
 import scala.annotation.tailrec
 
 case class Expression(tokens: List[ParsedToken]) {

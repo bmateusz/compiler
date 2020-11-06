@@ -1,20 +1,13 @@
 package compiler
 
 import arbitrary.ArbitraryExpression._
-import org.scalatest.EitherValues
-import org.scalatest.flatspec.AnyFlatSpec
+import compiler.Tokens._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-import scala.util.chaining.scalaUtilChainingOps
-
-class ExpressionTest extends AnyFlatSpec with EitherValues with ScalaCheckPropertyChecks {
+class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSize = 1, sizeRange = 10000, minSuccessful = 10000)
-
-  private def parseExpression(string: String): Expression =
-    SourceFile.parse(string).right.value.nonEmptyTokens
-      .pipe(Expression.parse(_, List.empty, List.empty, None))
 
   it should "evaluate random expressions with parentheses" in {
     forAll { tree: Tree =>

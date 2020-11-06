@@ -1,5 +1,8 @@
 package compiler
 
+import compiler.Errors.CompilerError
+import compiler.Tokens._
+
 import scala.io.BufferedSource
 
 class SourceFile(val tokens: List[Token]) {

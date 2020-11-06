@@ -1,5 +1,7 @@
 package compiler
 
+import compiler.Tokens._
+
 import scala.annotation.tailrec
 
 case class Assignment(identifier: Identifier,
@@ -42,12 +44,12 @@ object Block {
     }
   }
 
-  def parseDef(rest: List[Token], block: Block): Block = {
-    rest.headOption match {
+  def parseDef(tokens: List[Token], block: Block): Block = {
+    tokens.headOption match {
       case Some(value) =>
         value match {
           case identifier@Identifier(_) =>
-            parse(rest, block.addDef(identifier))
+            parse(tokens, block.addDef(identifier))
           case unexpected =>
             throw new RuntimeException(unexpected.toString)
         }

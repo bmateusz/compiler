@@ -1,4 +1,5 @@
-import compiler.{CompilerError, FileError, SourceFile}
+import compiler.Errors.{CompilerError, FileError}
+import compiler.SourceFile
 
 import scala.io.Source
 import scala.util.{Failure, Success, Using}
