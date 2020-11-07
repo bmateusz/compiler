@@ -120,7 +120,7 @@ object Tokens {
     val `*`: Token = Operator(Multiply)
     val `/`: Token = Operator(Divide)
 
-    val allSimpleTokens = List(
+    val simpleTokens = List(
       `def`,
       `:`,
       `=`,
@@ -137,6 +137,9 @@ object Tokens {
       `if`,
       `else`,
     )
+
+    val simpleTokensMap: Map[String, Token] = simpleTokens.map(t => t.value -> t).toMap
+
   }
 
   case class Identifier(override val value: String) extends Token

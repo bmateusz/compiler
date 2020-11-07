@@ -3,7 +3,7 @@ package compiler
 import java.lang.Character.isWhitespace
 
 import compiler.Errors.{CompilerError, InvalidToken}
-import compiler.Tokens.SimpleTokens.allSimpleTokens
+import compiler.Tokens.SimpleTokens.simpleTokens
 import compiler.Tokens._
 
 import scala.annotation.tailrec
@@ -44,7 +44,7 @@ object Line {
     findSimpleToken(line)
       .orElse(findRegexToken(line))
 
-  def findSimpleToken(line: String): Option[Token] = allSimpleTokens.find(token => line.startsWith(token.value))
+  def findSimpleToken(line: String): Option[Token] = simpleTokens.find(token => line.startsWith(token.value))
 
   val stringRegex: UnanchoredRegex = """^"((\\.|[^\\"])*)"""".r.unanchored
   val floatRegex: UnanchoredRegex = "^(\\d+)(\\.\\d+)?".r.unanchored

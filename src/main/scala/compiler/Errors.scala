@@ -23,6 +23,8 @@ object Errors {
 
   case class ExpectedRightParenthesis(got: Option[Token]) extends CompilerError
 
+  case class ExpectedParameterList(got: Option[Token]) extends CompilerError
+
   case class FileError(arg: String, throwable: Throwable) extends CompilerError
 
 }

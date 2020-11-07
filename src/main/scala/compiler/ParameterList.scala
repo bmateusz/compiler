@@ -1,15 +1,15 @@
 package compiler
 
-import compiler.Errors.{CompilerError, ExpectedRightParenthesis}
+import compiler.Errors.{CompilerError, ExpectedParameterList, ExpectedRightParenthesis}
 import compiler.ParameterList.Parameter
-import compiler.Tokens.{Colon, Comma, Identifier, Indentation, LeftParenthesis, RightParenthesis, Token}
-import compiler.Types.{Type, UnknownType}
+import compiler.Tokens._
+import compiler.Types.Type
 
 import scala.annotation.tailrec
 
 case class ParameterList(value: List[Parameter]) {
   def addParameter(name: String, typ: String): ParameterList =
-    ParameterList(value :+ Parameter(Identifier(name), UnknownType(typ)))
+    ParameterList(value :+ Parameter(Identifier(name), Types.parse(typ)))
 
 }
 
@@ -32,8 +32,8 @@ object ParameterList {
           case other =>
             Left(ExpectedRightParenthesis(other))
         }
-      case Nil =>
-        ???
+      case other =>
+        Left(ExpectedParameterList(other.headOption))
     }
   }
 
