@@ -14,7 +14,7 @@ class SourceFileTest extends CompilerSpecs {
 
   it should "be tokenized" in {
     val source = parseSuccess(example)
-    assert(source.nonEmptyTokens.length === 17)
+    assert(source.tokens.length === 23)
   }
 
   it should "report token error" in {

@@ -8,11 +8,6 @@ import scala.io.BufferedSource
 class SourceFile(val tokens: List[Token]) {
   override def toString: String = tokens.map(_.value).mkString(" ")
 
-  def nonEmptyTokens: List[Token] = tokens.filter {
-    case Indentation(_) => false
-    case _ => true
-  }
-
   def compile = {
     println(Block.parse(tokens, Block.empty))
   }
