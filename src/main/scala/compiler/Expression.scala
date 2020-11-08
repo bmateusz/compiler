@@ -1,5 +1,6 @@
 package compiler
 
+import compiler.Errors.{CompilerError, UnmatchedLeftParenthesis}
 import compiler.Tokens._
 
 import scala.annotation.tailrec
@@ -25,7 +26,7 @@ object Expression {
   def parse(tokens: List[Token],
             outputStack: List[ParsedToken],
             operatorStack: List[ParsedToken],
-            lastToken: Option[Token]): Expression =
+            lastToken: Option[Token]): Either[CompilerError, Expression] =
     tokens match {
       case x :: xs =>
         x match {
@@ -53,7 +54,10 @@ object Expression {
               case _ => true
             }
             parse(xs, outputStack ++ left, right.tail, Some(x))
-          case Indentation(length) => parse(xs, outputStack, operatorStack, Some(x))
+          case Indentation(length) if lastToken.isEmpty =>
+            parse(xs, outputStack, operatorStack, lastToken)
+          case Indentation(length) =>
+            finishExpression(xs, outputStack, operatorStack)
           case Def => ???
           case Class => ???
           case NotImplemented => ???
@@ -66,7 +70,17 @@ object Expression {
           case token@Identifier(value) => ???
           case StringLiteral(value) => ???
         }
-      case Nil => Expression(outputStack ++ operatorStack)
+      case Nil =>
+        finishExpression(Nil, outputStack, operatorStack)
     }
 
+  private def finishExpression(tokens: List[Token],
+                               outputStack: List[ParsedToken],
+                               operatorStack: List[ParsedToken]): Either[CompilerError, Expression] = {
+    if (operatorStack.contains(LeftParenthesis)) {
+      Left(UnmatchedLeftParenthesis())
+    } else {
+      Right(Expression(outputStack ++ operatorStack))
+    }
+  }
 }

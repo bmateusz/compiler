@@ -4,11 +4,6 @@ import compiler.Tokens._
 
 import scala.annotation.tailrec
 
-case class Assignment(identifier: Identifier,
-                      expression: Expression)
-
-case class Value(token: Token)
-
 class Block(val defs: List[String], val identifiers: List[String]) {
   def addIdentifier(identifier: Identifier): Block = new Block(defs, identifiers :+ identifier.value)
 
