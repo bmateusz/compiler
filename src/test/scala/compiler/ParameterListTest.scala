@@ -43,14 +43,14 @@ class ParameterListTest extends CompilerSpecs {
     val source = parseSuccess("""(a: MyClass = 2""")
     assert(source.tokens.length === 7)
     val params = ParameterList.parseParameterList(source.tokens)
-    assert(params.left.value === Errors.ExpectedRightParenthesis(None))
+    assert(params.left.value === List(Errors.ExpectedRightParenthesis(None)))
   }
 
   it should "recognize missing right parenthesis" in {
     val source = parseSuccess("""a: Float)""")
     assert(source.tokens.length === 5)
     val params = ParameterList.parseParameterList(source.tokens)
-    assert(params.left.value === Errors.ExpectedParameterList(Some(Identifier("a"))))
+    assert(params.left.value === List(Errors.ExpectedParameterList(Some(Identifier("a")))))
   }
 
 }

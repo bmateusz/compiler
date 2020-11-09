@@ -20,7 +20,7 @@ object ParameterList {
   case class Parameter(identifier: Identifier, typ: Type)
 
   @tailrec
-  def parseParameterList(tokens: List[Token]): Either[CompilerError, ParameterList] = {
+  def parseParameterList(tokens: List[Token]): Result[ParameterList] = {
     tokens match {
       case Indentation(_) :: rest =>
         parseParameterList(rest)
@@ -28,12 +28,12 @@ object ParameterList {
         val (left, right) = rest.span(_ != RightParenthesis)
         right.headOption match {
           case Some(RightParenthesis) =>
-            parseParameters(left, empty)
+            Result.eitherSingleError(parseParameters(left, empty), right)
           case other =>
-            Left(ExpectedRightParenthesis(other))
+            Result(ExpectedRightParenthesis(other), right)
         }
       case other =>
-        Left(ExpectedParameterList(other.headOption))
+        Result(ExpectedParameterList(other.headOption))
     }
   }
 

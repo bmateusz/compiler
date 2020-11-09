@@ -2,7 +2,7 @@ package compiler
 
 import java.lang.Character.isWhitespace
 
-import compiler.Errors.{CompilerError, InvalidToken}
+import compiler.Errors.InvalidToken
 import compiler.Tokens.SimpleTokens.simpleTokens
 import compiler.Tokens._
 
@@ -15,13 +15,13 @@ class Line(val number: Int,
 }
 
 object Line {
-  def apply(number: Int, string: String): Either[CompilerError, Line] = {
+  def apply(number: Int, string: String): Result[Line] = {
     val (whitespaces, rest) = string.span(isWhitespace)
     tokenize(rest) match {
       case Right(tokens) =>
-        Right(new Line(number, Indentation(whitespaces.length) +: tokens))
+        Result(new Line(number, Indentation(whitespaces.length) +: tokens))
       case Left(rest) =>
-        Left(InvalidToken.apply(number, string, rest))
+        Result(InvalidToken.apply(number, string, rest))
     }
   }
 

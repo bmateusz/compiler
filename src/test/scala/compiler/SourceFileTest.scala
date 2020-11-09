@@ -18,8 +18,8 @@ class SourceFileTest extends CompilerSpecs {
   }
 
   it should "report token error" in {
-    val errors = parseError("∂")
-    assert(errors === List(InvalidToken(0, 0, "∂")))
+    val errors = parseError("x = 1\n∂ = 2\nz = 3")
+    assert(errors === List(InvalidToken(1, 0, "∂ = 2")))
   }
 
 }

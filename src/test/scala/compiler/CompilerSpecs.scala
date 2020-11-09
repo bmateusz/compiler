@@ -12,14 +12,14 @@ trait CompilerSpecs extends AnyFlatSpec with EitherValues {
 
   def parseError(string: String): List[CompilerError] = SourceFile.parse(string).left.value
 
-  def parseExpression(string: String): Either[CompilerError, Expression] =
+  def parseExpression(string: String): Result[Expression] =
     parseSuccess(string)
       .pipe(sf => Expression.parse(sf.tokens, List.empty, List.empty, None))
 
   def parseExpressionSuccess(string: String): Expression =
     parseExpression(string).right.value
 
-  def parseExpressionError(string: String): CompilerError =
+  def parseExpressionError(string: String): List[CompilerError] =
     parseExpression(string).left.value
 
 }
