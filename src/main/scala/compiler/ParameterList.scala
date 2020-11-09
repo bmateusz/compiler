@@ -10,7 +10,6 @@ import scala.annotation.tailrec
 case class ParameterList(value: List[Parameter]) {
   def addParameter(name: String, typ: String): ParameterList =
     ParameterList(value :+ Parameter(Identifier(name), Types.parse(typ)))
-
 }
 
 object ParameterList {
@@ -22,15 +21,17 @@ object ParameterList {
   @tailrec
   def parseParameterList(tokens: List[Token]): Result[ParameterList] = {
     tokens match {
-      case Indentation(_) :: rest =>
-        parseParameterList(rest)
-      case LeftParenthesis :: rest =>
-        val (left, right) = rest.span(_ != RightParenthesis)
-        right.headOption match {
-          case Some(RightParenthesis) =>
-            Result.eitherSingleError(parseParameters(left, empty), right)
-          case other =>
-            Result(ExpectedRightParenthesis(other), right)
+      case Indentation(_) :: xs =>
+        parseParameterList(xs)
+      case LeftParenthesis :: xs =>
+        val (left, right) = xs.span(_ != RightParenthesis)
+        right match {
+          case RightParenthesis :: rest =>
+            Result.eitherSingleError(parseParameters(left, empty), rest)
+          case other :: rest =>
+            Result(ExpectedRightParenthesis(Some(other)), rest)
+          case Nil =>
+            Result(ExpectedRightParenthesis(None))
         }
       case other =>
         Result(ExpectedParameterList(other.headOption))
@@ -40,8 +41,8 @@ object ParameterList {
   @tailrec
   def parseParameters(tokens: List[Token], pl: ParameterList): Either[CompilerError, ParameterList] =
     tokens match {
-      case Indentation(_) :: rest =>
-        parseParameters(rest, pl)
+      case Indentation(_) :: xs =>
+        parseParameters(xs, pl)
       case Identifier(name) :: Colon :: Identifier(typ) :: Indentation(_) :: rest =>
         parseParameters(rest, pl.addParameter(name, typ))
       case Identifier(name) :: Colon :: Identifier(typ) :: Comma :: rest =>

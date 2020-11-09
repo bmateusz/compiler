@@ -6,15 +6,22 @@ class SourceFileTest extends CompilerSpecs {
 
   val example =
     """
-       testIntegers = 23
-       testStrings = "hello"
+       x = 1
+       y = 2
 
-       def function(parameter: Int): String = ???
+       def function(parameter: Int)
      """
 
   it should "be tokenized" in {
     val source = parseSuccess(example)
-    assert(source.tokens.length === 23)
+    assert(source.tokens.length === 19)
+  }
+
+  it should "be compiler" in {
+    val block = compileSuccess(example)
+    println(block)
+    assert(block.assignments.length === 2)
+    assert(block.definitions.length === 1)
   }
 
   it should "report token error" in {

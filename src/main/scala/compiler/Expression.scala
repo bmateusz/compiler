@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Errors.UnmatchedLeftParenthesis
+import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis}
 import compiler.Tokens._
 
 import scala.annotation.tailrec
@@ -28,48 +28,36 @@ object Expression {
             operatorStack: List[ParsedToken],
             lastToken: Option[Token]): Result[Expression] =
     tokens match {
-      case x :: xs =>
-        x match {
-          case token@Integer(value) =>
-            parse(xs, outputStack :+ token, operatorStack, Some(x))
-          case token@Operator(_) =>
-            val isUnaryOperator = lastToken.forall {
-              case Operator(_) | LeftParenthesis => true
-              case _ => false
-            }
-            val op = token.op match {
-              case Subtract if isUnaryOperator => Negate
-              case same => same
-            }
-            val (left, right) = operatorStack.span {
-              case Operator(currOp) if currOp.hasGreaterPrecedenceThan(op) => true
-              case _ => false
-            }
-            parse(xs, outputStack ++ left, Operator(op) +: right, Some(x))
-          case token@LeftParenthesis =>
-            parse(xs, outputStack, token +: operatorStack, Some(x))
-          case RightParenthesis =>
-            val (left, right) = operatorStack.span {
-              case LeftParenthesis => false
-              case _ => true
-            }
-            parse(xs, outputStack ++ left, right.tail, Some(x))
-          case Indentation(length) if lastToken.isEmpty =>
-            parse(xs, outputStack, operatorStack, lastToken)
-          case Indentation(length) =>
-            finishExpression(xs, outputStack, operatorStack)
-          case Def => ???
-          case Class => ???
-          case NotImplemented => ???
-          case If => ???
-          case Else => ???
-          case Colon => ???
-          case Equals => ???
-          case Comma => ???
-          case Dot => ???
-          case token@Identifier(value) => ???
-          case StringLiteral(value) => ???
+      case (token: Integer) :: xs =>
+        parse(xs, outputStack :+ token, operatorStack, Some(token))
+      case (token: Operator) :: xs =>
+        val isUnaryOperator = lastToken.forall {
+          case Operator(_) | LeftParenthesis => true
+          case _ => false
         }
+        val op = token.op match {
+          case Subtract if isUnaryOperator => Negate
+          case same => same
+        }
+        val (left, right) = operatorStack.span {
+          case Operator(currOp) if currOp.hasGreaterPrecedenceThan(op) => true
+          case _ => false
+        }
+        parse(xs, outputStack ++ left, Operator(op) +: right, Some(token))
+      case (token@LeftParenthesis) :: xs =>
+        parse(xs, outputStack, token +: operatorStack, Some(token))
+      case (token@RightParenthesis) :: xs =>
+        val (left, right) = operatorStack.span {
+          case LeftParenthesis => false
+          case _ => true
+        }
+        parse(xs, outputStack ++ left, right.tail, Some(token))
+      case Indentation(length) :: xs if lastToken.isEmpty =>
+        parse(xs, outputStack, operatorStack, lastToken)
+      case Indentation(length) :: xs =>
+        finishExpression(xs, outputStack, operatorStack)
+      case other :: xs =>
+        Result(UnexpectedToken(other), xs)
       case Nil =>
         finishExpression(Nil, outputStack, operatorStack)
     }

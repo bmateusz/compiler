@@ -8,9 +8,14 @@ import scala.util.chaining.scalaUtilChainingOps
 
 trait CompilerSpecs extends AnyFlatSpec with EitherValues {
 
-  def parseSuccess(string: String): SourceFile = SourceFile.parse(string).right.value
+  def parseSuccess(string: String): SourceFile =
+    SourceFile.parse(string).right.value
 
-  def parseError(string: String): List[CompilerError] = SourceFile.parse(string).left.value
+  def parseError(string: String): List[CompilerError] =
+    SourceFile.parse(string).left.value
+
+  def compileSuccess(string: String): Block =
+    parseSuccess(string).compile.value.right.value
 
   def parseExpression(string: String): Result[Expression] =
     parseSuccess(string)

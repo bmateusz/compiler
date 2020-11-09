@@ -9,8 +9,8 @@ class SourceFile(val tokens: List[Token]) {
   override def toString: String =
     tokens.map(_.value).mkString(" ")
 
-  def compile = {
-    println(Block.parse(tokens, Block.empty))
+  def compile: Result[Block] = {
+    Block.parse(tokens, Block.empty)
   }
 }
 

@@ -3,11 +3,17 @@ package compiler
 import compiler.Errors.CompilerError
 import compiler.Tokens.Token
 
-class Result[+A](val value: Either[List[CompilerError], A],
-                 val rest: List[Token]) {
+case class Result[+A](value: Either[List[CompilerError], A],
+                      rest: List[Token]) {
   def right: Either.RightProjection[List[CompilerError], A] = value.right
 
   def left: Either.LeftProjection[List[CompilerError], A] = value.left
+
+  def map[B](f: (A, List[Token]) => Result[B]): Result[B] =
+    value match {
+      case Left(value) => Result(value)
+      case Right(value) => f(value, rest)
+    }
 }
 
 object Result {

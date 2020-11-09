@@ -1,68 +1,55 @@
 package compiler
 
+import compiler.Errors.UnexpectedToken
 import compiler.Tokens._
 
 import scala.annotation.tailrec
 
-class Block(val defs: List[String], val identifiers: List[String]) {
-  def addIdentifier(identifier: Identifier): Block = new Block(defs, identifiers :+ identifier.value)
+case class Block(assignments: List[Assignment],
+                 definitions: List[Definition],
+                 classes: List[Class]) {
+  def addAssignment(assignment: Assignment): Block = copy(assignments = assignments :+ assignment)
 
-  def addDef(identifier: Identifier): Block = new Block(defs :+ identifier.value, identifiers)
+  def addDefinition(definition: Definition): Block = copy(definitions = definitions :+ definition)
 
-  override def toString: String = s"defs: $defs\nidentifiers: $identifiers"
+  def addClass(cls: Class): Block = copy(classes = classes :+ cls)
 }
 
 object Block {
 
-  val empty: Block = new Block(List.empty, List.empty)
+  val empty: Block =
+    Block(List.empty, List.empty, List.empty)
+
+  def parse(result: Result[Block]): Result[Block] =
+    result.map((block, rest) => parse(rest, block))
 
   @tailrec
-  def parse(tokens: List[Token], block: Block): Block = {
-    tokens match {
-      case token :: rest =>
-        token match {
-          case Indentation(_) =>
-            parse(rest, block)
-          case Def =>
-            parseDef(rest, block)
-          case identifier@Identifier(_) =>
-            parseAssignment(identifier, rest, block)
-          case Class =>
-            ???
-          case NotImplemented =>
-            block
-          case unexpected =>
-            throw new RuntimeException(unexpected.toString)
-        }
-      case Nil =>
-        block
-    }
-  }
-
-  def parseDef(tokens: List[Token], block: Block): Block = {
-    tokens.headOption match {
-      case Some(value) =>
-        value match {
-          case identifier@Identifier(_) =>
-            parse(tokens, block.addDef(identifier))
-          case unexpected =>
-            throw new RuntimeException(unexpected.toString)
-        }
-      case None =>
-        throw new RuntimeException("unexpected")
-    }
-  }
-
-  @tailrec
-  def parseAssignment(identifier: Identifier, tokens: List[Token], block: Block): Block = {
+  def parse(tokens: List[Token], block: Block): Result[Block] =
     tokens match {
       case Indentation(_) :: xs =>
-        parseAssignment(identifier, xs, block)
-      case Equals :: xs =>
-        val expr = Expression.parse(xs, List.empty, List.empty, None)
-        ???
-      case other =>
-        ???
+        parse(xs, block)
+      case Def :: xs =>
+        Definition
+          .parse(xs, block)
+          .map { (definition, rest) =>
+            parse(Result(block.addDefinition(definition), rest))
+          }
+      case Class :: xs =>
+        compiler.Class
+          .parse(xs, block)
+          .map { (cls, rest) =>
+            parse(Result(block.addClass(cls), rest))
+          }
+      case (identifier: Identifier) :: xs =>
+        Assignment
+          .parse(identifier, xs, block)
+          .map { (assignment, rest) =>
+            parse(Result(block.addAssignment(assignment), rest))
+          }
+      case Nil =>
+        Result(block)
+      case other :: xs =>
+        Result(UnexpectedToken(other), xs)
     }
-  }
+
 }

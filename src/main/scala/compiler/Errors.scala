@@ -21,6 +21,8 @@ object Errors {
     }
   }
 
+  case class UnexpectedToken(token: Token) extends CompilerError
+
   case class UnmatchedLeftParenthesis() extends CompilerError
 
   case class ExpectedRightParenthesis(got: Option[Token]) extends CompilerError
