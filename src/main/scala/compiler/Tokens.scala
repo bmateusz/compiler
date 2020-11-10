@@ -1,6 +1,28 @@
 package compiler
 
+import scala.util.matching.UnanchoredRegex
+
 object Tokens {
+
+  def parse(line: String): Option[Token] =
+    findSimpleToken(line)
+      .orElse(findRegexToken(line))
+
+  def findSimpleToken(line: String): Option[Token] =
+    SimpleTokens.simpleTokens.find(token => line.startsWith(token.value))
+
+  val stringRegex: UnanchoredRegex = """^"((\\.|[^\\"])*)"""".r.unanchored
+  val floatRegex: UnanchoredRegex = "^(\\d+)(\\.\\d+)?".r.unanchored
+  val literalRegex: UnanchoredRegex = "^([a-zA-Z]([0-9a-zA-Z_-]*[0-9a-zA-Z])?)".r.unanchored
+
+  def findRegexToken(line: String): Option[Token] =
+    line match {
+      case stringRegex(str, _) => Some(StringLiteral(str))
+      case floatRegex(a, null) => Some(Integer(a.toInt))
+      case floatRegex(a, b) => Some(Floating(s"$a.$b".toDouble))
+      case literalRegex(literal, _) => Some(Identifier(literal))
+      case _ => None
+    }
 
   sealed trait EvaluatedToken {
     val value: String

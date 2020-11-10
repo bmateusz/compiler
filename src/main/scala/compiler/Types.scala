@@ -2,6 +2,9 @@ package compiler
 
 object Types {
 
+  def parse(name: String): Type =
+    simpleTypesMap.getOrElse(name, UnknownType(name))
+
   sealed trait Type {
     val name: String
   }
@@ -29,8 +32,5 @@ object Types {
   )
 
   val simpleTypesMap: Map[String, Type] = simpleTypes.map(t => t.name -> t).toMap
-
-  def parse(name: String): Type =
-    simpleTypesMap.getOrElse(name, UnknownType(name))
 
 }

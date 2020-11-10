@@ -11,7 +11,7 @@ case class Result[+A](value: Either[List[CompilerError], A],
 
   def map[B](f: (A, List[Token]) => Result[B]): Result[B] =
     value match {
-      case Left(value) => Result(value)
+      case Left(value) => Result(value, rest)
       case Right(value) => f(value, rest)
     }
 }

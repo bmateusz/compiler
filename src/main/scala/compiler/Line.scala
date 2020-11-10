@@ -3,11 +3,9 @@ package compiler
 import java.lang.Character.isWhitespace
 
 import compiler.Errors.InvalidToken
-import compiler.Tokens.SimpleTokens.simpleTokens
-import compiler.Tokens._
+import compiler.Tokens.{Indentation, Token}
 
 import scala.annotation.tailrec
-import scala.util.matching.UnanchoredRegex
 
 class Line(val number: Int,
            val tokens: List[Token]) {
@@ -15,7 +13,8 @@ class Line(val number: Int,
 }
 
 object Line {
-  def apply(number: Int, string: String): Result[Line] = {
+
+  def parse(number: Int, string: String): Result[Line] = {
     val (whitespaces, rest) = string.span(isWhitespace)
     tokenize(rest) match {
       case Right(tokens) =>
@@ -31,7 +30,7 @@ object Line {
     if (line.isEmpty) {
       Right(tokens)
     } else {
-      parse(line) match {
+      Tokens.parse(line) match {
         case Some(identifier) =>
           tokenize(line.drop(identifier.length), tokens :+ identifier)
         case None =>
@@ -39,24 +38,5 @@ object Line {
       }
     }
   }
-
-  def parse(line: String): Option[Token] =
-    findSimpleToken(line)
-      .orElse(findRegexToken(line))
-
-  def findSimpleToken(line: String): Option[Token] = simpleTokens.find(token => line.startsWith(token.value))
-
-  val stringRegex: UnanchoredRegex = """^"((\\.|[^\\"])*)"""".r.unanchored
-  val floatRegex: UnanchoredRegex = "^(\\d+)(\\.\\d+)?".r.unanchored
-  val literalRegex: UnanchoredRegex = "^([a-zA-Z]([0-9a-zA-Z_-]*[0-9a-zA-Z])?)".r.unanchored
-
-  def findRegexToken(line: String): Option[Token] =
-    line match {
-      case stringRegex(str, _) => Some(StringLiteral(str))
-      case floatRegex(a, null) => Some(Integer(a.toInt))
-      case floatRegex(a, b) => Some(Floating(s"$a.$b".toDouble))
-      case literalRegex(literal, _) => Some(Identifier(literal))
-      case _ => None
-    }
 
 }

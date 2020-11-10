@@ -1,7 +1,7 @@
 package compiler
 
 import compiler.Errors.UnexpectedToken
-import compiler.Tokens._
+import compiler.Tokens.{Class, Def, Identifier, Indentation, Token}
 
 import scala.annotation.tailrec
 

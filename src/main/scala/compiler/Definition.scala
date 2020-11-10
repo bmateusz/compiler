@@ -1,21 +1,21 @@
 package compiler
 
 import compiler.Errors.UnexpectedToken
-import compiler.Tokens._
+import compiler.Tokens.{Identifier, Token}
 
 case class Definition(name: Identifier,
-                      value: ParameterList)
+                      parameters: Parameters)
 
 object Definition {
 
   def parse(tokens: List[Token], block: Block): Result[Definition] =
     tokens match {
       case (identifier: Identifier) :: xs =>
-        ParameterList
-          .parseParameterList(xs)
-          .map { (parameterList, rest) =>
+        Parameters
+          .parse(xs)
+          .map { (parameters, rest) =>
             Result(
-              Definition(identifier, parameterList),
+              Definition(identifier, parameters),
               rest
             )
           }

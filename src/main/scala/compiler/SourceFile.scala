@@ -1,7 +1,7 @@
 package compiler
 
 import compiler.Errors.CompilerError
-import compiler.Tokens._
+import compiler.Tokens.Token
 
 import scala.io.BufferedSource
 
@@ -24,7 +24,7 @@ object SourceFile {
   def parse(lines: Iterator[String]): Either[List[CompilerError], SourceFile] =
     lines
       .zipWithIndex
-      .map { case (string, num) => Line(num, string) }
+      .map { case (string, num) => Line.parse(num, string) }
       .toList
       .mapEither(
         lefts => lefts.flatten,

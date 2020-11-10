@@ -1,31 +1,36 @@
 package compiler
 
-import compiler.Errors.{CompilerError, ExpectedParameterList, ExpectedRightParenthesis}
-import compiler.ParameterList.Parameter
+import compiler.Errors.{CompilerError, ExpectedParameters, ExpectedRightParenthesis}
+import compiler.Parameters.Parameter
 import compiler.Tokens._
 import compiler.Types.Type
 
 import scala.annotation.tailrec
 
-case class ParameterList(value: List[Parameter]) {
-  def addParameter(name: String, typ: String): ParameterList =
-    ParameterList(value :+ Parameter(Identifier(name), Types.parse(typ)))
+case class Parameters(value: List[Parameter], returnType: Option[Type]) {
+  def addParameter(name: String, typ: String): Parameters =
+    copy(value = value :+ Parameter(Identifier(name), Types.parse(typ)))
+
+  def addReturnType(typ: String): Parameters =
+    copy(returnType = Some(Types.parse(typ)))
 }
 
-object ParameterList {
-
-  val empty: ParameterList = ParameterList(List.empty)
+object Parameters {
 
   case class Parameter(identifier: Identifier, typ: Type)
 
+  val empty: Parameters = Parameters(List.empty, None)
+
   @tailrec
-  def parseParameterList(tokens: List[Token]): Result[ParameterList] = {
+  def parse(tokens: List[Token]): Result[Parameters] = {
     tokens match {
       case Indentation(_) :: xs =>
-        parseParameterList(xs)
+        parse(xs)
       case LeftParenthesis :: xs =>
         val (left, right) = xs.span(_ != RightParenthesis)
         right match {
+          case RightParenthesis :: Colon :: Identifier(returnType) :: rest =>
+            Result.eitherSingleError(parseParameters(left, empty).map(_.addReturnType(returnType)), rest)
           case RightParenthesis :: rest =>
             Result.eitherSingleError(parseParameters(left, empty), rest)
           case other :: rest =>
@@ -34,12 +39,12 @@ object ParameterList {
             Result(ExpectedRightParenthesis(None))
         }
       case other =>
-        Result(ExpectedParameterList(other.headOption))
+        Result(ExpectedParameters(other.headOption))
     }
   }
 
   @tailrec
-  def parseParameters(tokens: List[Token], pl: ParameterList): Either[CompilerError, ParameterList] =
+  def parseParameters(tokens: List[Token], pl: Parameters): Either[CompilerError, Parameters] =
     tokens match {
       case Indentation(_) :: xs =>
         parseParameters(xs, pl)

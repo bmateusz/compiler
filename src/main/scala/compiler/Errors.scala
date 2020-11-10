@@ -1,6 +1,7 @@
 package compiler
 
 import compiler.Tokens.Token
+import compiler.Types.Type
 
 object Errors {
 
@@ -23,11 +24,13 @@ object Errors {
 
   case class UnexpectedToken(token: Token) extends CompilerError
 
+  case class UnexpectedReturnType(typ: Type) extends CompilerError
+
   case class UnmatchedLeftParenthesis() extends CompilerError
 
   case class ExpectedRightParenthesis(got: Option[Token]) extends CompilerError
 
-  case class ExpectedParameterList(got: Option[Token]) extends CompilerError
+  case class ExpectedParameters(got: Option[Token]) extends CompilerError
 
   case class FileError(arg: String, throwable: Throwable) extends CompilerError
 

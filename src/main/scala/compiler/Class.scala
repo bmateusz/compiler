@@ -1,23 +1,26 @@
 package compiler
 
-import compiler.Errors.UnexpectedToken
+import compiler.Errors.{UnexpectedReturnType, UnexpectedToken}
 import compiler.Tokens.{Identifier, Token}
 
 case class Class(name: Identifier,
-                 parameterList: ParameterList)
+                 parameters: Parameters)
 
 object Class {
 
   def parse(tokens: List[Token], block: Block): Result[Class] =
     tokens match {
       case (identifier: Identifier) :: xs =>
-        ParameterList
-          .parseParameterList(xs)
-          .map { (parameterList, rest) =>
-            Result(
-              Class(identifier, parameterList),
-              rest
-            )
+        Parameters
+          .parse(xs)
+          .map {
+            case (Parameters(_, Some(typ)), rest) =>
+              Result(UnexpectedReturnType(typ), rest)
+            case (parameters, rest) =>
+              Result(
+                Class(identifier, parameters),
+                rest
+              )
           }
       case other :: xs =>
         Result(UnexpectedToken(other), xs)
