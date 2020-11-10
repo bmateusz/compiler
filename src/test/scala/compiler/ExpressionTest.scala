@@ -1,13 +1,14 @@
 package compiler
 
 import arbitrary.ArbitraryExpression._
+import compiler.Errors.{UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Tokens._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
-    PropertyCheckConfiguration(minSize = 1, sizeRange = 10000, minSuccessful = 10000)
+    PropertyCheckConfiguration(minSize = 1, sizeRange = 100, minSuccessful = 100)
 
   it should "evaluate random expressions with parentheses" in {
     forAll { tree: Tree =>
@@ -68,6 +69,16 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
     val expr = parseExpressionSuccess("0 / (1 * 0)")
     assert(expr.tokens === List(Integer(0), Integer(1), Integer(0), Operator(Multiply), Operator(Divide)))
     assert(expr.evaluate === List(DivisionByZero))
+  }
+
+  it should "report error for unmatched left parenthesis" in {
+    val error = parseExpressionError("(3 * (2 + 1)")
+    assert(error === List(UnmatchedLeftParenthesis()))
+  }
+
+  it should "report error for unmatched right parenthesis" in {
+    val error = parseExpressionError("3 * (2 + 1))")
+    assert(error === List(UnmatchedRightParenthesis()))
   }
 
 }

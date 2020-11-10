@@ -1,7 +1,7 @@
 package compiler
 
 import compiler.Errors.UnexpectedToken
-import compiler.Tokens.{Class, Def, Identifier, Indentation, Token}
+import compiler.Tokens.{Class, Def, Equals, Identifier, Indentation, Token}
 
 import scala.annotation.tailrec
 
@@ -40,7 +40,7 @@ object Block {
           .map { (cls, rest) =>
             parse(Result(block.addClass(cls), rest))
           }
-      case (identifier: Identifier) :: xs =>
+      case (identifier: Identifier) :: Equals :: xs =>
         Assignment
           .parse(identifier, xs, block)
           .map { (assignment, rest) =>

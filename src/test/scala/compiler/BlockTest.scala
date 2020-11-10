@@ -1,7 +1,7 @@
 package compiler
 
 import compiler.Parameters.Parameter
-import compiler.Tokens.{Identifier, Integer}
+import compiler.Tokens.{Floating, Identifier, Integer, StringLiteral}
 
 class BlockTest extends CompilerSpecs {
 
@@ -10,7 +10,8 @@ class BlockTest extends CompilerSpecs {
     assert(block === Block(
       List(
         Assignment(Identifier("x"), Expression(List(Integer(1)))),
-        Assignment(Identifier("y"), Expression(List(Integer(2))))
+        Assignment(Identifier("y"), Expression(List(Floating(3.14)))),
+        Assignment(Identifier("z"), Expression(List(StringLiteral("hello"))))
       ),
       List(Definition(Identifier("function"), Parameters(
         List(Parameter(Identifier("parameter"), Types.Integer)),

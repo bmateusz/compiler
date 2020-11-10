@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Errors.{CompilerError, ExpectedParameters, ExpectedRightParenthesis}
+import compiler.Errors.{CompilerError, ExpectedColon, ExpectedIdentifier, ExpectedParameters, ExpectedRightParenthesis, ExpectedType}
 import compiler.Parameters.Parameter
 import compiler.Tokens._
 import compiler.Types.Type
@@ -33,9 +33,7 @@ object Parameters {
             Result.eitherSingleError(parseParameters(left, empty).map(_.addReturnType(returnType)), rest)
           case RightParenthesis :: rest =>
             Result.eitherSingleError(parseParameters(left, empty), rest)
-          case other :: rest =>
-            Result(ExpectedRightParenthesis(Some(other)), rest)
-          case Nil =>
+          case _ =>
             Result(ExpectedRightParenthesis(None))
         }
       case other =>
@@ -56,8 +54,12 @@ object Parameters {
         Right(pl.addParameter(name, typ))
       case Nil =>
         Right(pl)
+      case Identifier(name) :: Colon :: tokens =>
+        Left(ExpectedType(tokens.headOption))
+      case Identifier(name) :: tokens =>
+        Left(ExpectedColon(tokens.headOption))
       case tokens =>
-        Left(ExpectedRightParenthesis(tokens.headOption))
+        Left(ExpectedIdentifier(tokens.headOption))
     }
 
 }

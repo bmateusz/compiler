@@ -11,7 +11,8 @@ trait CompilerSpecs extends AnyFlatSpec with EitherValues {
   val exampleCode =
     """
        x = 1
-       y = 2
+       y = 3.14
+       z = "hello"
 
        class A(z: String)
 
@@ -26,6 +27,9 @@ trait CompilerSpecs extends AnyFlatSpec with EitherValues {
 
   def compileSuccess(string: String): Block =
     parseSuccess(string).compile.value.right.value
+
+  def compileError(string: String): List[CompilerError] =
+    parseSuccess(string).compile.value.left.value
 
   def parseExpression(string: String): Result[Expression] =
     parseSuccess(string)

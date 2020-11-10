@@ -19,7 +19,7 @@ object Tokens {
     line match {
       case stringRegex(str, _) => Some(StringLiteral(str))
       case floatRegex(a, null) => Some(Integer(a.toInt))
-      case floatRegex(a, b) => Some(Floating(s"$a.$b".toDouble))
+      case floatRegex(a, b) => Some(Floating(s"$a$b".toDouble))
       case literalRegex(literal, _) => Some(Identifier(literal))
       case _ => None
     }
@@ -166,15 +166,17 @@ object Tokens {
 
   case class Identifier(override val value: String) extends Token
 
-  case class StringLiteral(override val value: String) extends Token {
+  sealed trait ValueToken extends Token
+
+  case class StringLiteral(override val value: String) extends ValueToken {
     override def length: Int = value.length + 2 // the ""
   }
 
-  case class Integer(integer: Int) extends Token {
+  case class Integer(integer: Int) extends ValueToken {
     override val value: String = integer.toString
   }
 
-  case class Floating(double: Double) extends Token {
+  case class Floating(double: Double) extends ValueToken {
     override val value: String = double.toString
   }
 

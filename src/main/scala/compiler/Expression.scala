@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis}
+import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Tokens._
 
 import scala.annotation.tailrec
@@ -28,7 +28,7 @@ object Expression {
             operatorStack: List[ParsedToken],
             lastToken: Option[Token]): Result[Expression] =
     tokens match {
-      case (token: Integer) :: xs =>
+      case (token: ValueToken) :: xs =>
         parse(xs, outputStack :+ token, operatorStack, Some(token))
       case (token: Operator) :: xs =>
         val isUnaryOperator = lastToken.forall {
@@ -47,11 +47,15 @@ object Expression {
       case (token@LeftParenthesis) :: xs =>
         parse(xs, outputStack, token +: operatorStack, Some(token))
       case (token@RightParenthesis) :: xs =>
-        val (left, right) = operatorStack.span {
+        operatorStack.span {
           case LeftParenthesis => false
           case _ => true
+        } match {
+          case (left, Nil) =>
+            Result(UnmatchedRightParenthesis())
+          case (left, right) =>
+            parse(xs, outputStack ++ left, right.tail, Some(token))
         }
-        parse(xs, outputStack ++ left, right.tail, Some(token))
       case Indentation(length) :: xs if lastToken.isEmpty =>
         parse(xs, outputStack, operatorStack, lastToken)
       case Indentation(length) :: xs =>

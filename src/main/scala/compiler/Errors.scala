@@ -26,11 +26,19 @@ object Errors {
 
   case class UnexpectedReturnType(typ: Type) extends CompilerError
 
+  case class UnmatchedRightParenthesis() extends CompilerError
+
   case class UnmatchedLeftParenthesis() extends CompilerError
 
   case class ExpectedRightParenthesis(got: Option[Token]) extends CompilerError
 
   case class ExpectedParameters(got: Option[Token]) extends CompilerError
+
+  case class ExpectedIdentifier(got: Option[Token]) extends CompilerError
+
+  case class ExpectedColon(got: Option[Token]) extends CompilerError
+
+  case class ExpectedType(got: Option[Token]) extends CompilerError
 
   case class FileError(arg: String, throwable: Throwable) extends CompilerError
 
