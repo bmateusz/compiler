@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Errors.UnexpectedToken
+import compiler.Errors.{ExpectedIdentifier, UnexpectedToken}
 import compiler.Tokens.{Colon, Identifier}
 
 class DefinitionTest extends CompilerSpecs {
@@ -14,9 +14,14 @@ class DefinitionTest extends CompilerSpecs {
     ))
   }
 
-  it should "report error for missing name" in {
+  it should "report error for bad name" in {
     val block = compileError("def :()")
     assert(block === List(UnexpectedToken(Colon)))
+  }
+
+  it should "report error for no name" in {
+    val block = compileError("def ")
+    assert(block === List(ExpectedIdentifier(None)))
   }
 
 }

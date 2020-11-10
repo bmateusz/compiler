@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Errors.{UnexpectedReturnType, UnexpectedToken}
+import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType, UnexpectedToken}
 import compiler.Parameters.Parameter
 import compiler.Tokens.{Add, Identifier, Operator}
 import compiler.Types.UnknownType
@@ -39,6 +39,11 @@ class ClassTest extends CompilerSpecs {
   it should "report error when class has return type" in {
     val block = compileError("class A(a: Float): MyClass")
     assert(block === List(UnexpectedReturnType(UnknownType("MyClass"))))
+  }
+
+  it should "report error for no name" in {
+    val block = compileError("class ")
+    assert(block === List(ExpectedIdentifier(None)))
   }
 
 }

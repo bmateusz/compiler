@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Errors.{UnexpectedReturnType, UnexpectedToken}
+import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType, UnexpectedToken}
 import compiler.Tokens.{Identifier, Token}
 
 case class Class(name: Identifier,
@@ -24,6 +24,8 @@ object Class {
           }
       case other :: xs =>
         Result(UnexpectedToken(other), xs)
+      case Nil =>
+        Result(ExpectedIdentifier(None))
     }
 
 }
