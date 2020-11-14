@@ -1,55 +1,69 @@
 package compiler
 
-import compiler.Errors.UnexpectedToken
-import compiler.Tokens.{Class, Def, Equals, Identifier, Indentation, Token}
+import compiler.Tokens.{Class, Def, Enum, Equals, Identifier, Indentation, Token}
 
 import scala.annotation.tailrec
 
-case class Block(assignments: List[Assignment],
-                 definitions: List[Definition],
-                 classes: List[Class]) {
-  def addAssignment(assignment: Assignment): Block = copy(assignments = assignments :+ assignment)
-
-  def addDefinition(definition: Definition): Block = copy(definitions = definitions :+ definition)
-
-  def addClass(cls: Class): Block = copy(classes = classes :+ cls)
+case class Block(elements: List[Element]) {
+  def add(element: Element): Block = copy(elements = elements :+ element)
 }
 
 object Block {
 
   val empty: Block =
-    Block(List.empty, List.empty, List.empty)
+    Block(List.empty)
 
-  def parse(result: Result[Block]): Result[Block] =
-    result.map((block, rest) => parse(rest, block))
+  def parse(result: Result[Block], indentation: List[Indentation]): Result[Block] =
+    result.map((block, rest) => parse(rest, block, indentation))
 
   @tailrec
-  def parse(tokens: List[Token], block: Block): Result[Block] =
+  def parse(tokens: List[Token], block: Block, indentation: List[Indentation]): Result[Block] =
     tokens match {
-      case Indentation(_) :: xs =>
-        parse(xs, block)
+      case (current: Indentation) :: xs =>
+        indentation match {
+          case Indentation(length) :: _ if current.length == length =>
+            parse(xs, block, indentation)
+          case Indentation(length) :: _ if current.length > length =>
+            parse(xs, block, indentation :+ current)
+          case Indentation(length) :: Nil if current.length < length =>
+            Result(block, tokens)
+          case Indentation(length) :: indentationRest if current.length < length =>
+            parse(xs, block, indentationRest)
+          case Nil =>
+            parse(xs, block, List(current))
+        }
       case Def :: xs =>
         Definition
-          .parse(xs, block)
+          .parse(xs)
           .map { (definition, rest) =>
-            parse(Result(block.addDefinition(definition), rest))
+            parse(Result(block.add(definition), rest), indentation)
           }
       case Class :: xs =>
         compiler.Class
           .parse(xs, block)
           .map { (cls, rest) =>
-            parse(Result(block.addClass(cls), rest))
+            parse(Result(block.add(cls), rest), indentation)
+          }
+      case Enum :: xs =>
+        compiler.Enum
+          .parse(xs)
+          .map { (cls, rest) =>
+            parse(Result(block.add(cls), rest), indentation)
           }
       case (identifier: Identifier) :: Equals :: xs =>
         Assignment
           .parse(identifier, xs, block)
           .map { (assignment, rest) =>
-            parse(Result(block.addAssignment(assignment), rest))
+            parse(Result(block.add(assignment), rest), indentation)
           }
       case Nil =>
         Result(block)
-      case other :: xs =>
-        Result(UnexpectedToken(other), xs)
+      case others =>
+        Expression
+          .parse(others, List.empty, List.empty, None)
+          .map { (expr, rest) =>
+            parse(Result(block.add(expr), rest), indentation)
+          }
     }
 
 }

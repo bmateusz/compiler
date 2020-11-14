@@ -5,7 +5,7 @@ import compiler.Tokens.{Identifier, Indentation, Token}
 import scala.annotation.tailrec
 
 case class Assignment(name: Identifier,
-                      expression: Expression)
+                      expression: Expression) extends Element
 
 object Assignment {
 

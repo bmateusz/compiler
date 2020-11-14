@@ -12,8 +12,8 @@ class ReplTest extends CompilerSpecs {
     override def read(): String =
       if (messages.isEmpty) "" else messages.dequeue()
 
-    override def println(block: Block): Unit =
-      results.addOne(block.toString)
+    override def println(elements: List[Element]): Unit =
+      results.addOne(elements.toString)
 
     override def printlnEvaluation(tokens: List[Tokens.EvaluatedToken]): Unit =
       results.addOne(tokens.toString)
@@ -31,7 +31,7 @@ class ReplTest extends CompilerSpecs {
   it should "parse assignment" in {
     val repl = MockRepl(mutable.Queue("x = 1"))
     repl.repl()
-    assert(repl.results.toList === List("Block(List(Assignment(Identifier(x),Expression(List(Integer(1))))),List(),List())"))
+    assert(repl.results.toList === List("List(Assignment(Identifier(x),Expression(List(Integer(1)))))"))
   }
 
   it should "parse invalid block" in {

@@ -10,9 +10,7 @@ class AssignmentTest extends CompilerSpecs {
     assert(block === Block(
       List(
         Assignment(Identifier("x"), Expression(List(Integer(3)))),
-      ),
-      List.empty,
-      List.empty
+      )
     ))
   }
 
@@ -25,9 +23,7 @@ class AssignmentTest extends CompilerSpecs {
     assert(block === Block(
       List(
         Assignment(Identifier("x"), Expression(List(Integer(3), Integer(3), Operator(Add)))),
-      ),
-      List.empty,
-      List.empty
+      )
     ))
   }
 

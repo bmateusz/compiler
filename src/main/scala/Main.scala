@@ -1,5 +1,5 @@
 import compiler.Errors.{CompilerError, FileError}
-import compiler.{Block, SourceFile, Tokens}
+import compiler.{Element, SourceFile, Tokens}
 import repl.Repl
 
 import scala.io.{Source, StdIn}
@@ -33,8 +33,8 @@ object Main {
       override def read() =
         StdIn.readLine("> ")
 
-      override def println(block: Block): Unit =
-        Console.out.println(block)
+      override def println(elements: List[Element]): Unit =
+        Console.out.println(elements)
 
       override def printlnEvaluation(tokens: List[Tokens.EvaluatedToken]): Unit =
         Console.out.println(tokens.mkString(" "))

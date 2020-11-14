@@ -46,6 +46,10 @@ object Tokens {
     override val value: String = "class"
   }
 
+  case object Enum extends Token {
+    override val value: String = "enum"
+  }
+
   case object NotImplemented extends Token {
     override val value: String = "???"
   }
@@ -128,6 +132,7 @@ object Tokens {
   object SimpleTokens {
     val `def`: Token = Def
     val `class`: Token = Class
+    val `enum`: Token = Enum
     val `???`: Token = NotImplemented
     val `if`: Token = If
     val `else`: Token = Else
@@ -147,6 +152,7 @@ object Tokens {
       `:`,
       `=`,
       `class`,
+      `enum`,
       `(`,
       `,`,
       `.`,

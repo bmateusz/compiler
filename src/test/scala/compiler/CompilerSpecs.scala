@@ -16,7 +16,8 @@ trait CompilerSpecs extends AnyFlatSpec with EitherValues {
 
        class A(z: String)
 
-       def function(parameter: Int): Int
+       def function(parameter: Int): Int =
+         6 * 2
      """
 
   def parseSuccess(string: String): SourceFile =

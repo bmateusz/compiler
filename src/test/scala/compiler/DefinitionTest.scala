@@ -1,16 +1,25 @@
 package compiler
 
 import compiler.Errors.{ExpectedIdentifier, UnexpectedToken}
-import compiler.Tokens.{Colon, Identifier}
+import compiler.Tokens.{Colon, Identifier, Integer}
 
 class DefinitionTest extends CompilerSpecs {
 
   it should "parse simple definition" in {
     val block = compileSuccess("def x()")
     assert(block === Block(
-      List.empty,
-      List(Definition(Identifier("x"), Parameters(List(), None))),
-      List.empty
+      List(Definition(Identifier("x"), Parameters(List(), None), None))
+    ))
+  }
+
+  it should "parse simple definition with implementation" in {
+    val block = compileSuccess("def x(): Int = 2")
+    assert(block === Block(
+      List(Definition(
+        Identifier("x"),
+        Parameters(List(), Some(Types.Integer)),
+        Some(Block(List(Expression(List(Integer(2))))))
+      ))
     ))
   }
 

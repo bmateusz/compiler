@@ -5,7 +5,7 @@ import compiler.Tokens._
 
 import scala.annotation.tailrec
 
-case class Expression(tokens: List[ParsedToken]) {
+case class Expression(tokens: List[ParsedToken]) extends Element {
   def evaluate: List[EvaluatedToken] = tokens.foldLeft(List.empty[EvaluatedToken]) {
     case (acc, token@Integer(_)) => token :: acc
     case (Integer(x) :: xs, Operator(Negate)) => Integer(-x) :: xs

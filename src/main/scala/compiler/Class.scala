@@ -1,10 +1,10 @@
 package compiler
 
-import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType, UnexpectedToken}
+import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType}
 import compiler.Tokens.{Identifier, Token}
 
 case class Class(name: Identifier,
-                 parameters: Parameters)
+                 parameters: Parameters) extends Element
 
 object Class {
 
@@ -23,7 +23,7 @@ object Class {
               )
           }
       case other :: xs =>
-        Result(UnexpectedToken(other), xs)
+        Result(ExpectedIdentifier(Some(other)), xs)
       case Nil =>
         Result(ExpectedIdentifier(None))
     }

@@ -10,7 +10,7 @@ class SourceFile(val tokens: List[Token]) {
     tokens.map(_.value).mkString(" ")
 
   def compile: Result[Block] = {
-    Block.parse(tokens, Block.empty)
+    Block.parse(tokens, Block.empty, List.empty)
   }
 }
 

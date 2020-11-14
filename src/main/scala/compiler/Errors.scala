@@ -34,6 +34,8 @@ object Errors {
 
   case class ExpectedParameters(got: Option[Token]) extends CompilerError
 
+  case class ExpectedEnums(got: Option[Token]) extends CompilerError
+
   case class ExpectedIdentifier(got: Option[Token]) extends CompilerError
 
   case class ExpectedColon(got: Option[Token]) extends CompilerError
