@@ -1,12 +1,23 @@
 package compiler
 
-import compiler.Errors.{CompilerError, ExpectedIdentifier, ExpectedParameters, ExpectedRightParenthesis}
+import compiler.Errors.{CompilerError, EmptyEnum, ExpectedEnums, ExpectedIdentifier, ExpectedParameters, ExpectedRightParenthesis, NotUniqueEnumValues}
 import compiler.Tokens.{Comma, Identifier, Indentation, LeftParenthesis, RightParenthesis, Token}
 
 import scala.annotation.tailrec
 
 case class Enum(name: Identifier,
-                values: List[Identifier]) extends Element
+                values: List[Identifier]) extends Element {
+  def add(identifier: Identifier): Enum =
+    copy(values = values :+ identifier)
+
+  def notUniqueIdentifiers(): List[String] =
+    values
+      .groupMapReduce(_.value)(_ => 1)(_ + _)
+      .filter(_._2 > 1)
+      .keys
+      .toList
+      .sorted
+}
 
 object Enum {
 
@@ -25,29 +36,38 @@ object Enum {
         right match {
           case RightParenthesis :: rest =>
             Result.eitherSingleError(
-              parseEnums(left, List.empty).map(Enum(name, _)),
+              parseEnums(left, Enum(name, List.empty)),
               rest
-            )
+            ).map { (result, rest) =>
+              result.notUniqueIdentifiers() match {
+                case Nil =>
+                  Result(result, rest)
+                case errors =>
+                  Result(NotUniqueEnumValues(result.name.value, errors), rest)
+              }
+            }
           case _ =>
             Result(ExpectedRightParenthesis(None))
         }
       case other =>
-        Result(ExpectedParameters(other.headOption))
+        Result(ExpectedEnums(other.headOption))
     }
 
   @tailrec
-  def parseEnums(tokens: List[Token], enums: List[Identifier]): Either[CompilerError, List[Identifier]] =
+  def parseEnums(tokens: List[Token], enum: Enum): Either[CompilerError, Enum] =
     tokens match {
       case Indentation(_) :: xs =>
-        parseEnums(xs, enums)
+        parseEnums(xs, enum)
       case (identifier: Identifier) :: Indentation(_) :: rest =>
-        parseEnums(rest, enums :+ identifier)
+        parseEnums(rest, enum.add(identifier))
       case (identifier: Identifier) :: Comma :: rest =>
-        parseEnums(rest, enums :+ identifier)
+        parseEnums(rest, enum.add(identifier))
       case (identifier: Identifier) :: Nil =>
-        Right(enums :+ identifier)
+        Right(enum.add(identifier))
+      case Nil if enum.values.nonEmpty =>
+        Right(enum)
       case Nil =>
-        Right(enums)
+        Left(EmptyEnum(enum.name.value))
       case tokens =>
         Left(ExpectedIdentifier(tokens.headOption))
     }

@@ -36,6 +36,10 @@ object Errors {
 
   case class ExpectedEnums(got: Option[Token]) extends CompilerError
 
+  case class EmptyEnum(name: String) extends CompilerError
+
+  case class NotUniqueEnumValues(name: String, notUnique: List[String]) extends CompilerError
+
   case class ExpectedIdentifier(got: Option[Token]) extends CompilerError
 
   case class ExpectedColon(got: Option[Token]) extends CompilerError

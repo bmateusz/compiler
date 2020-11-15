@@ -3,6 +3,7 @@ import compiler.{Element, SourceFile, Tokens}
 import repl.Repl
 
 import scala.io.{Source, StdIn}
+import scala.util.chaining.scalaUtilChainingOps
 import scala.util.{Failure, Success, Using}
 
 object Main {
@@ -11,8 +12,9 @@ object Main {
     if (args.isEmpty) repl() else compileFiles(args)
 
   def compileFiles(args: Array[String]): Unit = {
-    val parsedSourceFiles: List[Either[List[CompilerError], SourceFile]] =
-      args.toList.map { arg =>
+    args
+      .toList
+      .map { arg =>
         Using(Source.fromFile(arg)) {
           SourceFile.parse
         } match {
@@ -20,17 +22,18 @@ object Main {
           case Failure(exception) => Left(List(FileError(arg, exception)))
         }
       }
-
-    parsedSourceFiles.map {
-      _.map { sourceFile =>
-        sourceFile.compile
+      .pipe { parsedSourceFile: List[Either[List[CompilerError], SourceFile]] =>
+        parsedSourceFile.map {
+          _.map { sourceFile =>
+            sourceFile.compile
+          }
+        }
       }
-    }
   }
 
   def repl(): Unit =
     new Repl {
-      override def read() =
+      override def read(): String =
         StdIn.readLine("> ")
 
       override def println(elements: List[Element]): Unit =

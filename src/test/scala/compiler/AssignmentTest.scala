@@ -28,18 +28,18 @@ class AssignmentTest extends CompilerSpecs {
   }
 
   it should "report error if equals is not after identifier" in {
-    val error = compileError(
+    val block = compileError(
       """
         x
           = 3 + 3
       """
     )
-    assert(error === List(UnexpectedToken(Identifier("x"))))
+    assert(block === List(UnexpectedToken(Identifier("x"))))
   }
 
   it should "report error if expression is bad" in {
-    val error = compileError("x = def 3")
-    assert(error === List(UnexpectedToken(Def)))
+    val block = compileError("x = def 3")
+    assert(block === List(UnexpectedToken(Def)))
   }
 
 }
