@@ -40,7 +40,7 @@ object Block {
           }
       case Class :: xs =>
         compiler.Class
-          .parse(xs, block)
+          .parse(xs)
           .map { (cls, rest) =>
             parse(Result(block.add(cls), rest), indentation)
           }

@@ -5,6 +5,18 @@ import compiler.Tokens.{Floating, Identifier, Integer, SimpleTokens, StringLiter
 
 class BlockTest extends CompilerSpecs {
 
+  val exampleCode =
+    """
+       x = 1
+       y = 3.14
+       z = "hello"
+
+       class A(z: String)
+
+       def function(parameter: Int): Int =
+         6 * 2
+     """
+
   it should "be compiled" in {
     val block = compileSuccess(exampleCode)
     assert(block === Block(

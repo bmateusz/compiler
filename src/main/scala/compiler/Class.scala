@@ -8,7 +8,7 @@ case class Class(name: Identifier,
 
 object Class {
 
-  def parse(tokens: List[Token], block: Block): Result[Class] =
+  def parse(tokens: List[Token]): Result[Class] =
     tokens match {
       case (identifier: Identifier) :: xs =>
         Parameters

@@ -7,13 +7,30 @@ import scala.annotation.tailrec
 
 case class Expression(tokens: List[ParsedToken]) extends Element {
   def evaluate: List[EvaluatedToken] = tokens.foldLeft(List.empty[EvaluatedToken]) {
-    case (acc, token@Integer(_)) => token :: acc
+    case (acc, token: Integer) => token :: acc
+    case (acc, token: Floating) => token :: acc
     case (Integer(x) :: xs, Operator(Negate)) => Integer(-x) :: xs
+    case (Floating(x) :: xs, Operator(Negate)) => Floating(-x) :: xs
     case (Integer(x) :: Integer(y) :: ys, Operator(Add)) => Integer(y + x) :: ys
     case (Integer(x) :: Integer(y) :: ys, Operator(Subtract)) => Integer(y - x) :: ys
     case (Integer(x) :: Integer(y) :: ys, Operator(Multiply)) => Integer(y * x) :: ys
     case (Integer(x) :: Integer(y) :: ys, Operator(Divide)) if x != 0 => Integer(y / x) :: ys
     case (Integer(x) :: Integer(y) :: ys, Operator(Divide)) => return List(DivisionByZero)
+    case (Floating(x) :: Integer(y) :: ys, Operator(Add)) => Floating(y + x) :: ys
+    case (Floating(x) :: Integer(y) :: ys, Operator(Subtract)) => Floating(y - x) :: ys
+    case (Floating(x) :: Integer(y) :: ys, Operator(Multiply)) => Floating(y * x) :: ys
+    case (Floating(x) :: Integer(y) :: ys, Operator(Divide)) if x != 0 => Floating(y / x) :: ys
+    case (Floating(x) :: Integer(y) :: ys, Operator(Divide)) => return List(DivisionByZero)
+    case (Integer(x) :: Floating(y) :: ys, Operator(Add)) => Floating(y + x) :: ys
+    case (Integer(x) :: Floating(y) :: ys, Operator(Subtract)) => Floating(y - x) :: ys
+    case (Integer(x) :: Floating(y) :: ys, Operator(Multiply)) => Floating(y * x) :: ys
+    case (Integer(x) :: Floating(y) :: ys, Operator(Divide)) if x != 0 => Floating(y / x) :: ys
+    case (Integer(x) :: Floating(y) :: ys, Operator(Divide)) => return List(DivisionByZero)
+    case (Floating(x) :: Floating(y) :: ys, Operator(Add)) => Floating(y + x) :: ys
+    case (Floating(x) :: Floating(y) :: ys, Operator(Subtract)) => Floating(y - x) :: ys
+    case (Floating(x) :: Floating(y) :: ys, Operator(Multiply)) => Floating(y * x) :: ys
+    case (Floating(x) :: Floating(y) :: ys, Operator(Divide)) if x != 0 => Floating(y / x) :: ys
+    case (Floating(x) :: Floating(y) :: ys, Operator(Divide)) => return List(DivisionByZero)
   }
 }
 

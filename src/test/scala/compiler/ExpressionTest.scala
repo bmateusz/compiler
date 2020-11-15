@@ -8,13 +8,26 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
-    PropertyCheckConfiguration(minSize = 1, sizeRange = 100, minSuccessful = 100)
+    PropertyCheckConfiguration(minSize = 1, sizeRange = 1000, minSuccessful = 1000)
 
-  it should "evaluate random expressions with parentheses" in {
-    forAll { tree: Tree =>
+  it should "evaluate random integer expressions with parentheses" in {
+    forAll { tree: IntTree =>
       val prodResult = parseExpressionSuccess(tree.toString).evaluate
       val testResult = tree.evaluate match {
         case Right(value) => List(Integer(value))
+        case Left("Division by zero") => List(DivisionByZero)
+        case Left(error) => fail(error)
+      }
+
+      assert(prodResult === testResult, s"Expected $testResult, got $prodResult for ${tree.toString}")
+    }
+  }
+
+  it should "evaluate random float expressions with parentheses" in {
+    forAll { tree: FloatTree =>
+      val prodResult = parseExpressionSuccess(tree.toString).evaluate
+      val testResult = tree.evaluate match {
+        case Right(value) => List(Floating(value))
         case Left("Division by zero") => List(DivisionByZero)
         case Left(error) => fail(error)
       }
@@ -63,6 +76,12 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
     val expr = parseExpressionSuccess("0 / 1 * 0")
     assert(expr.tokens === List(Integer(0), Integer(1), Operator(Divide), Integer(0), Operator(Multiply)))
     assert(expr.evaluate === List(Integer(0)))
+  }
+
+  it should "evaluate exponential float" in {
+    val expr = parseExpressionSuccess("0.1e-5 + 2")
+    assert(expr.tokens === List(Floating(0.1e-5), Integer(2), Operator(Add)))
+    assert(expr.evaluate === List(Floating(2.000001)))
   }
 
   it should "evaluate a division by zero" in {

@@ -8,18 +8,6 @@ import scala.util.chaining.scalaUtilChainingOps
 
 trait CompilerSpecs extends AnyFlatSpec with EitherValues {
 
-  val exampleCode =
-    """
-       x = 1
-       y = 3.14
-       z = "hello"
-
-       class A(z: String)
-
-       def function(parameter: Int): Int =
-         6 * 2
-     """
-
   def parseSuccess(string: String): SourceFile =
     SourceFile.parse(string).right.value
 

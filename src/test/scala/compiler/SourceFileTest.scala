@@ -5,8 +5,8 @@ import compiler.Errors.InvalidToken
 class SourceFileTest extends CompilerSpecs {
 
   it should "be tokenized" in {
-    val source = parseSuccess(exampleCode)
-    assert(source.tokens.length === 39)
+    val source = parseSuccess("x = 1\ny = 2\nz = 3")
+    assert(source.tokens.length === 12)
   }
 
   it should "report token error" in {
