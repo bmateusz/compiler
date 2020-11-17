@@ -14,9 +14,9 @@ object Definition {
       case (identifier: Identifier) :: xs =>
         Parameters
           .parse(xs)
-          .map {
+          .flatMap {
             case (parameters, Equals :: rest) =>
-              Block.parse(rest, Block.empty, List.empty).map { (resultBlock, resultRest) =>
+              Block.parse(rest, Block.empty, List.empty).flatMap { (resultBlock, resultRest) =>
                 Result(
                   Definition(identifier, parameters, Some(resultBlock)),
                   resultRest

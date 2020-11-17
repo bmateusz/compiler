@@ -17,7 +17,7 @@ object Assignment {
       case xs =>
         Expression
           .parse(xs, List.empty, List.empty, None)
-          .map { (expression, rest) =>
+          .flatMap { (expression, rest) =>
             Result(Assignment(identifier, expression), rest)
           }
     }

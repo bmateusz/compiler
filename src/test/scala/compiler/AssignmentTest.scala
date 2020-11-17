@@ -1,7 +1,7 @@
 package compiler
 
 import compiler.Errors.UnexpectedToken
-import compiler.Tokens.{Add, Def, Identifier, Integer, Operator}
+import compiler.Tokens.{Add, Def, Identifier, Integer, Operator, Equals}
 
 class AssignmentTest extends CompilerSpecs {
 
@@ -34,7 +34,7 @@ class AssignmentTest extends CompilerSpecs {
           = 3 + 3
       """
     )
-    assert(block === List(UnexpectedToken(Identifier("x"))))
+    assert(block === List(UnexpectedToken(Equals)))
   }
 
   it should "report error if expression is bad" in {

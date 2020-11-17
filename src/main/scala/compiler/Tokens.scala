@@ -30,9 +30,7 @@ object Tokens {
     def length: Int = value.length
   }
 
-  sealed trait ParsedToken extends EvaluatedToken
-
-  sealed trait Token extends ParsedToken
+  sealed trait Token extends EvaluatedToken
 
   case class Indentation(override val length: Int) extends Token {
     override val value: String = "\n" + " " * length
@@ -186,7 +184,7 @@ object Tokens {
     override val value: String = double.toString
   }
 
-  case object DivisionByZero extends ParsedToken {
+  case object DivisionByZero extends EvaluatedToken {
     override val value: String = "0 / 0"
   }
 

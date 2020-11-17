@@ -14,7 +14,7 @@ object Block {
     Block(List.empty)
 
   def parse(result: Result[Block], indentation: List[Indentation]): Result[Block] =
-    result.map((block, rest) => parse(rest, block, indentation))
+    result.flatMap((block, rest) => parse(rest, block, indentation))
 
   @tailrec
   def parse(tokens: List[Token], block: Block, indentation: List[Indentation]): Result[Block] =
@@ -35,25 +35,25 @@ object Block {
       case Def :: xs =>
         Definition
           .parse(xs)
-          .map { (definition, rest) =>
+          .flatMap { (definition, rest) =>
             parse(Result(block.add(definition), rest), indentation)
           }
       case Class :: xs =>
         compiler.Class
           .parse(xs)
-          .map { (cls, rest) =>
+          .flatMap { (cls, rest) =>
             parse(Result(block.add(cls), rest), indentation)
           }
       case Enum :: xs =>
         compiler.Enum
           .parse(xs)
-          .map { (cls, rest) =>
+          .flatMap { (cls, rest) =>
             parse(Result(block.add(cls), rest), indentation)
           }
       case (identifier: Identifier) :: Equals :: xs =>
         Assignment
           .parse(identifier, xs, block)
-          .map { (assignment, rest) =>
+          .flatMap { (assignment, rest) =>
             parse(Result(block.add(assignment), rest), indentation)
           }
       case Nil =>
@@ -61,7 +61,7 @@ object Block {
       case others =>
         Expression
           .parse(others, List.empty, List.empty, None)
-          .map { (expr, rest) =>
+          .flatMap { (expr, rest) =>
             parse(Result(block.add(expr), rest), indentation)
           }
     }

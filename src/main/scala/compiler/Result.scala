@@ -9,7 +9,13 @@ case class Result[+A](value: Either[List[CompilerError], A],
 
   def left: Either.LeftProjection[List[CompilerError], A] = value.left
 
-  def map[B](f: (A, List[Token]) => Result[B]): Result[B] =
+  def map[B](f: A => B): Result[B] =
+    value match {
+      case Left(value) => Result(value, rest)
+      case Right(value) => Result(f(value), rest)
+    }
+
+  def flatMap[B](f: (A, List[Token]) => Result[B]): Result[B] =
     value match {
       case Left(value) => Result(value, rest)
       case Right(value) => f(value, rest)

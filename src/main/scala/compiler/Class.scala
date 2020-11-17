@@ -13,7 +13,7 @@ object Class {
       case (identifier: Identifier) :: xs =>
         Parameters
           .parse(xs)
-          .map {
+          .flatMap {
             case (Parameters(_, Some(typ)), rest) =>
               Result(UnexpectedReturnType(typ), rest)
             case (parameters, rest) =>

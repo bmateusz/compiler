@@ -38,7 +38,7 @@ object Enum {
             Result.eitherSingleError(
               parseEnums(left, Enum(name, List.empty)),
               rest
-            ).map { (result, rest) =>
+            ).flatMap { (result, rest) =>
               result.notUniqueIdentifiers() match {
                 case Nil =>
                   Result(result, rest)
