@@ -6,6 +6,8 @@ import scala.annotation.tailrec
 
 case class Block(elements: List[Element]) {
   def add(element: Element): Block = copy(elements = elements :+ element)
+
+  def get(identifier: Identifier): Option[Element] = elements.find(_.name.value == identifier.value)
 }
 
 object Block {

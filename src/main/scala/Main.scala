@@ -25,7 +25,7 @@ object Main {
       .pipe { parsedSourceFile: List[Either[List[CompilerError], SourceFile]] =>
         parsedSourceFile.map {
           _.map { sourceFile =>
-            sourceFile.compile
+            sourceFile.compile()
           }
         }
       }

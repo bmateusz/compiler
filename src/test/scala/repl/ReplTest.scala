@@ -34,6 +34,12 @@ class ReplTest extends CompilerSpecs {
     assert(repl.results.toList === List("List(Assignment(Identifier(x),Expression(List(Integer(1)))))"))
   }
 
+  it should "evaluate assignments" in {
+    val repl = MockRepl(mutable.Queue("x = 12", "y = 24", "x + y"))
+    repl.repl()
+    assert(repl.results.lastOption === Some("List(Integer(36))"))
+  }
+
   it should "parse invalid block" in {
     val repl = MockRepl(mutable.Queue("x , ="))
     repl.repl()

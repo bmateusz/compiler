@@ -15,10 +15,10 @@ trait CompilerSpecs extends AnyFlatSpec with EitherValues {
     SourceFile.parse(string).left.value
 
   def compileSuccess(string: String): Block =
-    parseSuccess(string).compile.value.right.value
+    parseSuccess(string).compile().value.right.value
 
   def compileError(string: String): List[CompilerError] =
-    parseSuccess(string).compile.value.left.value
+    parseSuccess(string).compile().value.left.value
 
   def parseExpression(string: String): Result[Expression] =
     parseSuccess(string)

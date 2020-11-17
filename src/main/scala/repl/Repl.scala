@@ -2,7 +2,7 @@ package repl
 
 import compiler.Errors.CompilerError
 import compiler.Tokens.EvaluatedToken
-import compiler.{Element, Expression, SourceFile}
+import compiler.{Block, Element, Expression, SourceFile}
 
 import scala.annotation.tailrec
 
@@ -17,26 +17,29 @@ trait Repl {
   def printlnError(errors: List[CompilerError]): Unit
 
   @tailrec
-  final def repl(): Unit = {
+  final def repl(block: Block = Block.empty): Unit = {
     val str = read()
     if (str.nonEmpty) {
       SourceFile.parse(str) match {
         case Right(source) =>
-          source.compile.value match {
-            case Right(block) =>
-              block.elements match {
-                case (expr: Expression) :: Nil =>
-                  printlnEvaluation(expr.evaluate)
-                case other =>
-                  println(other)
+          source.compile(block).value match {
+            case Right(newBlock) =>
+              newBlock.elements.lastOption match {
+                case Some(expr: Expression) =>
+                  printlnEvaluation(expr.evaluate(newBlock))
+                  repl(newBlock)
+                case _ =>
+                  println(newBlock.elements)
+                  repl(newBlock)
               }
             case Left(compileError) =>
               printlnError(compileError)
+              repl(block)
           }
         case Left(compileError) =>
           printlnError(compileError)
+          repl(block)
       }
-      repl()
     }
   }
 

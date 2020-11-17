@@ -80,10 +80,6 @@ object Tokens {
     override val value: String = ","
   }
 
-  case object Dot extends Token {
-    override val value: String = "."
-  }
-
   sealed trait Operators {
     val value: String
     val precedence: Int
@@ -117,6 +113,12 @@ object Tokens {
     override val leftAssociative: Boolean = true
   }
 
+  case object Dot extends Operators {
+    override val value: String = "."
+    override val precedence: Int = 4
+    override val leftAssociative: Boolean = true
+  }
+
   case object Negate extends Operators {
     val value: String = "-"
     override val precedence: Int = 4
@@ -139,7 +141,7 @@ object Tokens {
     val `(`: Token = LeftParenthesis
     val `)`: Token = RightParenthesis
     val `,`: Token = Comma
-    val `.`: Token = Dot
+    val `.`: Token = Operator(Dot)
     val `+`: Token = Operator(Add)
     val `-`: Token = Operator(Subtract)
     val `*`: Token = Operator(Multiply)

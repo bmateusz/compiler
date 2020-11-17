@@ -6,8 +6,16 @@ import compiler.Tokens._
 import scala.annotation.tailrec
 
 case class Expression(tokens: List[Token]) extends Element {
-  def evaluate: List[EvaluatedToken] = tokens.foldLeft(List.empty[EvaluatedToken]) {
+  override val name: Identifier = Identifier("_expression")
+
+  def evaluate(block: Block = Block.empty): List[EvaluatedToken] = tokens.foldLeft(List.empty[EvaluatedToken]) {
     case (DivisionByZero :: Nil, _) => List(DivisionByZero)
+    case (acc, identifier: Identifier) => block.get(identifier) match {
+      case Some(asg: Assignment) =>
+        asg.expression.tokens ++ acc
+      case None =>
+        acc
+    }
     case (acc, token: Integer) => token :: acc
     case (acc, token: Floating) => token :: acc
     case (Integer(x) :: xs, Operator(Negate)) => Integer(-x) :: xs
