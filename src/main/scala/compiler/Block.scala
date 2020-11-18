@@ -4,16 +4,28 @@ import compiler.Tokens.{Class, Def, Enum, Equals, Identifier, Indentation, Token
 
 import scala.annotation.tailrec
 
-case class Block(elements: List[Element]) {
-  def add(element: Element): Block = copy(elements = elements :+ element)
+case class Block(elements: Map[String, Element],
+                 expressions: List[Expression]) {
+  def sortedElements: List[Element] =
+    elements
+      .values
+      .toList
+      .sortBy(_.name.value)
 
-  def get(identifier: Identifier): Option[Element] = elements.find(_.name.value == identifier.value)
+  def add(element: Element): Block = copy(elements =
+    elements + (element.name.value -> element))
+
+  def add(expression: Expression): Block =
+    copy(expressions = expressions :+ expression)
+
+  def get(identifier: Identifier): Option[Element] =
+    elements.get(identifier.value)
 }
 
 object Block {
 
   val empty: Block =
-    Block(List.empty)
+    Block(Map.empty, List.empty)
 
   def parse(result: Result[Block], indentation: List[Indentation]): Result[Block] =
     result.flatMap((block, rest) => parse(rest, block, indentation))

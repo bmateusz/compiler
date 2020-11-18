@@ -5,9 +5,7 @@ import compiler.Tokens._
 
 import scala.annotation.tailrec
 
-case class Expression(tokens: List[Token]) extends Element {
-  override val name: Identifier = Identifier("_expression")
-
+case class Expression(tokens: List[Token]) {
   def evaluate(block: Block = Block.empty): List[EvaluatedToken] = tokens.foldLeft(List.empty[EvaluatedToken]) {
     case (DivisionByZero :: Nil, _) => List(DivisionByZero)
     case (acc, identifier: Identifier) => block.get(identifier) match {

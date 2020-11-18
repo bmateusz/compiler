@@ -24,12 +24,12 @@ trait Repl {
         case Right(source) =>
           source.compile(block).value match {
             case Right(newBlock) =>
-              newBlock.elements.lastOption match {
+              newBlock.expressions.lastOption match {
                 case Some(expr: Expression) =>
                   printlnEvaluation(expr.evaluate(newBlock))
                   repl(newBlock)
                 case _ =>
-                  println(newBlock.elements)
+                  println(newBlock.sortedElements)
                   repl(newBlock)
               }
             case Left(compileError) =>

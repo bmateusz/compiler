@@ -8,9 +8,10 @@ class AssignmentTest extends CompilerSpecs {
   it should "parse simple assignment" in {
     val block = compileSuccess("x = 3")
     assert(block === Block(
-      List(
-        Assignment(Identifier("x"), Expression(List(Integer(3)))),
-      )
+      Map(
+        "x" -> Assignment(Identifier("x"), Expression(List(Integer(3)))),
+      ),
+      List.empty
     ))
   }
 
@@ -21,9 +22,10 @@ class AssignmentTest extends CompilerSpecs {
           3 + 3
       """)
     assert(block === Block(
-      List(
-        Assignment(Identifier("x"), Expression(List(Integer(3), Integer(3), Operator(Add)))),
-      )
+      Map(
+        "x" -> Assignment(Identifier("x"), Expression(List(Integer(3), Integer(3), Operator(Add)))),
+      ),
+      List.empty
     ))
   }
 
