@@ -1,7 +1,7 @@
 package compiler
 
-import compiler.Errors.UnexpectedToken
-import compiler.Tokens.{Add, Def, Identifier, Integer, Operator, Equals}
+import compiler.Errors.{UnexpectedToken, UnparsedTokens}
+import compiler.Tokens.{Add, Def, Equals, Identifier, Indentation, Integer, Operator}
 
 class AssignmentTest extends CompilerSpecs {
 
@@ -36,12 +36,12 @@ class AssignmentTest extends CompilerSpecs {
           = 3 + 3
       """
     )
-    assert(block === List(UnexpectedToken(Equals)))
+    assert(block === List(UnparsedTokens(List(Equals, Integer(3), Operator(Add), Integer(3), Indentation(6)))))
   }
 
   it should "report error if expression is bad" in {
     val block = compileError("x = def 3")
-    assert(block === List(UnexpectedToken(Def)))
+    assert(block === List(UnexpectedToken(Def), UnparsedTokens(List(Integer(3)))))
   }
 
 }

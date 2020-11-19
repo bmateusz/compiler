@@ -1,14 +1,10 @@
 package compiler
 
-import compiler.Errors.CompilerError
+import compiler.Errors.{CompilerError, UnparsedTokens}
 import compiler.Tokens.Token
 
 case class Result[+A](value: Either[List[CompilerError], A],
                       rest: List[Token]) {
-  def right: Either.RightProjection[List[CompilerError], A] = value.right
-
-  def left: Either.LeftProjection[List[CompilerError], A] = value.left
-
   def map[B](f: A => B): Result[B] =
     value match {
       case Left(value) => Result(value, rest)
@@ -19,6 +15,17 @@ case class Result[+A](value: Either[List[CompilerError], A],
     value match {
       case Left(value) => Result(value, rest)
       case Right(value) => f(value, rest)
+    }
+
+  def finishedParsingTokens(): Result[A] =
+    if (rest.isEmpty) {
+      this
+    } else {
+      val error = UnparsedTokens(rest)
+      value match {
+        case Left(value) => Result(value :+ error, List.empty)
+        case Right(value) => Result(Left(List(error)), List.empty)
+      }
     }
 }
 
@@ -39,13 +46,6 @@ object Result {
 
   def apply[A](value: Either[List[CompilerError], A], rest: List[Token]): Result[A] =
     new Result(value, rest)
-
-  // because of type erasure
-  def eitherSingleError[A](value: Either[CompilerError, A], rest: List[Token]): Result[A] =
-    new Result(value match {
-      case Left(value) => Left(List(value))
-      case Right(value) => Right(value)
-    }, rest)
 
   def apply[A](success: A): Result[A] =
     new Result(Right(success), Nil)

@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Errors.{EmptyEnum, ExpectedIdentifier, NotUniqueEnumValues}
+import compiler.Errors.{EmptyEnum, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, NotUniqueEnumValues}
 import compiler.Tokens.{Add, Identifier, Operator}
 
 class EnumTest extends CompilerSpecs {
@@ -42,9 +42,24 @@ class EnumTest extends CompilerSpecs {
     assert(block === List(NotUniqueEnumValues("NotUnique", List("b", "c", "e"))))
   }
 
-  it should "report error when class has invalid identifier" in {
+  it should "report error when enum name is not identifier" in {
     val block = compileError("enum +A()")
     assert(block === List(ExpectedIdentifier(Some(Operator(Add)))))
+  }
+
+  it should "report error when enum value is not identifier" in {
+    val block = compileError("enum A(First, +)")
+    assert(block === List(ExpectedIdentifier(Some(Operator(Add)))))
+  }
+
+  it should "report error when enum does not start with left parenthesis" in {
+    val block = compileError("enum A B (First, Second)")
+    assert(block === List(ExpectedLeftParenthesis(Some(Identifier("B")))))
+  }
+
+  it should "report error when enum value has no right parenthesis" in {
+    val block = compileError("enum A(First, Second")
+    assert(block === List(ExpectedRightParenthesis(None)))
   }
 
   it should "report error for no name" in {

@@ -1,7 +1,7 @@
 package compiler
 
-import compiler.Errors.{ExpectedIdentifier, UnexpectedToken}
-import compiler.Tokens.{Colon, Identifier, Integer}
+import compiler.Errors.{ExpectedIdentifier, UnexpectedToken, UnparsedTokens}
+import compiler.Tokens.{Colon, Identifier, Integer, LeftParenthesis, RightParenthesis}
 
 class DefinitionTest extends CompilerSpecs {
 
@@ -31,7 +31,7 @@ class DefinitionTest extends CompilerSpecs {
 
   it should "report error for bad name" in {
     val block = compileError("def :()")
-    assert(block === List(UnexpectedToken(Colon)))
+    assert(block === List(UnexpectedToken(Colon), UnparsedTokens(List(LeftParenthesis, RightParenthesis))))
   }
 
   it should "report error for no name" in {

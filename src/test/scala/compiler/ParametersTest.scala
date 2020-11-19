@@ -1,5 +1,6 @@
 package compiler
 
+import compiler.Errors.{ExpectedColon, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, ExpectedType}
 import compiler.Parameters.Parameter
 import compiler.Tokens.{Colon, Identifier}
 import compiler.Types.UnknownType
@@ -43,35 +44,35 @@ class ParametersTest extends CompilerSpecs {
     val source = parseSuccess("""(a: MyClass = 2""")
     assert(source.tokens.length === 7)
     val params = Parameters.parse(source.tokens)
-    assert(params.left.value === List(Errors.ExpectedRightParenthesis(None)))
+    assert(params.left.value === List(ExpectedRightParenthesis(None)))
   }
 
   it should "recognize missing left parenthesis" in {
     val source = parseSuccess("""a: Float)""")
     assert(source.tokens.length === 5)
     val params = Parameters.parse(source.tokens)
-    assert(params.left.value === List(Errors.ExpectedParameters(Some(Identifier("a")))))
+    assert(params.left.value === List(ExpectedLeftParenthesis(Some(Identifier("a")))))
   }
 
   it should "recognize missing identifier" in {
     val source = parseSuccess("""(: Int)""")
     assert(source.tokens.length === 5)
     val params = Parameters.parse(source.tokens)
-    assert(params.left.value === List(Errors.ExpectedIdentifier(Some(Colon))))
+    assert(params.left.value === List(ExpectedIdentifier(Some(Colon))))
   }
 
   it should "recognize missing colon" in {
     val source = parseSuccess("""(a Int)""")
     assert(source.tokens.length === 5)
     val params = Parameters.parse(source.tokens)
-    assert(params.left.value === List(Errors.ExpectedColon(Some(Identifier("Int")))))
+    assert(params.left.value === List(ExpectedColon(Some(Identifier("Int")))))
   }
 
   it should "recognize missing type" in {
     val source = parseSuccess("""(a:)""")
     assert(source.tokens.length === 5)
     val params = Parameters.parse(source.tokens)
-    assert(params.left.value === List(Errors.ExpectedType(None)))
+    assert(params.left.value === List(ExpectedType(None)))
   }
 
 }

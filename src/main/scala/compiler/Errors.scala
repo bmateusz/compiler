@@ -30,11 +30,9 @@ object Errors {
 
   case class UnmatchedLeftParenthesis() extends CompilerError
 
+  case class ExpectedLeftParenthesis(got: Option[Token]) extends CompilerError
+
   case class ExpectedRightParenthesis(got: Option[Token]) extends CompilerError
-
-  case class ExpectedParameters(got: Option[Token]) extends CompilerError
-
-  case class ExpectedEnums(got: Option[Token]) extends CompilerError
 
   case class EmptyEnum(name: String) extends CompilerError
 
@@ -47,5 +45,7 @@ object Errors {
   case class ExpectedType(got: Option[Token]) extends CompilerError
 
   case class FileError(arg: String, throwable: Throwable) extends CompilerError
+
+  case class UnparsedTokens(tokens: List[Token]) extends CompilerError
 
 }

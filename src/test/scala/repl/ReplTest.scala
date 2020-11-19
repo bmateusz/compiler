@@ -43,7 +43,7 @@ class ReplTest extends CompilerSpecs {
   it should "parse invalid block" in {
     val repl = MockRepl(mutable.Queue("x , ="))
     repl.repl()
-    assert(repl.results.toList === List("List(UnexpectedToken(Comma))"))
+    assert(repl.results.toList === List("List(UnexpectedToken(Comma), UnparsedTokens(List(Equals)))"))
   }
 
   it should "parse token error" in {

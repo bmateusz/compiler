@@ -1,8 +1,8 @@
 package compiler
 
-import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType}
+import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType, UnparsedTokens}
 import compiler.Parameters.Parameter
-import compiler.Tokens.{Add, Identifier, Operator}
+import compiler.Tokens.{Add, Colon, Identifier, LeftParenthesis, Operator, RightParenthesis}
 import compiler.Types.UnknownType
 
 class ClassTest extends CompilerSpecs {
@@ -35,7 +35,10 @@ class ClassTest extends CompilerSpecs {
 
   it should "report error when class has invalid identifier" in {
     val block = compileError("class +A(a: Float)")
-    assert(block === List(ExpectedIdentifier(Some(Operator(Add)))))
+    assert(block === List(
+      ExpectedIdentifier(Some(Operator(Add))),
+      UnparsedTokens(List(Identifier("A"), LeftParenthesis, Identifier("a"), Colon, Identifier("Float"), RightParenthesis))
+    ))
   }
 
   it should "report error when class has return type" in {

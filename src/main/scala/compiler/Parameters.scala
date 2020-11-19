@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Errors.{CompilerError, ExpectedColon, ExpectedIdentifier, ExpectedParameters, ExpectedRightParenthesis, ExpectedType}
+import compiler.Errors.{CompilerError, ExpectedColon, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, ExpectedType}
 import compiler.Parameters.Parameter
 import compiler.Tokens._
 import compiler.Types.Type
@@ -30,19 +30,19 @@ object Parameters {
         val (left, right) = xs.span(_ != RightParenthesis)
         right match {
           case RightParenthesis :: Colon :: Identifier(returnType) :: rest =>
-            Result.eitherSingleError(parseParameters(left, empty).map(_.addReturnType(returnType)), rest)
+            Result(parseParameters(left, empty).map(_.addReturnType(returnType)), rest)
           case RightParenthesis :: rest =>
-            Result.eitherSingleError(parseParameters(left, empty), rest)
+            Result(parseParameters(left, empty), rest)
           case _ =>
             Result(ExpectedRightParenthesis(None))
         }
       case other =>
-        Result(ExpectedParameters(other.headOption))
+        Result(ExpectedLeftParenthesis(other.headOption))
     }
   }
 
   @tailrec
-  def parseParameters(tokens: List[Token], pl: Parameters): Either[CompilerError, Parameters] =
+  def parseParameters(tokens: List[Token], pl: Parameters): Either[List[CompilerError], Parameters] =
     tokens match {
       case Indentation(_) :: xs =>
         parseParameters(xs, pl)
@@ -55,11 +55,11 @@ object Parameters {
       case Nil =>
         Right(pl)
       case Identifier(name) :: Colon :: tokens =>
-        Left(ExpectedType(tokens.headOption))
+        Left(List(ExpectedType(tokens.headOption)))
       case Identifier(name) :: tokens =>
-        Left(ExpectedColon(tokens.headOption))
+        Left(List(ExpectedColon(tokens.headOption)))
       case tokens =>
-        Left(ExpectedIdentifier(tokens.headOption))
+        Left(List(ExpectedIdentifier(tokens.headOption)))
     }
 
 }

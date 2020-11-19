@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Errors.{CompilerError, EmptyEnum, ExpectedEnums, ExpectedIdentifier, ExpectedRightParenthesis, NotUniqueEnumValues}
+import compiler.Errors.{CompilerError, EmptyEnum, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, NotUniqueEnumValues}
 import compiler.Tokens.{Comma, Identifier, Indentation, LeftParenthesis, RightParenthesis, Token}
 
 import scala.annotation.tailrec
@@ -35,7 +35,7 @@ object Enum {
         val (left, right) = xs.span(_ != RightParenthesis)
         right match {
           case RightParenthesis :: rest =>
-            Result.eitherSingleError(
+            Result(
               parseEnums(left, Enum(name, List.empty)),
               rest
             ).flatMap { (result, rest) =>
@@ -50,11 +50,11 @@ object Enum {
             Result(ExpectedRightParenthesis(None))
         }
       case other =>
-        Result(ExpectedEnums(other.headOption))
+        Result(ExpectedLeftParenthesis(other.headOption))
     }
 
   @tailrec
-  def parseEnums(tokens: List[Token], enum: Enum): Either[CompilerError, Enum] =
+  def parseEnums(tokens: List[Token], enum: Enum): Either[List[CompilerError], Enum] =
     tokens match {
       case Indentation(_) :: xs =>
         parseEnums(xs, enum)
@@ -67,8 +67,8 @@ object Enum {
       case Nil if enum.values.nonEmpty =>
         Right(enum)
       case Nil =>
-        Left(EmptyEnum(enum.name.value))
+        Left(List(EmptyEnum(enum.name.value)))
       case tokens =>
-        Left(ExpectedIdentifier(tokens.headOption))
+        Left(List(ExpectedIdentifier(tokens.headOption)))
     }
 }

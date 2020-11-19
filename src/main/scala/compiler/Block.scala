@@ -76,7 +76,7 @@ object Block {
         Expression
           .parse(others, List.empty, List.empty, None)
           .flatMap { (expr, rest) =>
-            parse(Result(block.add(expr), rest), indentation)
+            Result(block.add(expr), rest)
           }
     }
 

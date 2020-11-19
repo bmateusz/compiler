@@ -8,6 +8,12 @@ import scala.util.chaining.scalaUtilChainingOps
 
 trait CompilerSpecs extends AnyFlatSpec with EitherValues {
 
+  implicit class ResultEitherOps[A](result: Result[A]) {
+    def right: Either.RightProjection[List[CompilerError], A] = result.value.right
+
+    def left: Either.LeftProjection[List[CompilerError], A] = result.value.left
+  }
+
   def parseSuccess(string: String): SourceFile =
     SourceFile.parse(string).right.value
 
