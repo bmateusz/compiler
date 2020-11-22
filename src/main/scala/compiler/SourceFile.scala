@@ -26,7 +26,7 @@ object SourceFile {
   def parse(lines: Iterator[String]): Either[List[CompilerError], SourceFile] =
     lines
       .zipWithIndex
-      .map { case (string, num) => Line.parse(num, string) }
+      .map { case (string, num) => Line.parse(string, num) }
       .toList
       .mapEither(
         lefts => lefts.flatten,

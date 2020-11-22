@@ -7,18 +7,18 @@ import compiler.Tokens.{Indentation, Token}
 
 import scala.annotation.tailrec
 
-class Line(val number: Int,
-           val tokens: List[Token]) {
+class Line(val tokens: List[Token],
+           val number: Int) {
   override def toString: String = tokens.mkString(" ")
 }
 
 object Line {
 
-  def parse(number: Int, string: String): Result[Line] = {
+  def parse(string: String, number: Int): Result[Line] = {
     val (whitespaces, rest) = string.span(isWhitespace)
     tokenize(rest) match {
       case Right(tokens) =>
-        Result(new Line(number, Indentation(whitespaces.length) +: tokens))
+        Result(new Line(Indentation(whitespaces.length) +: tokens, number))
       case Left(rest) =>
         Result(InvalidToken.apply(number, string, rest))
     }
