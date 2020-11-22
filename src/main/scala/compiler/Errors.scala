@@ -44,6 +44,8 @@ object Errors {
 
   case class ExpectedType(got: Option[Token]) extends CompilerError
 
+  case class Redefinition(name: String) extends CompilerError
+
   case class FileError(arg: String, throwable: Throwable) extends CompilerError
 
   case class UnparsedTokens(tokens: List[Token]) extends CompilerError

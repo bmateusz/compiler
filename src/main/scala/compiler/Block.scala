@@ -1,5 +1,6 @@
 package compiler
 
+import compiler.Errors.Redefinition
 import compiler.Tokens.{Class, Def, Enum, Equals, Identifier, Indentation, Token}
 
 import scala.annotation.tailrec
@@ -12,8 +13,11 @@ case class Block(elements: Map[String, Element],
       .toList
       .sortBy(_.name.value)
 
-  def add(element: Element): Block = copy(elements =
-    elements + (element.name.value -> element))
+  def add(element: Element, rest: List[Token]): Result[Block] =
+    if (elements.contains(element.name.value))
+      Result(Redefinition(element.name.value), rest)
+    else
+      Result(copy(elements = elements + (element.name.value -> element)), rest)
 
   def add(expression: Expression): Block =
     copy(expressions = expressions :+ expression)
@@ -50,25 +54,25 @@ object Block {
         Definition
           .parse(xs)
           .flatMap { (definition, rest) =>
-            parse(Result(block.add(definition), rest), indentation)
+            parse(block.add(definition, rest), indentation)
           }
       case Class :: xs =>
         compiler.Class
           .parse(xs)
           .flatMap { (cls, rest) =>
-            parse(Result(block.add(cls), rest), indentation)
+            parse(block.add(cls, rest), indentation)
           }
       case Enum :: xs =>
         compiler.Enum
           .parse(xs)
-          .flatMap { (cls, rest) =>
-            parse(Result(block.add(cls), rest), indentation)
+          .flatMap { (enm, rest) =>
+            parse(block.add(enm, rest), indentation)
           }
       case (identifier: Identifier) :: Equals :: xs =>
         Assignment
-          .parse(identifier, xs, block)
+          .parse(identifier, xs)
           .flatMap { (assignment, rest) =>
-            parse(Result(block.add(assignment), rest), indentation)
+            parse(block.add(assignment, rest), indentation)
           }
       case Nil =>
         Result(block)

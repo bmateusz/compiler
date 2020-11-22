@@ -10,10 +10,10 @@ case class Assignment(name: Identifier,
 object Assignment {
 
   @tailrec
-  def parse(identifier: Identifier, tokens: List[Token], block: Block): Result[Assignment] =
+  def parse(identifier: Identifier, tokens: List[Token]): Result[Assignment] =
     tokens match {
       case Indentation(_) :: xs =>
-        parse(identifier, xs, block)
+        parse(identifier, xs)
       case xs =>
         Expression
           .parse(xs, List.empty, List.empty, None)

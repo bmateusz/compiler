@@ -1,5 +1,6 @@
 package compiler
 
+import compiler.Errors.Redefinition
 import compiler.Parameters.Parameter
 import compiler.Tokens.{Floating, Identifier, Integer, SimpleTokens, StringLiteral}
 
@@ -35,6 +36,14 @@ class BlockTest extends CompilerSpecs {
       ),
       List.empty
     ))
+  }
+
+  it should "not allow reassign to value" in {
+    val block = compileError("""
+      x = 2
+      x = 5
+    """)
+    assert(block === List(Redefinition("x")))
   }
 
 }
