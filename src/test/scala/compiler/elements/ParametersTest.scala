@@ -1,9 +1,10 @@
-package compiler
+package compiler.elements
 
 import compiler.Errors.{ExpectedColon, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, ExpectedType}
-import compiler.Parameters.Parameter
 import compiler.Tokens.{Colon, Identifier}
 import compiler.Types.UnknownType
+import compiler.elements.Parameters.Parameter
+import compiler.{CompilerSpecs, Types}
 
 class ParametersTest extends CompilerSpecs {
 

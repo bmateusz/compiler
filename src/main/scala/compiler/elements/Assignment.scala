@@ -1,6 +1,7 @@
-package compiler
+package compiler.elements
 
 import compiler.Tokens.{Identifier, Indentation, Token}
+import compiler.{Expression, Result}
 
 import scala.annotation.tailrec
 

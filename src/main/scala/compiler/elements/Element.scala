@@ -1,4 +1,4 @@
-package compiler
+package compiler.elements
 
 import compiler.Tokens.Identifier
 

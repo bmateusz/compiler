@@ -76,6 +76,22 @@ object Tokens {
     override val value: String = ")"
   }
 
+  case object LeftBracket extends Token {
+    override val value: String = "["
+  }
+
+  case object RightBracket extends Token {
+    override val value: String = "]"
+  }
+
+  case object LeftCurlyBrace extends Token {
+    override val value: String = "{"
+  }
+
+  case object RightCurlyBrace extends Token {
+    override val value: String = "}"
+  }
+
   case object Comma extends Token {
     override val value: String = ","
   }
@@ -140,6 +156,10 @@ object Tokens {
     val `=`: Token = Equals
     val `(`: Token = LeftParenthesis
     val `)`: Token = RightParenthesis
+    val `[`: Token = LeftBracket
+    val `]`: Token = RightBracket
+    val `{`: Token = LeftCurlyBrace
+    val `}`: Token = RightCurlyBrace
     val `,`: Token = Comma
     val `.`: Token = Operator(Dot)
     val `+`: Token = Operator(Add)
@@ -154,9 +174,13 @@ object Tokens {
       `class`,
       `enum`,
       `(`,
+      `)`,
+      `[`,
+      `]`,
+      `{`,
+      `}`,
       `,`,
       `.`,
-      `)`,
       `+`,
       `-`,
       `*`,
@@ -165,8 +189,6 @@ object Tokens {
       `if`,
       `else`,
     )
-
-    val simpleTokensMap: Map[String, Token] = simpleTokens.map(t => t.value -> t).toMap
 
   }
 

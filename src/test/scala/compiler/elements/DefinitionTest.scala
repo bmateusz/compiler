@@ -1,7 +1,8 @@
-package compiler
+package compiler.elements
 
 import compiler.Errors.{ExpectedIdentifier, UnexpectedToken, UnparsedTokens}
 import compiler.Tokens.{Colon, Identifier, Integer, LeftParenthesis, RightParenthesis}
+import compiler.{CompilerSpecs, Expression, Types, elements}
 
 class DefinitionTest extends CompilerSpecs {
 
@@ -19,7 +20,7 @@ class DefinitionTest extends CompilerSpecs {
     val block = compileSuccess("def x(): Int = 2")
     assert(block === Block(
       Map(
-        "x" -> Definition(
+        "x" -> elements.Definition(
         Identifier("x"),
         Parameters(List(), Some(Types.Integer)),
         Some(Block(Map.empty, List(Expression(List(Integer(2))))))

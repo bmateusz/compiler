@@ -1,8 +1,9 @@
-package compiler
+package compiler.elements
 
 import compiler.Errors.Redefinition
-import compiler.Parameters.Parameter
-import compiler.Tokens.{Floating, Identifier, Integer, SimpleTokens, StringLiteral}
+import compiler.Tokens.{Floating, Identifier, Integer, Multiply, Operator, StringLiteral}
+import compiler.elements.Parameters.Parameter
+import compiler.{CompilerSpecs, Expression, Types, elements}
 
 class BlockTest extends CompilerSpecs {
 
@@ -23,8 +24,8 @@ class BlockTest extends CompilerSpecs {
     assert(block === Block(
       Map(
         "x" -> Assignment(Identifier("x"), Expression(List(Integer(1)))),
-        "y" -> Assignment(Identifier("y"), Expression(List(Floating(3.14)))),
-        "z" -> Assignment(Identifier("z"), Expression(List(StringLiteral("hello")))),
+        "y" -> elements.Assignment(Identifier("y"), Expression(List(Floating(3.14)))),
+        "z" -> elements.Assignment(Identifier("z"), Expression(List(StringLiteral("hello")))),
         "A" -> Class(Identifier("A"), Parameters(
           List(Parameter(Identifier("z"), Types.String)),
           None
@@ -32,7 +33,7 @@ class BlockTest extends CompilerSpecs {
         "function" -> Definition(Identifier("function"), Parameters(
           List(Parameter(Identifier("parameter"), Types.Integer)),
           Some(Types.Integer)
-        ), Some(Block(Map.empty, List(Expression(List(Integer(6), Integer(2), SimpleTokens.`*`))))))
+        ), Some(Block(Map.empty, List(Expression(List(Integer(6), Integer(2), Operator(Multiply)))))))
       ),
       List.empty
     ))

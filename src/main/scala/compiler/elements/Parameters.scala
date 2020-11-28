@@ -1,9 +1,10 @@
-package compiler
+package compiler.elements
 
 import compiler.Errors.{CompilerError, ExpectedColon, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, ExpectedType}
-import compiler.Parameters.Parameter
 import compiler.Tokens._
 import compiler.Types.Type
+import compiler.elements.Parameters.Parameter
+import compiler.{Result, Types}
 
 import scala.annotation.tailrec
 
@@ -22,7 +23,7 @@ object Parameters {
   val empty: Parameters = Parameters(List.empty, None)
 
   @tailrec
-  def parse(tokens: List[Token]): Result[Parameters] = {
+  def parse(tokens: List[Token]): Result[Parameters] =
     tokens match {
       case Indentation(_) :: xs =>
         parse(xs)
@@ -39,7 +40,6 @@ object Parameters {
       case other =>
         Result(ExpectedLeftParenthesis(other.headOption))
     }
-  }
 
   @tailrec
   def parseParameters(tokens: List[Token], pl: Parameters): Either[List[CompilerError], Parameters] =

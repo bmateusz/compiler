@@ -1,7 +1,8 @@
-package compiler
+package compiler.elements
 
 import compiler.Errors.Redefinition
 import compiler.Tokens.{Class, Def, Enum, Equals, Identifier, Indentation, Token}
+import compiler.{Expression, Result}
 
 import scala.annotation.tailrec
 
@@ -57,13 +58,13 @@ object Block {
             parse(block.add(definition, rest), indentation)
           }
       case Class :: xs =>
-        compiler.Class
+        compiler.elements.Class
           .parse(xs)
           .flatMap { (cls, rest) =>
             parse(block.add(cls, rest), indentation)
           }
       case Enum :: xs =>
-        compiler.Enum
+        compiler.elements.Enum
           .parse(xs)
           .flatMap { (enm, rest) =>
             parse(block.add(enm, rest), indentation)

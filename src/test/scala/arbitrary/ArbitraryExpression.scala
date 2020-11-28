@@ -37,7 +37,7 @@ object ArbitraryExpression {
   case class IntNode(left: IntTree, right: IntTree, operator: Operator) extends IntTree {
     override def toString: String = s"($left$operator$right)"
 
-    override def evaluate: Either[String, Int] = {
+    override def evaluate: Either[String, Int] =
       left.evaluate.flatMap { a =>
         right.evaluate.flatMap { b =>
           operator match {
@@ -49,7 +49,6 @@ object ArbitraryExpression {
           }
         }
       }
-    }
   }
 
   case class IntLeaf(value: Int) extends IntTree {
@@ -65,7 +64,7 @@ object ArbitraryExpression {
   case class FloatNode(left: FloatTree, right: FloatTree, operator: Operator) extends FloatTree {
     override def toString: String = s"($left$operator$right)"
 
-    override def evaluate: Either[String, Double] = {
+    override def evaluate: Either[String, Double] =
       left.evaluate.flatMap { a =>
         right.evaluate.flatMap { b =>
           operator match {
@@ -77,7 +76,6 @@ object ArbitraryExpression {
           }
         }
       }
-    }
   }
 
   case class FloatLeaf(value: Double) extends FloatTree {

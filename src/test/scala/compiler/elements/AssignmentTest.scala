@@ -1,7 +1,8 @@
-package compiler
+package compiler.elements
 
 import compiler.Errors.{UnexpectedToken, UnparsedTokens}
 import compiler.Tokens.{Add, Def, Equals, Identifier, Indentation, Integer, Operator}
+import compiler.{CompilerSpecs, Expression, elements}
 
 class AssignmentTest extends CompilerSpecs {
 
@@ -23,7 +24,7 @@ class AssignmentTest extends CompilerSpecs {
       """)
     assert(block === Block(
       Map(
-        "x" -> Assignment(Identifier("x"), Expression(List(Integer(3), Integer(3), Operator(Add)))),
+        "x" -> elements.Assignment(Identifier("x"), Expression(List(Integer(3), Integer(3), Operator(Add)))),
       ),
       List.empty
     ))

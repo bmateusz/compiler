@@ -3,6 +3,8 @@ package compiler
 import compiler.Errors.{CompilerError, UnparsedTokens}
 import compiler.Tokens.Token
 
+import scala.util.chaining.scalaUtilChainingOps
+
 case class Result[+A](value: Either[List[CompilerError], A],
                       rest: List[Token]) {
   def map[B](f: A => B): Result[B] =
@@ -33,15 +35,17 @@ object Result {
 
   implicit class ResultOps[+A](result: List[Result[A]]) {
     def mapEither[B](mapLefts: List[List[CompilerError]] => List[CompilerError],
-                     mapRights: List[A] => B): Either[List[CompilerError], B] = {
-      val (lefts, rights) = result.map(_.value).partitionMap(identity)
-
-      if (lefts.isEmpty) {
-        Right(mapRights(rights))
-      } else {
-        Left(mapLefts(lefts))
-      }
-    }
+                     mapRights: List[A] => B): Either[List[CompilerError], B] =
+      result
+        .map(_.value)
+        .partitionMap(identity)
+        .pipe { case (lefts, rights) =>
+          if (lefts.isEmpty) {
+            Right(mapRights(rights))
+          } else {
+            Left(mapLefts(lefts))
+          }
+        }
   }
 
   def apply[A](value: Either[List[CompilerError], A], rest: List[Token]): Result[A] =

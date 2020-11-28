@@ -2,6 +2,7 @@ package compiler
 
 import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Tokens._
+import compiler.elements.{Assignment, Block}
 
 import scala.annotation.tailrec
 

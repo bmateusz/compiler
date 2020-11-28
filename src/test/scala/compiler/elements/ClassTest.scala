@@ -1,9 +1,10 @@
-package compiler
+package compiler.elements
 
 import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType, UnparsedTokens}
-import compiler.Parameters.Parameter
 import compiler.Tokens.{Add, Colon, Identifier, LeftParenthesis, Operator, RightParenthesis}
 import compiler.Types.UnknownType
+import compiler.elements.Parameters.Parameter
+import compiler.{CompilerSpecs, Types, elements}
 
 class ClassTest extends CompilerSpecs {
 
@@ -27,7 +28,7 @@ class ClassTest extends CompilerSpecs {
     )
     assert(block === Block(
       Map(
-        "A" -> Class(Identifier("A"), Parameters(List(Parameter(Identifier("value"), Types.String)), None))
+        "A" -> elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("value"), Types.String)), None))
       ),
       List.empty
     ))

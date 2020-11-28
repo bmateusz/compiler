@@ -1,7 +1,8 @@
-package compiler
+package compiler.elements
 
 import compiler.Errors.{ExpectedIdentifier, UnexpectedToken}
 import compiler.Tokens.{Equals, Identifier, Token}
+import compiler.Result
 
 case class Definition(name: Identifier,
                       parameters: Parameters,

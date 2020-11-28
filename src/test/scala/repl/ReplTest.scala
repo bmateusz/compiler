@@ -1,6 +1,7 @@
 package repl
 
 import compiler._
+import compiler.elements.Element
 
 import scala.collection.mutable
 
@@ -49,7 +50,7 @@ class ReplTest extends CompilerSpecs {
   it should "parse token error" in {
     val repl = MockRepl(mutable.Queue("x = ß"))
     repl.repl()
-    assert(repl.results.toList === List("List([0:3] Invalid token:  ß)"))
+    assert(repl.results.toList === List("List([0:4] Invalid token: ß)"))
   }
 
 }

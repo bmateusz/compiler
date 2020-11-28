@@ -12,14 +12,14 @@ object Errors {
   }
 
   object InvalidToken {
-    def apply(row: Int, lineString: String, rest: String): InvalidToken = {
-      val maxLength = 30
+    val maxLength = 30
 
+    def apply(row: Int, lineString: String, rest: String): InvalidToken =
       new InvalidToken(
         row,
         lineString.length - rest.length,
-        if (rest.length > maxLength) rest.take(maxLength - 3) + "..." else rest)
-    }
+        if (rest.length > maxLength) rest.take(maxLength - 3) + "..." else rest
+      )
   }
 
   case class UnexpectedToken(token: Token) extends CompilerError

@@ -1,6 +1,7 @@
-package compiler
+package compiler.elements
 
 import compiler.Errors.{CompilerError, EmptyEnum, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, NotUniqueEnumValues}
+import compiler.Result
 import compiler.Tokens.{Comma, Identifier, Indentation, LeftParenthesis, RightParenthesis, Token}
 
 import scala.annotation.tailrec

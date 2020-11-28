@@ -1,5 +1,6 @@
 import compiler.Errors.{CompilerError, FileError}
-import compiler.{Element, SourceFile, Tokens}
+import compiler.elements.Element
+import compiler.{SourceFile, Tokens}
 import repl.Repl
 
 import scala.io.{Source, StdIn}
@@ -11,7 +12,7 @@ object Main {
   def main(args: Array[String]): Unit =
     if (args.isEmpty) repl() else compileFiles(args)
 
-  def compileFiles(args: Array[String]): Unit = {
+  def compileFiles(args: Array[String]): Unit =
     args
       .toList
       .map { arg =>
@@ -29,7 +30,6 @@ object Main {
           }
         }
       }
-  }
 
   def repl(): Unit =
     new Repl {

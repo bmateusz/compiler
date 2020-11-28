@@ -3,6 +3,7 @@ package compiler
 import arbitrary.ArbitraryExpression._
 import compiler.Errors.{UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Tokens._
+import compiler.elements.{Assignment, Block}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {

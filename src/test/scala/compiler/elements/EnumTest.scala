@@ -1,5 +1,6 @@
-package compiler
+package compiler.elements
 
+import compiler.CompilerSpecs
 import compiler.Errors.{EmptyEnum, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, NotUniqueEnumValues}
 import compiler.Tokens.{Add, Identifier, Operator}
 

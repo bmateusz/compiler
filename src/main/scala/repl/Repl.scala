@@ -2,7 +2,8 @@ package repl
 
 import compiler.Errors.CompilerError
 import compiler.Tokens.EvaluatedToken
-import compiler.{Block, Element, Expression, SourceFile}
+import compiler.elements.{Block, Element}
+import compiler.{Expression, SourceFile}
 
 import scala.annotation.tailrec
 
