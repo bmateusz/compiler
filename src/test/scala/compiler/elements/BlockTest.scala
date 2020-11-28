@@ -33,9 +33,9 @@ class BlockTest extends CompilerSpecs {
         "function" -> Definition(Identifier("function"), Parameters(
           List(Parameter(Identifier("parameter"), Types.Integer)),
           Some(Types.Integer)
-        ), Some(Block(Map.empty, List(Expression(List(Integer(6), Integer(2), Operator(Multiply)))))))
+        ), Some(Block(Map.empty, Some(Expression(List(Integer(6), Integer(2), Operator(Multiply)))))))
       ),
-      List.empty
+      None
     ))
   }
 

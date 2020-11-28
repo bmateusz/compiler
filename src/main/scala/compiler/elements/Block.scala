@@ -7,7 +7,7 @@ import compiler.{Expression, Result}
 import scala.annotation.tailrec
 
 case class Block(elements: Map[String, Element],
-                 expressions: List[Expression]) {
+                 expression: Option[Expression]) {
   def sortedElements: List[Element] =
     elements
       .values
@@ -20,8 +20,8 @@ case class Block(elements: Map[String, Element],
     else
       Result(copy(elements = elements + (element.name.value -> element)), rest)
 
-  def add(expression: Expression): Block =
-    copy(expressions = expressions :+ expression)
+  def set(expression: Expression): Block =
+    copy(expression = Some(expression))
 
   def get(identifier: Identifier): Option[Element] =
     elements.get(identifier.value)
@@ -30,7 +30,7 @@ case class Block(elements: Map[String, Element],
 object Block {
 
   val empty: Block =
-    Block(Map.empty, List.empty)
+    Block(Map.empty, None)
 
   def parse(result: Result[Block], indentation: List[Indentation]): Result[Block] =
     result.flatMap((block, rest) => parse(rest, block, indentation))
@@ -81,7 +81,7 @@ object Block {
         Expression
           .parse(others, List.empty, List.empty, None)
           .flatMap { (expr, rest) =>
-            Result(block.add(expr), rest)
+            Result(block.set(expr), rest)
           }
     }
 

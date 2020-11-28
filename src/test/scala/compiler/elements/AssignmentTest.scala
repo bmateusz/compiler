@@ -12,7 +12,7 @@ class AssignmentTest extends CompilerSpecs {
       Map(
         "x" -> Assignment(Identifier("x"), Expression(List(Integer(3)))),
       ),
-      List.empty
+      None
     ))
   }
 
@@ -26,7 +26,7 @@ class AssignmentTest extends CompilerSpecs {
       Map(
         "x" -> elements.Assignment(Identifier("x"), Expression(List(Integer(3), Integer(3), Operator(Add)))),
       ),
-      List.empty
+      None
     ))
   }
 

@@ -106,7 +106,7 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
     assert(expr.tokens === List(Integer(1), Identifier("x"), Operator(Add), Integer(3), Operator(Subtract)))
     val block = Block(
       Map("x" -> Assignment(Identifier("x"), Expression(List(Integer(100))))),
-      List.empty
+      None
     )
     assert(expr.evaluate(block) === List(Integer(98)))
   }

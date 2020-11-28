@@ -12,7 +12,7 @@ class EnumTest extends CompilerSpecs {
       Map(
         "Boolean" -> Enum(Identifier("Boolean"), List(Identifier("True"), Identifier("False")))
       ),
-      List.empty
+      None
     ))
   }
 
@@ -29,7 +29,7 @@ class EnumTest extends CompilerSpecs {
       Map(
         "A" -> Enum(Identifier("A"), List(Identifier("X"), Identifier("Y")))
       ),
-      List.empty
+      None
     ))
   }
 

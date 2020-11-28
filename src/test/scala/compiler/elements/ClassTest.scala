@@ -14,7 +14,7 @@ class ClassTest extends CompilerSpecs {
       Map(
         "A" -> Class(Identifier("A"), Parameters(List(Parameter(Identifier("x"), Types.Integer)), None))
       ),
-      List.empty
+      None
     ))
   }
 
@@ -30,7 +30,7 @@ class ClassTest extends CompilerSpecs {
       Map(
         "A" -> elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("value"), Types.String)), None))
       ),
-      List.empty
+      None
     ))
   }
 

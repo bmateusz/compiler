@@ -12,7 +12,7 @@ class DefinitionTest extends CompilerSpecs {
       Map(
         "x" -> Definition(Identifier("x"), Parameters(List(), None), None)
       ),
-      List.empty
+      None
     ))
   }
 
@@ -23,10 +23,10 @@ class DefinitionTest extends CompilerSpecs {
         "x" -> elements.Definition(
         Identifier("x"),
         Parameters(List(), Some(Types.Integer)),
-        Some(Block(Map.empty, List(Expression(List(Integer(2))))))
+        Some(Block(Map.empty, Some(Expression(List(Integer(2))))))
       )
       ),
-      List.empty
+      None
     ))
   }
 

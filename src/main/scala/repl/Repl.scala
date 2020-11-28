@@ -25,7 +25,7 @@ trait Repl {
         case Right(source) =>
           source.compile(block).value match {
             case Right(newBlock) =>
-              newBlock.expressions.lastOption match {
+              newBlock.expression match {
                 case Some(expr: Expression) =>
                   printlnEvaluation(expr.evaluate(newBlock))
                   repl(newBlock)
