@@ -11,29 +11,22 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSize = 1, sizeRange = 1000, minSuccessful = 1000)
 
-  it should "evaluate random integer expressions with parentheses" in {
-    forAll { tree: IntTree =>
-      val prodResult = parseExpressionSuccess(tree.toString).evaluate()
+  it should "evaluate random expressions with parentheses" in {
+    forAll { tree: Tree =>
+      val treeAsString = tree.toString
+      val prodResult = parseExpressionSuccess(treeAsString).evaluate() match {
+        case Floating(value) :: Nil if value.isNaN => List(Identifier("NaN"))
+        case x => x
+      }
       val testResult = tree.evaluate match {
-        case Right(value) => List(Integer(value))
-        case Left("Division by zero") => List(DivisionByZero)
-        case Left(error) => fail(error)
+        case IntValue(value) => List(Integer(value))
+        case FloatValue(value) if value.isNaN => List(Identifier("NaN"))
+        case FloatValue(value) => List(Floating(value))
+        case Error("Division by zero") => List(DivisionByZero)
+        case Error(error) => fail(error)
       }
 
-      assert(prodResult === testResult, s"Expected $testResult, got $prodResult for ${tree.toString}")
-    }
-  }
-
-  it should "evaluate random float expressions with parentheses" in {
-    forAll { tree: FloatTree =>
-      val prodResult = parseExpressionSuccess(tree.toString).evaluate()
-      val testResult = tree.evaluate match {
-        case Right(value) => List(Floating(value))
-        case Left("Division by zero") => List(DivisionByZero)
-        case Left(error) => fail(error)
-      }
-
-      assert(prodResult === testResult, s"Expected $testResult, got $prodResult for ${tree.toString}")
+      assert(prodResult === testResult, s"Expected $testResult, got $prodResult for ${treeAsString}")
     }
   }
 

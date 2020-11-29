@@ -30,58 +30,83 @@ object ArbitraryExpression {
 
   }
 
-  sealed trait IntTree {
-    def evaluate: Either[String, Int]
+  sealed trait Value {
+    def half: Value
+
+    def op(operator: Operator, other: () => Value): Value
   }
 
-  case class IntNode(left: IntTree, right: IntTree, operator: Operator) extends IntTree {
+  case class Error(string: String) extends Value {
+    override def half: Value = this
+    override def op(operator: Operator, other: () => Value): Value = this
+  }
+
+  case class IntValue(a: Long) extends Value {
+    override def half: Value = IntValue(a / 2)
+    override def op(operator: Operator, other: () => Value): Value =
+      other() match {
+        case b: Error => b
+        case IntValue(b) =>
+          operator match {
+            case Add => IntValue(a + b)
+            case Subtract => IntValue(a - b)
+            case Multiple => IntValue(a * b)
+            case Divide if b != 0 => IntValue(a / b)
+            case Divide => Error("Division by zero")
+          }
+        case FloatValue(b) =>
+          operator match {
+            case Add => FloatValue(a + b)
+            case Subtract => FloatValue(a - b)
+            case Multiple => FloatValue(a * b)
+            case Divide => FloatValue(a / b)
+          }
+      }
+
+  }
+
+  case class FloatValue(a: Double) extends Value {
+    override def half: Value = FloatValue(a / 2)
+    override def op(operator: Operator, other: () => Value): Value =
+      other() match {
+        case b: Error => b
+        case IntValue(b) =>
+          operator match {
+            case Add => FloatValue(a + b)
+            case Subtract => FloatValue(a - b)
+            case Multiple => FloatValue(a * b)
+            case Divide => FloatValue(a / b)
+          }
+        case FloatValue(b) =>
+          operator match {
+            case Add => FloatValue(a + b)
+            case Subtract => FloatValue(a - b)
+            case Multiple => FloatValue(a * b)
+            case Divide => FloatValue(a / b)
+          }
+      }
+
+  }
+
+  sealed trait Tree {
+    def evaluate: Value
+  }
+
+  case class Node(left: Tree, right: Tree, operator: Operator) extends Tree {
     override def toString: String = s"($left$operator$right)"
 
-    override def evaluate: Either[String, Int] =
-      left.evaluate.flatMap { a =>
-        right.evaluate.flatMap { b =>
-          operator match {
-            case Add => Right(a + b)
-            case Subtract => Right(a - b)
-            case Multiple => Right(a * b)
-            case Divide if b != 0 => Right(a / b)
-            case Divide => Left("Division by zero")
-          }
-        }
-      }
+    override def evaluate: Value =
+      left.evaluate.op(operator, () => right.evaluate)
   }
 
-  case class IntLeaf(value: Int) extends IntTree {
-    override val toString: String = value.toString
+  case class Leaf(value: Value) extends Tree {
+    override val toString: String = value match {
+      case Error(string) => string
+      case IntValue(int) => int.toString
+      case FloatValue(float) => float.toString
+    }
 
-    override val evaluate: Either[String, Int] = Right(value)
-  }
-
-  sealed trait FloatTree {
-    def evaluate: Either[String, Double]
-  }
-
-  case class FloatNode(left: FloatTree, right: FloatTree, operator: Operator) extends FloatTree {
-    override def toString: String = s"($left$operator$right)"
-
-    override def evaluate: Either[String, Double] =
-      left.evaluate.flatMap { a =>
-        right.evaluate.flatMap { b =>
-          operator match {
-            case Add => Right(a + b)
-            case Subtract => Right(a - b)
-            case Multiple => Right(a * b)
-            case Divide if b != 0 => Right(a / b)
-            case Divide => Left("Division by zero")
-          }
-        }
-      }
-  }
-
-  case class FloatLeaf(value: Double) extends FloatTree {
-    override val toString: String = value.toString
-
-    override val evaluate: Either[String, Double] = Right(value)
+    override val evaluate: Value = value
   }
 
   val genOperator: Gen[Operator] =
@@ -92,58 +117,34 @@ object ArbitraryExpression {
       Divide
     )
 
-  val genIntLeaf: Gen[IntLeaf] = Gen.chooseNum(-128, 128).map(IntLeaf)
+  val genLeaf: Gen[Leaf] = Gen.frequency(
+    (1, Gen.long.map(a => Leaf(IntValue(a)))),
+    (1, Gen.double.map(a => Leaf(FloatValue(a))))
+  )
 
-  val genIntNode: Gen[IntNode] = for {
-    left <- Gen.sized(h => Gen.resize(h / 2, genIntTree))
-    right <- Gen.sized(h => Gen.resize(h / 2, genIntTree))
+  val genNode: Gen[Node] = for {
+    left <- Gen.sized(h => Gen.resize(h / 2, genTree))
+    right <- Gen.sized(h => Gen.resize(h / 2, genTree))
     operator <- genOperator
-  } yield IntNode(left, right, operator)
+  } yield Node(left, right, operator)
 
-  def genIntTree: Gen[IntTree] = Gen.sized { height =>
+  def genTree: Gen[Tree] = Gen.sized { height =>
     if (height <= 0) {
-      genIntLeaf
+      genLeaf
     } else {
-      Gen.oneOf(genIntLeaf, genIntNode)
+      Gen.oneOf(genLeaf, genNode)
     }
   }
 
-  implicit val arbIntTree: Arbitrary[IntTree] = Arbitrary(genIntTree)
+  implicit val arbTree: Arbitrary[Tree] = Arbitrary(genTree)
 
-  implicit val shrinkIntTree: Shrink[IntTree] = Shrink {
-    case IntNode(left, right, operator) =>
-      shrink(left).map(IntNode(_, right, operator)) lazyAppendedAll
-        shrink(right).map(IntNode(left, _, operator)) lazyAppendedAll
-        List(IntLeaf(1))
-    case IntLeaf(value) =>
-      shrink(value).map(leafValue => IntLeaf(leafValue / 2))
-  }
-
-  val genFloatLeaf: Gen[FloatLeaf] = Gen.double.map(FloatLeaf)
-
-  val genFloatNode: Gen[FloatNode] = for {
-    left <- Gen.sized(h => Gen.resize(h / 2, genFloatTree))
-    right <- Gen.sized(h => Gen.resize(h / 2, genFloatTree))
-    operator <- genOperator
-  } yield FloatNode(left, right, operator)
-
-  def genFloatTree: Gen[FloatTree] = Gen.sized { height =>
-    if (height <= 0) {
-      genFloatLeaf
-    } else {
-      Gen.oneOf(genFloatLeaf, genFloatNode)
-    }
-  }
-
-  implicit val arbFloatTree: Arbitrary[FloatTree] = Arbitrary(genFloatTree)
-
-  implicit val shrinkFloatTree: Shrink[FloatTree] = Shrink {
-    case FloatNode(left, right, operator) =>
-      shrink(left).map(FloatNode(_, right, operator)) lazyAppendedAll
-        shrink(right).map(FloatNode(left, _, operator)) lazyAppendedAll
-        List(FloatLeaf(1))
-    case FloatLeaf(value) =>
-      shrink(value).map(leafValue => FloatLeaf(leafValue / 2))
+  implicit val shrinkTree: Shrink[Tree] = Shrink {
+    case Node(left, right, operator) =>
+      shrink(left).map(Node(_, right, operator)) lazyAppendedAll
+        shrink(right).map(Node(left, _, operator)) lazyAppendedAll
+        List(Leaf(IntValue(1)), Leaf(FloatValue(1.0)))
+    case Leaf(value) =>
+      shrink(value).map(v => Leaf(v.half))
   }
 
   implicit val arbOperator: Arbitrary[Operator] = Arbitrary(genOperator)

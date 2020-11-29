@@ -18,7 +18,7 @@ object Tokens {
   def findRegexToken(line: String): Option[Token] =
     line match {
       case stringRegex(str, _) => Some(StringLiteral(str))
-      case floatRegex(a, null, _) => Some(Integer(a.toInt))
+      case floatRegex(a, null, _) => Some(Integer(a.toLong))
       case floatRegex(a, b, _) => Some(Floating(s"$a$b".toDouble))
       case literalRegex(literal, _) => Some(Identifier(literal))
       case _ => None
@@ -200,7 +200,7 @@ object Tokens {
     override def length: Int = value.length + 2 // the ""
   }
 
-  case class Integer(integer: Int) extends ValueToken {
+  case class Integer(integer: Long) extends ValueToken {
     override val value: String = integer.toString
   }
 
