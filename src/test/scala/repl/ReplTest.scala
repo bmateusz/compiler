@@ -47,6 +47,12 @@ class ReplTest extends CompilerSpecs {
     assert(repl.results.lastOption === Some("List(Integer(232))"))
   }
 
+  it should "evaluate multiple class assignments" in {
+    val repl = MockRepl(mutable.Queue("class A(x:Int)", "a = A(232)", "b = A(444)", "b.x"))
+    repl.repl()
+    assert(repl.results.lastOption === Some("List(Integer(444))"))
+  }
+
   it should "parse invalid block" in {
     val repl = MockRepl(mutable.Queue("x . ="))
     repl.repl()

@@ -33,7 +33,7 @@ trait Repl {
                   newBlock.evaluate().value match {
                     case Left(evaluationError) =>
                       printlnError(evaluationError)
-                      repl(newBlock)
+                      repl(block)
                     case Right(evaluated) =>
                       println(evaluated.sortedElements)
                       repl(evaluated)

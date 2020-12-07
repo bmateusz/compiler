@@ -40,7 +40,8 @@ class BlockTest extends CompilerSpecs {
   }
 
   it should "not allow reassign to value" in {
-    val block = compileError("""
+    val block = compileError(
+      """
       x = 2
       x = 5
     """)
@@ -64,11 +65,34 @@ class BlockTest extends CompilerSpecs {
     assert(evaluated === Block(
       List(
         elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String)), None)),
-        elements.Assignment(Identifier("a"), Expression(List(ClassInstance(Identifier("A"),List(List(Integer(33)), List(StringLiteral("str")))))))),
+        elements.Assignment(Identifier("a"), Expression(List(ClassInstance(Identifier("A"), List(List(Integer(33)), List(StringLiteral("str")))))))),
       None
     ))
     val expr = parseExpressionSuccess("a.n")
     assert(expr.evaluate(evaluated) === List(Integer(33)))
+  }
+
+  it should "parse assignment of a class of class" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        class A(n: Int)
+        class B(a: A, m: Int)
+        a = A(33)
+        b = B(a, 2)
+      """))
+    val expr = parseExpressionSuccess("b.a.n * b.m")
+    assert(expr.evaluate(evaluated) === List(Integer(66)))
+  }
+
+  it should "parse assignment of a class aliased" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        class A(n: Int)
+        a = A(2)
+        b = a
+      """))
+    val expr = parseExpressionSuccess("b.n")
+    assert(expr.evaluate(evaluated) === List(Integer(2)))
   }
 
 }

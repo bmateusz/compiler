@@ -12,31 +12,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
   def evaluate(block: Block = Block.empty): List[EvaluatedToken] = tokens.foldLeft(List.empty[EvaluatedToken]) {
     case ((ee: EvaluationError) :: Nil, _) => List(ee)
     case ((field: Identifier) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
-      block.get(identifier) match {
-        case Some(asg: Assignment) =>
-          asg.expression.tokens match {
-            case (v: ValueToken) :: Nil =>
-              v :: xs
-            case (cli: ClassInstance) :: Nil =>
-              block.get(cli.identifier) match {
-                case Some(cls: Class) =>
-                  cls.parameters.findParameter(field) match {
-                    case Some((parameter, n)) =>
-                      cli.values(n) ++ xs
-                    case None =>
-                      List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
-                  }
-                case None =>
-                  List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
-              }
-            case other =>
-              List(EvaluationError(UnexpectedIdentifier(field)))
-          }
-        case Some(other) =>
-          List(EvaluationError(UnexpectedIdentifier(field)))
-        case None =>
-          List(EvaluationError(UnexpectedIdentifier(identifier)))
-      }
+      dot(block, identifier, field, xs)
     case (acc, identifier: Identifier) =>
       block.get(identifier) match {
         case Some(asg: Assignment) =>
@@ -60,6 +36,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
         case None =>
           identifier :: acc
       }
+    case (acc, cli: ClassInstance) => cli :: acc
     case (acc, token: Integer) => token :: acc
     case (acc, token: Floating) => token :: acc
     case (acc, token: StringLiteral) => token :: acc
@@ -85,6 +62,36 @@ case class Expression(tokens: List[EvaluatedToken]) {
     case (StringLiteral(x) :: StringLiteral(y) :: ys, Operator(Add)) => StringLiteral(y + x) :: ys
     case (acc, other) => List(EvaluationError(UnexpectedEvaluation(acc, other)))
   }
+
+  @tailrec
+  private def dot(block: Block, identifier: Identifier, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
+    block.get(identifier) match {
+      case Some(asg: Assignment) =>
+        asg.expression.tokens match {
+          case (v: ValueToken) :: Nil =>
+            v :: xs
+          case (cli: ClassInstance) :: Nil =>
+            block.get(cli.identifier) match {
+              case Some(cls: Class) =>
+                cls.parameters.findParameter(field) match {
+                  case Some((parameter, n)) =>
+                    cli.values(n) ++ xs
+                  case None =>
+                    List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
+                }
+              case None =>
+                List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
+            }
+          case (identifier: Identifier) :: Nil =>
+            dot(block, identifier, field, xs)
+          case other =>
+            List(EvaluationError(UnexpectedIdentifier(field)))
+        }
+      case Some(other) =>
+        List(EvaluationError(UnexpectedIdentifier(field)))
+      case None =>
+        List(EvaluationError(UnexpectedIdentifier(identifier)))
+    }
 }
 
 object Expression {

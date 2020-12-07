@@ -38,6 +38,8 @@ case class Block(elements: List[Element],
             case (newElement, rest) =>
               block.add(newElement, rest)
           }
+      case (left@Result(_, _), curr) =>
+        left
     }
 }
 
