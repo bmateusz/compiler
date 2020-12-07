@@ -9,8 +9,8 @@ class DefinitionTest extends CompilerSpecs {
   it should "parse simple definition" in {
     val block = compileSuccess("def x()")
     assert(block === Block(
-      Map(
-        "x" -> Definition(Identifier("x"), Parameters(List(), None), None)
+      List(
+        Definition(Identifier("x"), Parameters(List(), None), None)
       ),
       None
     ))
@@ -19,12 +19,12 @@ class DefinitionTest extends CompilerSpecs {
   it should "parse simple definition with implementation" in {
     val block = compileSuccess("def x(): Int = 2")
     assert(block === Block(
-      Map(
-        "x" -> elements.Definition(
-        Identifier("x"),
-        Parameters(List(), Some(Types.Integer)),
-        Some(Block(Map.empty, Some(Expression(List(Integer(2))))))
-      )
+      List(
+        elements.Definition(
+          Identifier("x"),
+          Parameters(List(), Some(Types.Integer)),
+          Some(Block(List.empty, Some(Expression(List(Integer(2))))))
+        )
       ),
       None
     ))

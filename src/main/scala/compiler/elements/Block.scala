@@ -6,31 +6,45 @@ import compiler.{Expression, Result}
 
 import scala.annotation.tailrec
 
-case class Block(elements: Map[String, Element],
+case class Block(elements: List[Element],
                  expression: Option[Expression]) {
   def sortedElements: List[Element] =
     elements
-      .values
-      .toList
       .sortBy(_.name.value)
 
   def add(element: Element, rest: List[Token]): Result[Block] =
-    if (elements.contains(element.name.value))
+    if (elements.exists(_.name.value == element.name.value))
       Result(Redefinition(element.name.value), rest)
     else
-      Result(copy(elements = elements + (element.name.value -> element)), rest)
+      Result(
+        copy(
+          elements = elements :+ element
+        ),
+        rest
+      )
 
   def set(expression: Expression): Block =
     copy(expression = Some(expression))
 
   def get(identifier: Identifier): Option[Element] =
-    elements.get(identifier.value)
+    elements.find(_.name.value == identifier.value)
+
+  def evaluate(parent: Block = Block.empty, rest: List[Token] = List.empty): Result[Block] =
+    elements.foldLeft(Result(parent, rest)) {
+      case (Result(Right(block), rest), curr) =>
+        curr
+          .evaluate(block, rest)
+          .flatMap {
+            case (newElement, rest) =>
+              block.add(newElement, rest)
+          }
+    }
 }
 
 object Block {
 
   val empty: Block =
-    Block(Map.empty, None)
+    Block(List.empty, None)
 
   def parse(result: Result[Block], indentation: List[Indentation]): Result[Block] =
     result.flatMap((block, rest) => parse(rest, block, indentation))
@@ -79,7 +93,7 @@ object Block {
         Result(block)
       case others =>
         Expression
-          .parse(others, List.empty, List.empty, None)
+          .parse(others)
           .flatMap { (expr, rest) =>
             Result(block.set(expr), rest)
           }

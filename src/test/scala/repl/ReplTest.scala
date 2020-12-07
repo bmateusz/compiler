@@ -41,10 +41,16 @@ class ReplTest extends CompilerSpecs {
     assert(repl.results.lastOption === Some("List(Integer(36))"))
   }
 
-  it should "parse invalid block" in {
-    val repl = MockRepl(mutable.Queue("x , ="))
+  it should "evaluate class assignments" in {
+    val repl = MockRepl(mutable.Queue("class A(x:Int)", "a = A(232)", "a.x"))
     repl.repl()
-    assert(repl.results.toList === List("List(UnexpectedToken(Comma), UnparsedTokens(List(Equals)))"))
+    assert(repl.results.lastOption === Some("List(Integer(232))"))
+  }
+
+  it should "parse invalid block" in {
+    val repl = MockRepl(mutable.Queue("x . ="))
+    repl.repl()
+    assert(repl.results.toList === List("List(UnexpectedToken(Equals))"))
   }
 
   it should "parse token error" in {

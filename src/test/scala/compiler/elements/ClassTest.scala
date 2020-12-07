@@ -11,8 +11,8 @@ class ClassTest extends CompilerSpecs {
   it should "parse simple class" in {
     val block = compileSuccess("class A(x: Int)")
     assert(block === Block(
-      Map(
-        "A" -> Class(Identifier("A"), Parameters(List(Parameter(Identifier("x"), Types.Integer)), None))
+      List(
+        Class(Identifier("A"), Parameters(List(Parameter(Identifier("x"), Types.Integer)), None))
       ),
       None
     ))
@@ -27,8 +27,8 @@ class ClassTest extends CompilerSpecs {
       """
     )
     assert(block === Block(
-      Map(
-        "A" -> elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("value"), Types.String)), None))
+      List(
+        Class(Identifier("A"), Parameters(List(Parameter(Identifier("value"), Types.String)), None))
       ),
       None
     ))

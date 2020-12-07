@@ -24,13 +24,41 @@ object Tokens {
       case _ => None
     }
 
+  def splitBySeparator[T](list: List[T], sep: T): List[List[T]] =
+    list.span( _ != sep ) match {
+      case (hd, _ :: tl) => hd :: splitBySeparator(tl, sep)
+      case (hd, _) => List(hd)
+    }
+
+  implicit class TokenListExtension[T >: Token](tokens: List[T]) {
+    def spanMatchingRightParenthesis(): (List[T], List[T]) =
+      tokens
+        .scanLeft(1) {
+          case (acc, LeftParenthesis) => acc + 1
+          case (acc, RightParenthesis) => acc - 1
+          case (acc, _) => acc
+        }
+        .zipWithIndex
+        .find(_._1 == 0) match {
+          case Some((0, value: Int)) =>
+            tokens.splitAt(value - 1)
+          case _ =>
+            (tokens, List.empty)
+        }
+
+    def splitByComma(): List[List[T]] =
+      splitBySeparator(tokens, Comma)
+  }
+
   sealed trait EvaluatedToken {
     val value: String
 
     def length: Int = value.length
   }
 
-  sealed trait Token extends EvaluatedToken
+  sealed trait ParsedToken extends EvaluatedToken
+
+  sealed trait Token extends ParsedToken
 
   case class Indentation(override val length: Int) extends Token {
     override val value: String = "\n" + " " * length
@@ -194,6 +222,16 @@ object Tokens {
 
   case class Identifier(override val value: String) extends Token
 
+  object Identifier {
+    def notUniqueIdentifiers(values: List[Identifier]): List[String] =
+      values
+        .groupMapReduce(_.value)(_ => 1)(_ + _)
+        .filter(_._2 > 1)
+        .keys
+        .toList
+        .sorted
+  }
+
   sealed trait ValueToken extends Token
 
   case class StringLiteral(override val value: String) extends ValueToken {
@@ -208,8 +246,32 @@ object Tokens {
     override val value: String = double.toString
   }
 
-  case object DivisionByZero extends EvaluatedToken {
+  case class ParsedCall(identifier: Identifier, expression: Expression) extends ParsedToken {
+    override val value: String = s"${identifier.value}(${expression.tokens})"
+  }
+
+  case class EvaluationError(token: EvaluationErrorToken) extends EvaluatedToken {
+    override val value: String = token.value
+  }
+
+  sealed trait EvaluationErrorToken {
+    val value: String
+  }
+
+  case object DivisionByZero extends EvaluationErrorToken {
     override val value: String = "0 / 0"
+  }
+
+  case class UnexpectedIdentifier(token: Token) extends EvaluationErrorToken {
+    override val value: String = token.value
+  }
+
+  case class UnexpectedEvaluation(acc: List[EvaluatedToken], token: EvaluatedToken) extends EvaluationErrorToken {
+    override val value: String = s"${token.value}, ${acc.map(_.value)}"
+  }
+
+  case class ClassInstance(identifier: Identifier, values: List[List[EvaluatedToken]]) extends EvaluatedToken {
+    override val value: String = s"${identifier.value}($values)"
   }
 
 }

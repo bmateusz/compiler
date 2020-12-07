@@ -15,6 +15,9 @@ trait CompilerSpecs extends AnyFlatSpec with EitherValues {
     def left: Either.LeftProjection[List[CompilerError], A] = result.value.left
   }
 
+  def parseLineSuccess(string: String): Line =
+    Line.parse(string, 0).right.value
+
   def parseSuccess(string: String): SourceFile =
     SourceFile.parse(string).right.value
 
@@ -29,12 +32,15 @@ trait CompilerSpecs extends AnyFlatSpec with EitherValues {
 
   def parseExpression(string: String): Result[Expression] =
     parseSuccess(string)
-      .pipe(sf => Expression.parse(sf.tokens, List.empty, List.empty, None))
+      .pipe(sf => Expression.parse(sf.tokens))
 
   def parseExpressionSuccess(string: String): Expression =
     parseExpression(string).right.value
 
   def parseExpressionError(string: String): List[CompilerError] =
     parseExpression(string).left.value
+
+  def evaluateBlock(block: Block): Block =
+    block.evaluate().value.right.value
 
 }

@@ -2,28 +2,74 @@ package compiler
 
 import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Tokens._
-import compiler.elements.{Assignment, Block}
+import compiler.elements.{Assignment, Block, Class}
+import compiler.Tokens.TokenListExtension
 
 import scala.annotation.tailrec
+import scala.util.chaining.scalaUtilChainingOps
 
-case class Expression(tokens: List[Token]) {
+case class Expression(tokens: List[EvaluatedToken]) {
   def evaluate(block: Block = Block.empty): List[EvaluatedToken] = tokens.foldLeft(List.empty[EvaluatedToken]) {
-    case (DivisionByZero :: Nil, _) => List(DivisionByZero)
-    case (acc, identifier: Identifier) => block.get(identifier) match {
-      case Some(asg: Assignment) =>
-        asg.expression.tokens ++ acc
-      case None =>
-        acc
-    }
+    case ((ee: EvaluationError) :: Nil, _) => List(ee)
+    case ((field: Identifier) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
+      block.get(identifier) match {
+        case Some(asg: Assignment) =>
+          asg.expression.tokens match {
+            case (v: ValueToken) :: Nil =>
+              v :: xs
+            case (cli: ClassInstance) :: Nil =>
+              block.get(cli.identifier) match {
+                case Some(cls: Class) =>
+                  cls.parameters.findParameter(field) match {
+                    case Some((parameter, n)) =>
+                      cli.values(n) ++ xs
+                    case None =>
+                      List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
+                  }
+                case None =>
+                  List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
+              }
+            case other =>
+              List(EvaluationError(UnexpectedIdentifier(field)))
+          }
+        case Some(other) =>
+          List(EvaluationError(UnexpectedIdentifier(field)))
+        case None =>
+          List(EvaluationError(UnexpectedIdentifier(identifier)))
+      }
+    case (acc, identifier: Identifier) =>
+      block.get(identifier) match {
+        case Some(asg: Assignment) =>
+          asg.constantOrIdentifier ++ acc
+        case Some(other) =>
+          List(EvaluationError(UnexpectedIdentifier(other.name)))
+        case None =>
+          identifier :: acc
+      }
+    case (acc, ParsedCall(identifier, expression)) =>
+      block.get(identifier) match {
+        case Some(cls: Class) =>
+          expression
+            .tokens
+            .splitByComma()
+            .pipe(
+              ClassInstance(identifier, _) :: acc
+            )
+        case Some(other) =>
+          List(EvaluationError(UnexpectedIdentifier(other.name)))
+        case None =>
+          identifier :: acc
+      }
     case (acc, token: Integer) => token :: acc
     case (acc, token: Floating) => token :: acc
+    case (acc, token: StringLiteral) => token :: acc
     case (Integer(x) :: xs, Operator(Negate)) => Integer(-x) :: xs
     case (Floating(x) :: xs, Operator(Negate)) => Floating(-x) :: xs
     case (Integer(x) :: Integer(y) :: ys, Operator(Add)) => Integer(y + x) :: ys
     case (Integer(x) :: Integer(y) :: ys, Operator(Subtract)) => Integer(y - x) :: ys
     case (Integer(x) :: Integer(y) :: ys, Operator(Multiply)) => Integer(y * x) :: ys
     case (Integer(x) :: Integer(y) :: ys, Operator(Divide)) if x != 0 => Integer(y / x) :: ys
-    case (Integer(x) :: Integer(y) :: ys, Operator(Divide)) => List(DivisionByZero)
+    case (Integer(_) :: Integer(_) :: _, Operator(Divide)) => List(EvaluationError(DivisionByZero))
     case (Floating(x) :: Integer(y) :: ys, Operator(Add)) => Floating(y + x) :: ys
     case (Floating(x) :: Integer(y) :: ys, Operator(Subtract)) => Floating(y - x) :: ys
     case (Floating(x) :: Integer(y) :: ys, Operator(Multiply)) => Floating(y * x) :: ys
@@ -36,24 +82,31 @@ case class Expression(tokens: List[Token]) {
     case (Floating(x) :: Floating(y) :: ys, Operator(Subtract)) => Floating(y - x) :: ys
     case (Floating(x) :: Floating(y) :: ys, Operator(Multiply)) => Floating(y * x) :: ys
     case (Floating(x) :: Floating(y) :: ys, Operator(Divide)) => Floating(y / x) :: ys
+    case (StringLiteral(x) :: StringLiteral(y) :: ys, Operator(Add)) => StringLiteral(y + x) :: ys
+    case (acc, other) => List(EvaluationError(UnexpectedEvaluation(acc, other)))
   }
 }
 
 object Expression {
 
+  def parse(tokens: List[Token]): Result[Expression] =
+    parse(tokens, List.empty, List.empty, None)
+
   /**
    * Shunting-yard algorithm by Edsger W. Dijkstra
    */
   @tailrec
-  def parse(tokens: List[Token],
-            outputStack: List[Token],
-            operatorStack: List[Token],
-            lastToken: Option[Token]): Result[Expression] =
+  private def parse(tokens: List[Token],
+                    outputStack: List[ParsedToken],
+                    operatorStack: List[Token],
+                    lastToken: Option[Token]): Result[Expression] =
     tokens match {
       case (identifier: Identifier) :: xs =>
         parse(xs, outputStack :+ identifier, operatorStack, Some(identifier))
       case (token: ValueToken) :: xs =>
         parse(xs, outputStack :+ token, operatorStack, Some(token))
+      case Comma :: xs =>
+        parse(xs, outputStack :+ Comma, operatorStack, Some(Comma))
       case (token: Operator) :: xs =>
         val isUnaryOperator = lastToken.forall {
           case Operator(_) | LeftParenthesis => true
@@ -69,20 +122,35 @@ object Expression {
         }
         parse(xs, outputStack ++ left, Operator(op) +: right, Some(token))
       case (token@LeftParenthesis) :: xs =>
-        parse(xs, outputStack, token +: operatorStack, Some(token))
+        lastToken match {
+          case Some(identifier: Identifier) =>
+            xs.spanMatchingRightParenthesis() match {
+              case (_, Nil) =>
+                Result(UnmatchedRightParenthesis())
+              case (left, right) =>
+                parse(left) match {
+                  case Result(Right(innerExpression: Expression), _: List[Token]) =>
+                    parse(right, outputStack.init :+ ParsedCall(identifier, innerExpression), token +: operatorStack, Some(RightParenthesis))
+                  case err =>
+                    err
+                }
+            }
+          case _ =>
+            parse(xs, outputStack, token +: operatorStack, Some(token))
+        }
       case (token@RightParenthesis) :: xs =>
         operatorStack.span {
           case LeftParenthesis => false
           case _ => true
         } match {
-          case (left, Nil) =>
+          case (_, Nil) =>
             Result(UnmatchedRightParenthesis())
           case (left, right) =>
             parse(xs, outputStack ++ left, right.tail, Some(token))
         }
-      case Indentation(length) :: xs if lastToken.isEmpty =>
+      case Indentation(_) :: xs if lastToken.isEmpty =>
         parse(xs, outputStack, operatorStack, lastToken)
-      case Indentation(length) :: xs =>
+      case Indentation(_) :: xs =>
         finishExpression(xs, outputStack, operatorStack)
       case other :: xs =>
         Result(UnexpectedToken(other), xs)
@@ -91,12 +159,12 @@ object Expression {
     }
 
   private def finishExpression(rest: List[Token],
-                               outputStack: List[Token],
-                               operatorStack: List[Token]): Result[Expression] = {
+                               outputStack: List[ParsedToken],
+                               operatorStack: List[Token]): Result[Expression] =
     if (operatorStack.contains(LeftParenthesis)) {
       Result(UnmatchedLeftParenthesis())
     } else {
       Result(Expression(outputStack ++ operatorStack), rest)
     }
-  }
+
 }

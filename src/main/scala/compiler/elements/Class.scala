@@ -1,8 +1,8 @@
 package compiler.elements
 
 import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType}
-import compiler.Tokens.{Identifier, Token}
 import compiler.Result
+import compiler.Tokens.{Identifier, Token}
 
 case class Class(name: Identifier,
                  parameters: Parameters) extends Element

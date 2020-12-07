@@ -1,19 +1,25 @@
 package compiler.elements
 
-import compiler.Errors.{CompilerError, ExpectedColon, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, ExpectedType}
-import compiler.Tokens._
+import compiler.Errors.{CompilerError, ExpectedColon, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, ExpectedType, NotUniqueParameters}
+import compiler.Tokens.{TokenListExtension, _}
 import compiler.Types.Type
 import compiler.elements.Parameters.Parameter
 import compiler.{Result, Types}
 
 import scala.annotation.tailrec
 
-case class Parameters(value: List[Parameter], returnType: Option[Type]) {
+case class Parameters(values: List[Parameter], returnType: Option[Type]) {
   def addParameter(name: String, typ: String): Parameters =
-    copy(value = value :+ Parameter(Identifier(name), Types.parse(typ)))
+    copy(values = values :+ Parameter(Identifier(name), Types.parse(typ)))
 
   def addReturnType(typ: String): Parameters =
     copy(returnType = Some(Types.parse(typ)))
+
+  def notUniqueIdentifiers(): List[String] =
+    Identifier.notUniqueIdentifiers(values.map(_.identifier))
+
+  def findParameter(identifier: Identifier): Option[(Parameter, Int)] =
+    values.zipWithIndex.find(_._1.identifier == identifier)
 }
 
 object Parameters {
@@ -28,7 +34,7 @@ object Parameters {
       case Indentation(_) :: xs =>
         parse(xs)
       case LeftParenthesis :: xs =>
-        val (left, right) = xs.span(_ != RightParenthesis)
+        val (left, right) = xs.spanMatchingRightParenthesis()
         right match {
           case RightParenthesis :: Colon :: Identifier(returnType) :: rest =>
             Result(parseParameters(left, empty).map(_.addReturnType(returnType)), rest)
@@ -51,15 +57,21 @@ object Parameters {
       case Identifier(name) :: Colon :: Identifier(typ) :: Comma :: rest =>
         parseParameters(rest, pl.addParameter(name, typ))
       case Identifier(name) :: Colon :: Identifier(typ) :: Nil =>
-        Right(pl.addParameter(name, typ))
+        checkParameters(pl.addParameter(name, typ))
       case Nil =>
-        Right(pl)
+        checkParameters(pl)
       case Identifier(name) :: Colon :: tokens =>
         Left(List(ExpectedType(tokens.headOption)))
       case Identifier(name) :: tokens =>
         Left(List(ExpectedColon(tokens.headOption)))
       case tokens =>
         Left(List(ExpectedIdentifier(tokens.headOption)))
+    }
+
+  def checkParameters(parameters: Parameters): Either[List[CompilerError], Parameters] =
+    parameters.notUniqueIdentifiers() match {
+      case Nil => Right(parameters)
+      case xs => Left(List(NotUniqueParameters(xs)))
     }
 
 }

@@ -23,7 +23,7 @@ object Line {
           case Right(tokens) =>
             Result(new Line(Indentation(whitespaces.length) +: tokens, number))
           case Left(rest) =>
-            Result(InvalidToken.apply(number, string, rest))
+            Result(InvalidToken(number, string, rest))
         }
       }
 

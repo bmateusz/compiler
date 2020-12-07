@@ -30,8 +30,14 @@ trait Repl {
                   printlnEvaluation(expr.evaluate(newBlock))
                   repl(newBlock)
                 case _ =>
-                  println(newBlock.sortedElements)
-                  repl(newBlock)
+                  newBlock.evaluate().value match {
+                    case Left(evaluationError) =>
+                      printlnError(evaluationError)
+                      repl(newBlock)
+                    case Right(evaluated) =>
+                      println(evaluated.sortedElements)
+                      repl(evaluated)
+                  }
               }
             case Left(compileError) =>
               printlnError(compileError)

@@ -22,11 +22,11 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
         case IntValue(value) => List(Integer(value))
         case FloatValue(value) if value.isNaN => List(Identifier("NaN"))
         case FloatValue(value) => List(Floating(value))
-        case Error("Division by zero") => List(DivisionByZero)
+        case Error("Division by zero") => List(EvaluationError(DivisionByZero))
         case Error(error) => fail(error)
       }
 
-      assert(prodResult === testResult, s"Expected $testResult, got $prodResult for ${treeAsString}")
+      assert(prodResult === testResult, s"Expected $testResult, got $prodResult for $treeAsString")
     }
   }
 
@@ -81,7 +81,7 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
   it should "evaluate a division by zero" in {
     val expr = parseExpressionSuccess("0 / (1 * 0)")
     assert(expr.tokens === List(Integer(0), Integer(1), Integer(0), Operator(Multiply), Operator(Divide)))
-    assert(expr.evaluate() === List(DivisionByZero))
+    assert(expr.evaluate() === List(EvaluationError(DivisionByZero)))
   }
 
   it should "report error for unmatched left parenthesis" in {
@@ -98,7 +98,7 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
     val expr = parseExpressionSuccess("1 + x - 3")
     assert(expr.tokens === List(Integer(1), Identifier("x"), Operator(Add), Integer(3), Operator(Subtract)))
     val block = Block(
-      Map("x" -> Assignment(Identifier("x"), Expression(List(Integer(100))))),
+      List(Assignment(Identifier("x"), Expression(List(Integer(100))))),
       None
     )
     assert(expr.evaluate(block) === List(Integer(98)))

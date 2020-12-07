@@ -2,7 +2,7 @@ package compiler.elements
 
 import compiler.Errors.{CompilerError, EmptyEnum, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, NotUniqueEnumValues}
 import compiler.Result
-import compiler.Tokens.{Comma, Identifier, Indentation, LeftParenthesis, RightParenthesis, Token}
+import compiler.Tokens.{Comma, Identifier, Indentation, LeftParenthesis, RightParenthesis, Token, TokenListExtension}
 
 import scala.annotation.tailrec
 
@@ -12,12 +12,7 @@ case class Enum(name: Identifier,
     copy(values = values :+ identifier)
 
   def notUniqueIdentifiers(): List[String] =
-    values
-      .groupMapReduce(_.value)(_ => 1)(_ + _)
-      .filter(_._2 > 1)
-      .keys
-      .toList
-      .sorted
+    Identifier.notUniqueIdentifiers(values)
 }
 
 object Enum {
@@ -33,7 +28,7 @@ object Enum {
   def parse(name: Identifier, tokens: List[Token]): Result[Enum] =
     tokens match {
       case LeftParenthesis :: xs =>
-        val (left, right) = xs.span(_ != RightParenthesis)
+        val (left, right) = xs.spanMatchingRightParenthesis()
         right match {
           case RightParenthesis :: rest =>
             Result(

@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Tokens.Token
+import compiler.Tokens.{EvaluatedToken, EvaluationErrorToken, Token}
 import compiler.Types.Type
 
 object Errors {
@@ -38,6 +38,8 @@ object Errors {
 
   case class NotUniqueEnumValues(name: String, notUnique: List[String]) extends CompilerError
 
+  case class NotUniqueParameters(notUnique: List[String]) extends CompilerError
+
   case class ExpectedIdentifier(got: Option[Token]) extends CompilerError
 
   case class ExpectedColon(got: Option[Token]) extends CompilerError
@@ -45,6 +47,8 @@ object Errors {
   case class ExpectedType(got: Option[Token]) extends CompilerError
 
   case class Redefinition(name: String) extends CompilerError
+
+  case class AssignmentError(token: EvaluationErrorToken) extends CompilerError
 
   case class FileError(arg: String, throwable: Throwable) extends CompilerError
 

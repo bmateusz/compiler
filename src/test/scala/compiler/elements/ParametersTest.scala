@@ -1,6 +1,6 @@
 package compiler.elements
 
-import compiler.Errors.{ExpectedColon, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, ExpectedType}
+import compiler.Errors.{ExpectedColon, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, ExpectedType, NotUniqueParameters}
 import compiler.Tokens.{Colon, Identifier}
 import compiler.Types.UnknownType
 import compiler.elements.Parameters.Parameter
@@ -39,6 +39,13 @@ class ParametersTest extends CompilerSpecs {
     assert(source.tokens.length === 3)
     val params = Parameters.parse(source.tokens)
     assert(params.right.value === Parameters(List.empty, None))
+  }
+
+  it should "report error for not unique parameter" in {
+    val source = parseSuccess("""(a: Int, b: Int, a: String)""")
+    assert(source.tokens.length === 14)
+    val params = Parameters.parse(source.tokens)
+    assert(params.left.value === List(NotUniqueParameters(List("a"))))
   }
 
   it should "recognize missing right parenthesis" in {

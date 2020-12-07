@@ -1,16 +1,17 @@
 package compiler.elements
 
 import compiler.Errors.{UnexpectedToken, UnparsedTokens}
-import compiler.Tokens.{Add, Def, Equals, Identifier, Indentation, Integer, Operator}
-import compiler.{CompilerSpecs, Expression, elements}
+import compiler.Tokens.{Add, Comma, Def, Equals, Identifier, Indentation, Integer, Operator, StringLiteral}
+import compiler.elements.Parameters.Parameter
+import compiler.{CompilerSpecs, Expression, Types, elements}
 
 class AssignmentTest extends CompilerSpecs {
 
   it should "parse simple assignment" in {
     val block = compileSuccess("x = 3")
     assert(block === Block(
-      Map(
-        "x" -> Assignment(Identifier("x"), Expression(List(Integer(3)))),
+      List(
+        Assignment(Identifier("x"), Expression(List(Integer(3))))
       ),
       None
     ))
@@ -23,8 +24,8 @@ class AssignmentTest extends CompilerSpecs {
           3 + 3
       """)
     assert(block === Block(
-      Map(
-        "x" -> elements.Assignment(Identifier("x"), Expression(List(Integer(3), Integer(3), Operator(Add)))),
+      List(
+        elements.Assignment(Identifier("x"), Expression(List(Integer(3), Integer(3), Operator(Add))))
       ),
       None
     ))

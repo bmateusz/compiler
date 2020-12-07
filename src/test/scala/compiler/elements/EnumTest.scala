@@ -9,8 +9,8 @@ class EnumTest extends CompilerSpecs {
   it should "parse simple enum" in {
     val block = compileSuccess("enum Boolean(True, False)")
     assert(block === Block(
-      Map(
-        "Boolean" -> Enum(Identifier("Boolean"), List(Identifier("True"), Identifier("False")))
+      List(
+        Enum(Identifier("Boolean"), List(Identifier("True"), Identifier("False")))
       ),
       None
     ))
@@ -26,8 +26,8 @@ class EnumTest extends CompilerSpecs {
       """
     )
     assert(block === Block(
-      Map(
-        "A" -> Enum(Identifier("A"), List(Identifier("X"), Identifier("Y")))
+      List(
+        Enum(Identifier("A"), List(Identifier("X"), Identifier("Y")))
       ),
       None
     ))
