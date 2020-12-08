@@ -62,7 +62,6 @@ object ArbitraryExpression {
             case Divide => FloatValue(a / b)
           }
       }
-
   }
 
   case class FloatValue(a: Double) extends Value {
@@ -85,7 +84,6 @@ object ArbitraryExpression {
             case Divide => FloatValue(a / b)
           }
       }
-
   }
 
   sealed trait Tree {

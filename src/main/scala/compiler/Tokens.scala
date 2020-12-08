@@ -250,6 +250,10 @@ object Tokens {
     override val value: String = s"${identifier.value}(${expression.tokens})"
   }
 
+  case object EndMarker extends ParsedToken {
+    override val value: String = s"END"
+  }
+
   case class EvaluationError(token: EvaluationErrorToken) extends EvaluatedToken {
     override val value: String = token.value
   }
@@ -271,7 +275,11 @@ object Tokens {
   }
 
   case class ClassInstance(identifier: Identifier, values: List[List[EvaluatedToken]]) extends EvaluatedToken {
-    override val value: String = s"${identifier.value}($values)"
+    override val value: String = s"instance ${identifier.value}($values)"
+  }
+
+  case class CallDefinition(identifier: Identifier, values: List[List[EvaluatedToken]]) extends EvaluatedToken {
+    override val value: String = s"call ${identifier.value}($values)"
   }
 
 }

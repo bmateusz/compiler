@@ -2,35 +2,29 @@ package compiler
 
 import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Tokens._
-import compiler.elements.{Assignment, Block, Class}
+import compiler.elements.{Assignment, Block, Class, Definition}
 import compiler.Tokens.TokenListExtension
 
 import scala.annotation.tailrec
 import scala.util.chaining.scalaUtilChainingOps
 
 case class Expression(tokens: List[EvaluatedToken]) {
-  def evaluate(block: Block = Block.empty): List[EvaluatedToken] = tokens.foldLeft(List.empty[EvaluatedToken]) {
+
+  def evaluate(block: Block = Block.empty): List[EvaluatedToken] =
+    evaluate(tokens, block)
+
+  def evaluate(tokens: List[EvaluatedToken], block: Block): List[EvaluatedToken] = tokens.foldLeft(List.empty[EvaluatedToken]) {
     case ((ee: EvaluationError) :: Nil, _) => List(ee)
     case ((field: Identifier) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
       dot(block, identifier, field, xs)
+    case ((field: Identifier) :: (cli: ClassInstance) :: xs, Operator(Dot)) =>
+      dot(block, cli, field, xs)
+    case (acc, pc: ParsedCall) =>
+      parsedCall(block, pc, acc)
     case (acc, identifier: Identifier) =>
       block.get(identifier) match {
         case Some(asg: Assignment) =>
           asg.constantOrIdentifier ++ acc
-        case Some(other) =>
-          List(EvaluationError(UnexpectedIdentifier(other.name)))
-        case None =>
-          identifier :: acc
-      }
-    case (acc, ParsedCall(identifier, expression)) =>
-      block.get(identifier) match {
-        case Some(cls: Class) =>
-          expression
-            .tokens
-            .splitByComma()
-            .pipe(
-              ClassInstance(identifier, _) :: acc
-            )
         case Some(other) =>
           List(EvaluationError(UnexpectedIdentifier(other.name)))
         case None =>
@@ -63,6 +57,19 @@ case class Expression(tokens: List[EvaluatedToken]) {
     case (acc, other) => List(EvaluationError(UnexpectedEvaluation(acc, other)))
   }
 
+  private def dot(block: Block, cli: ClassInstance, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
+    block.get(cli.identifier) match {
+      case Some(cls: Class) =>
+        cls.parameters.findParameter(field) match {
+          case Some((parameter, n)) =>
+            cli.values(n) ++ xs
+          case None =>
+            List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
+        }
+      case None =>
+        List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
+    }
+
   @tailrec
   private def dot(block: Block, identifier: Identifier, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
     block.get(identifier) match {
@@ -71,17 +78,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
           case (v: ValueToken) :: Nil =>
             v :: xs
           case (cli: ClassInstance) :: Nil =>
-            block.get(cli.identifier) match {
-              case Some(cls: Class) =>
-                cls.parameters.findParameter(field) match {
-                  case Some((parameter, n)) =>
-                    cli.values(n) ++ xs
-                  case None =>
-                    List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
-                }
-              case None =>
-                List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
-            }
+            dot(block, cli, field, xs)
           case (identifier: Identifier) :: Nil =>
             dot(block, identifier, field, xs)
           case other =>
@@ -91,6 +88,30 @@ case class Expression(tokens: List[EvaluatedToken]) {
         List(EvaluationError(UnexpectedIdentifier(field)))
       case None =>
         List(EvaluationError(UnexpectedIdentifier(identifier)))
+    }
+
+  def parsedCall(block: Block, pc: ParsedCall, acc: List[EvaluatedToken]): List[EvaluatedToken] =
+    block.get(pc.identifier) match {
+      case Some(cls: Class) =>
+        pc.expression
+          .tokens
+          .splitByComma()
+          .map(evaluate(_, block))
+          .pipe { tokens =>
+            ClassInstance(pc.identifier, tokens) :: acc
+          }
+      case Some(df: Definition) =>
+        pc.expression
+          .tokens
+          .splitByComma()
+          .map(evaluate(_, block))
+          .pipe { tokens =>
+            CallDefinition(pc.identifier, tokens) :: acc
+          }
+      case Some(other) =>
+        List(EvaluationError(UnexpectedIdentifier(other.name)))
+      case None =>
+        pc.identifier :: acc
     }
 }
 

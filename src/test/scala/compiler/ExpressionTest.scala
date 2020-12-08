@@ -1,6 +1,5 @@
 package compiler
 
-import arbitrary.ArbitraryExpression._
 import compiler.Errors.{UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Tokens._
 import compiler.elements.{Assignment, Block}
@@ -9,9 +8,10 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
-    PropertyCheckConfiguration(minSize = 1, sizeRange = 1000, minSuccessful = 1000)
+    PropertyCheckConfiguration(minSize = 1, sizeRange = 100, minSuccessful = 100)
 
   it should "evaluate random expressions with parentheses" in {
+    import arbitrary.ArbitraryExpression._
     forAll { tree: Tree =>
       val treeAsString = tree.toString
       val prodResult = parseExpressionSuccess(treeAsString).evaluate() match {
@@ -24,6 +24,19 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
         case FloatValue(value) => List(Floating(value))
         case Error("Division by zero") => List(EvaluationError(DivisionByZero))
         case Error(error) => fail(error)
+      }
+
+      assert(prodResult === testResult, s"Expected $testResult, got $prodResult for $treeAsString")
+    }
+  }
+
+  it should "evaluate random string expressions with parentheses" in {
+    import arbitrary.ArbitraryString._
+    forAll { tree: Tree =>
+      val treeAsString = tree.toString
+      val prodResult = parseExpressionSuccess(treeAsString).evaluate()
+      val testResult = tree.evaluate match {
+        case StringValue(value) => List(StringLiteral(value))
       }
 
       assert(prodResult === testResult, s"Expected $testResult, got $prodResult for $treeAsString")

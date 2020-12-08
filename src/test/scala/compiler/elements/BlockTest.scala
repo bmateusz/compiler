@@ -1,7 +1,7 @@
 package compiler.elements
 
 import compiler.Errors.Redefinition
-import compiler.Tokens.{ClassInstance, Comma, Floating, Identifier, Integer, Multiply, Operator, ParsedCall, StringLiteral}
+import compiler.Tokens.{CallDefinition, ClassInstance, Comma, Floating, Identifier, Integer, Multiply, Operator, ParsedCall, StringLiteral}
 import compiler.elements.Parameters.Parameter
 import compiler.{CompilerSpecs, Expression, Types, elements}
 
@@ -77,11 +77,23 @@ class BlockTest extends CompilerSpecs {
       """
         class A(n: Int)
         class B(a: A, m: Int)
-        a = A(33)
-        b = B(a, 2)
+        x = A(33)
+        b = B(x, 2)
       """))
     val expr = parseExpressionSuccess("b.a.n * b.m")
     assert(expr.evaluate(evaluated) === List(Integer(66)))
+  }
+
+  it should "parse inline assignment of a class of class" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        class A(n: Int)
+        class B(a: A)
+        class C(b: B)
+        x = C(B(A(121)))
+      """))
+    val expr = parseExpressionSuccess("x.b.a.n")
+    assert(expr.evaluate(evaluated) === List(Integer(121)))
   }
 
   it should "parse assignment of a class aliased" in {
@@ -93,6 +105,15 @@ class BlockTest extends CompilerSpecs {
       """))
     val expr = parseExpressionSuccess("b.n")
     assert(expr.evaluate(evaluated) === List(Integer(2)))
+  }
+
+  it should "parse call of a definition" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        def x(n: Int) = 3 + n
+      """))
+    val expr = parseExpressionSuccess("x(4)")
+    assert(expr.evaluate(evaluated) === List(CallDefinition(Identifier("x"),List(List(Integer(4))))))
   }
 
 }

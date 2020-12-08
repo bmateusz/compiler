@@ -28,7 +28,7 @@ trait Repl {
               newBlock.expression match {
                 case Some(expr: Expression) =>
                   printlnEvaluation(expr.evaluate(newBlock))
-                  repl(newBlock)
+                  repl(block)
                 case _ =>
                   newBlock.evaluate().value match {
                     case Left(evaluationError) =>
