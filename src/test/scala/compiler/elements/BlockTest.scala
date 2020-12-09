@@ -77,8 +77,8 @@ class BlockTest extends CompilerSpecs {
       """
         class A(n: Int)
         class B(a: A, m: Int)
-        x = A(33)
-        b = B(x, 2)
+        a = A(33)
+        b = B(a, 2)
       """))
     val expr = parseExpressionSuccess("b.a.n * b.m")
     assert(expr.evaluate(evaluated) === List(Integer(66)))

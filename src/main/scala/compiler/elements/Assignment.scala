@@ -22,6 +22,12 @@ case class Assignment(name: Identifier,
       case (v: ValueToken) :: Nil => v :: Nil
       case _ => name :: Nil
     }
+
+  def singleTokenOrIdentifier(): EvaluatedToken =
+    expression.tokens match {
+      case (v: EvaluatedToken) :: Nil => v
+      case _ => name
+    }
 }
 
 object Assignment {

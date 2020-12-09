@@ -55,6 +55,15 @@ case class Expression(tokens: List[EvaluatedToken]) {
     case (Floating(x) :: Floating(y) :: ys, Operator(Divide)) => Floating(y / x) :: ys
     case (StringLiteral(x) :: StringLiteral(y) :: ys, Operator(Add)) => StringLiteral(y + x) :: ys
     case (acc, other) => List(EvaluationError(UnexpectedEvaluation(acc, other)))
+  }.map {
+    case identifier: Identifier =>
+      block.get(identifier) match {
+        case Some(asg: Assignment) =>
+          asg.singleTokenOrIdentifier()
+        case _ =>
+          identifier
+      }
+    case other => other
   }
 
   private def dot(block: Block, cli: ClassInstance, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
