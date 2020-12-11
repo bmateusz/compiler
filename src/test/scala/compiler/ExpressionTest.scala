@@ -2,7 +2,8 @@ package compiler
 
 import compiler.Errors.{UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Tokens._
-import compiler.elements.{Assignment, Block}
+import compiler.elements.Parameters.Parameter
+import compiler.elements.{Assignment, Block, Class, Parameters}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
@@ -120,7 +121,14 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
   it should "evaluate class field" in {
     val expr = parseExpressionSuccess("1 + x.a - 3")
     assert(expr.tokens === List(Integer(1), Identifier("x"), Identifier("a"), Operator(Dot), Operator(Add), Integer(3), Operator(Subtract)))
-    // assert(expr.evaluate() === List(Integer(-1)))
+    val block = Block(
+      List(
+        Class(Identifier("A"), Parameters(List(Parameter(Identifier("a"), Types.Integer)), None)),
+        Assignment(Identifier("x"), Expression(List(ClassInstance(Identifier("A"), List(List(Integer(1)))))))
+      ),
+      None
+    )
+    assert(expr.evaluate(block) === List(Integer(-1)))
   }
 
 }
