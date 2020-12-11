@@ -3,9 +3,11 @@ package compiler.elements
 import compiler.Errors.{ExpectedIdentifier, UnexpectedToken}
 import compiler.Tokens.{Equals, Identifier, Token}
 import compiler.Result
+import compiler.Types.Type
 
 case class Definition(name: Identifier,
                       parameters: Parameters,
+                      returnType: Option[Type],
                       block: Option[Block]) extends Element
 
 object Definition {
@@ -16,16 +18,16 @@ object Definition {
         Parameters
           .parse(xs)
           .flatMap {
-            case (parameters, Equals :: rest) =>
+            case ((parameters, returnType), Equals :: rest) =>
               Block.parse(rest, Block.empty, List.empty).flatMap { (resultBlock, resultRest) =>
                 Result(
-                  Definition(identifier, parameters, Some(resultBlock)),
+                  Definition(identifier, parameters, returnType, Some(resultBlock)),
                   resultRest
                 )
               }
-            case (parameters, rest) =>
+            case ((parameters, returnType), rest) =>
               Result(
-                Definition(identifier, parameters, None),
+                Definition(identifier, parameters, returnType, None),
                 rest
               )
           }

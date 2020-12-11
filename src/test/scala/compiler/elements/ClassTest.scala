@@ -12,7 +12,7 @@ class ClassTest extends CompilerSpecs {
     val block = compileSuccess("class A(x: Int)")
     assert(block === Block(
       List(
-        Class(Identifier("A"), Parameters(List(Parameter(Identifier("x"), Types.Integer)), None))
+        Class(Identifier("A"), Parameters(List(Parameter(Identifier("x"), Types.Integer))))
       ),
       None
     ))
@@ -28,7 +28,7 @@ class ClassTest extends CompilerSpecs {
     )
     assert(block === Block(
       List(
-        Class(Identifier("A"), Parameters(List(Parameter(Identifier("value"), Types.String)), None))
+        Class(Identifier("A"), Parameters(List(Parameter(Identifier("value"), Types.String))))
       ),
       None
     ))

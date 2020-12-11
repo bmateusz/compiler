@@ -12,10 +12,10 @@ class ParametersTest extends CompilerSpecs {
     val source = parseSuccess("(a: Float, b: MyClass)")
     assert(source.tokens.length === 10)
     val params = Parameters.parse(source.tokens)
-    assert(params.right.value === Parameters(List(
+    assert(params.right.value === (Parameters(List(
       Parameter(Identifier("a"), Types.Floating),
       Parameter(Identifier("b"), UnknownType("MyClass"))
-    ), None))
+    )), None))
   }
 
   it should "parse parameters separated by newline" in {
@@ -27,10 +27,10 @@ class ParametersTest extends CompilerSpecs {
           )""")
     assert(source.tokens.length === 13)
     val params = Parameters.parse(source.tokens)
-    assert(params.right.value === Parameters(List(
+    assert(params.right.value === (Parameters(List(
       Parameter(Identifier("a"), Types.Integer),
       Parameter(Identifier("b"), Types.String)
-    ), None))
+    )), None))
   }
 
   it should "parse empty parameter list" in {
@@ -38,7 +38,7 @@ class ParametersTest extends CompilerSpecs {
       """()""")
     assert(source.tokens.length === 3)
     val params = Parameters.parse(source.tokens)
-    assert(params.right.value === Parameters(List.empty, None))
+    assert(params.right.value === (Parameters(List.empty), None))
   }
 
   it should "report error for not unique parameter" in {

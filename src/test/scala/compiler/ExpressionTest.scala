@@ -123,7 +123,7 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
     assert(expr.tokens === List(Integer(1), Identifier("x"), Identifier("a"), Operator(Dot), Operator(Add), Integer(3), Operator(Subtract)))
     val block = Block(
       List(
-        Class(Identifier("A"), Parameters(List(Parameter(Identifier("a"), Types.Integer)), None)),
+        Class(Identifier("A"), Parameters(List(Parameter(Identifier("a"), Types.Integer)))),
         Assignment(Identifier("x"), Expression(List(ClassInstance(Identifier("A"), List(List(Integer(1)))))))
       ),
       None

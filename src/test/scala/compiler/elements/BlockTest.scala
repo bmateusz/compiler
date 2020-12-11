@@ -27,13 +27,14 @@ class BlockTest extends CompilerSpecs {
         Assignment(Identifier("y"), Expression(List(Floating(3.14)))),
         Assignment(Identifier("z"), Expression(List(StringLiteral("hello")))),
         Class(Identifier("A"), Parameters(
-          List(Parameter(Identifier("z"), Types.String)),
-          None
+          List(Parameter(Identifier("z"), Types.String))
         )),
-        Definition(Identifier("function"), Parameters(
-          List(Parameter(Identifier("parameter"), Types.Integer)),
-          Some(Types.Integer)
-        ), Some(Block(List.empty, Some(Expression(List(Integer(6), Integer(2), Operator(Multiply)))))))
+        Definition(
+          Identifier("function"), Parameters(
+          List(Parameter(Identifier("parameter"), Types.Integer))),
+          Some(Types.Integer),
+          Some(Block(List.empty, Some(Expression(List(Integer(6), Integer(2), Operator(Multiply))))))
+        )
       ),
       None
     ))
@@ -56,7 +57,7 @@ class BlockTest extends CompilerSpecs {
       """)
     assert(block === Block(
       List(
-        elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String)), None)),
+        elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String)))),
         elements.Assignment(Identifier("a"), Expression(List(ParsedCall(Identifier("A"), Expression(List(Integer(33), Comma, StringLiteral("str")))))))
       ),
       None
@@ -64,7 +65,7 @@ class BlockTest extends CompilerSpecs {
     val evaluated = evaluateBlock(block)
     assert(evaluated === Block(
       List(
-        elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String)), None)),
+        elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String)))),
         elements.Assignment(Identifier("a"), Expression(List(ClassInstance(Identifier("A"), List(List(Integer(33)), List(StringLiteral("str")))))))),
       None
     ))
@@ -113,7 +114,7 @@ class BlockTest extends CompilerSpecs {
         def x(n: Int) = 3 + n
       """))
     val expr = parseExpressionSuccess("x(4)")
-    assert(expr.evaluate(evaluated) === List(CallDefinition(Identifier("x"),List(List(Integer(4))))))
+    assert(expr.evaluate(evaluated) === List(CallDefinition(Identifier("x"), List(List(Integer(4))))))
   }
 
 }

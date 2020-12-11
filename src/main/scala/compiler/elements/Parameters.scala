@@ -8,12 +8,9 @@ import compiler.{Result, Types}
 
 import scala.annotation.tailrec
 
-case class Parameters(values: List[Parameter], returnType: Option[Type]) {
+case class Parameters(values: List[Parameter]) {
   def addParameter(name: String, typ: String): Parameters =
     copy(values = values :+ Parameter(Identifier(name), Types.parse(typ)))
-
-  def addReturnType(typ: String): Parameters =
-    copy(returnType = Some(Types.parse(typ)))
 
   def notUniqueIdentifiers(): List[String] =
     Identifier.notUniqueIdentifiers(values.map(_.identifier))
@@ -26,10 +23,10 @@ object Parameters {
 
   case class Parameter(identifier: Identifier, typ: Type)
 
-  val empty: Parameters = Parameters(List.empty, None)
+  val empty: Parameters = Parameters(List.empty)
 
   @tailrec
-  def parse(tokens: List[Token]): Result[Parameters] =
+  def parse(tokens: List[Token]): Result[(Parameters, Option[Type])] =
     tokens match {
       case Indentation(_) :: xs =>
         parse(xs)
@@ -37,9 +34,12 @@ object Parameters {
         val (left, right) = xs.spanMatchingRightParenthesis()
         right match {
           case RightParenthesis :: Colon :: Identifier(returnType) :: rest =>
-            Result(parseParameters(left, empty).map(_.addReturnType(returnType)), rest)
+            Result(
+              parseParameters(left, empty).map((_, Some(Types.parse(returnType)))),
+              rest
+            )
           case RightParenthesis :: rest =>
-            Result(parseParameters(left, empty), rest)
+            Result(parseParameters(left, empty).map((_, None)), rest)
           case _ =>
             Result(ExpectedRightParenthesis(None))
         }

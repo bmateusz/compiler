@@ -10,7 +10,7 @@ class DefinitionTest extends CompilerSpecs {
     val block = compileSuccess("def x()")
     assert(block === Block(
       List(
-        Definition(Identifier("x"), Parameters(List(), None), None)
+        Definition(Identifier("x"), Parameters(List()), None, None)
       ),
       None
     ))
@@ -22,7 +22,8 @@ class DefinitionTest extends CompilerSpecs {
       List(
         elements.Definition(
           Identifier("x"),
-          Parameters(List(), Some(Types.Integer)),
+          Parameters(List()),
+          Some(Types.Integer),
           Some(Block(List.empty, Some(Expression(List(Integer(2))))))
         )
       ),

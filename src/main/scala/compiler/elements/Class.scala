@@ -15,9 +15,9 @@ object Class {
         Parameters
           .parse(xs)
           .flatMap {
-            case (Parameters(_, Some(typ)), rest) =>
+            case ((_, Some(typ)), rest) =>
               Result(UnexpectedReturnType(typ), rest)
-            case (parameters, rest) =>
+            case ((parameters, None), rest) =>
               Result(
                 Class(identifier, parameters),
                 rest
