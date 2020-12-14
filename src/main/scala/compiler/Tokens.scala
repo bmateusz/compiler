@@ -6,18 +6,38 @@ object Tokens {
 
   def parse(line: String): Option[Token] =
     findSimpleToken(line)
+      .orElse(findStringLiteral(line))
       .orElse(findRegexToken(line))
 
   def findSimpleToken(line: String): Option[Token] =
     SimpleTokens.simpleTokens.find(token => line.startsWith(token.value))
 
-  val stringRegex: UnanchoredRegex = """^"((?:\\.|[^\\"])*)"""".r.unanchored
+  // val stringRegex: UnanchoredRegex = """^"((?:\\.|[^\\"])*)"""".r.unanchored
+  def findStringLiteral(line: String): Option[Token] =
+    line
+      .iterator
+      .scanLeft(0) {
+        case (0, '"') => 1
+        case (0, _) => -1
+        case (1, '\\') => 2
+        case (1, '"') => -2
+        case (1, _) => 1
+        case (2, _) => 1
+      }
+      .zipWithIndex
+      .find(_._1 < 0)
+      .flatMap {
+        case (-2, value: Int) =>
+          Some(StringLiteral(line.slice(1, value - 1)))
+        case _ =>
+          None
+      }
+
   val floatRegex: UnanchoredRegex = "^(\\d+)(\\.\\d+(?:[eE]-?\\d+)?)?".r.unanchored
   val literalRegex: UnanchoredRegex = "^([a-zA-Z](?:[0-9a-zA-Z_-]*[0-9a-zA-Z])?)".r.unanchored
 
   def findRegexToken(line: String): Option[Token] =
     line match {
-      case stringRegex(str) => Some(StringLiteral(str))
       case floatRegex(a, null) => Some(Integer(a.toLong))
       case floatRegex(a, b) => Some(Floating(s"$a$b".toDouble))
       case literalRegex(literal) => Some(Identifier(literal))
@@ -25,7 +45,7 @@ object Tokens {
     }
 
   def splitBySeparator[T](list: List[T], sep: T): List[List[T]] =
-    list.span( _ != sep ) match {
+    list.span(_ != sep) match {
       case (hd, _ :: tl) => hd :: splitBySeparator(tl, sep)
       case (hd, _) => List(hd)
     }
@@ -40,11 +60,11 @@ object Tokens {
         }
         .zipWithIndex
         .find(_._1 == 0) match {
-          case Some((0, value: Int)) =>
-            tokens.splitAt(value - 1)
-          case _ =>
-            (tokens, List.empty)
-        }
+        case Some((0, value: Int)) =>
+          tokens.splitAt(value - 1)
+        case _ =>
+          (tokens, List.empty)
+      }
 
     def splitByComma(): List[List[T]] =
       splitBySeparator(tokens, Comma)

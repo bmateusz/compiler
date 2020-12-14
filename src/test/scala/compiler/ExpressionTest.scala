@@ -9,7 +9,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
-    PropertyCheckConfiguration(minSize = 1, sizeRange = 100, minSuccessful = 100)
+    PropertyCheckConfiguration(minSize = 1, sizeRange = 1000, minSuccessful = 1000)
 
   it should "evaluate random expressions with parentheses" in {
     import arbitrary.ArbitraryExpression._
