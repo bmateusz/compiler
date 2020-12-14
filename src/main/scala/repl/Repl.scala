@@ -27,7 +27,7 @@ trait Repl {
             case Right(newBlock) =>
               newBlock.expression match {
                 case Some(expr: Expression) =>
-                  printlnEvaluation(expr.evaluate(newBlock))
+                  printlnEvaluation(expr.call(newBlock))
                   repl(block)
                 case _ =>
                   newBlock.evaluate().value match {

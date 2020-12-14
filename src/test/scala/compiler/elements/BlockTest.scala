@@ -115,6 +115,7 @@ class BlockTest extends CompilerSpecs {
       """))
     val expr = parseExpressionSuccess("x(4)")
     assert(expr.evaluate(evaluated) === List(CallDefinition(Identifier("x"), List(List(Integer(4))))))
+    assert(expr.call(evaluated) === List(Integer(7)))
   }
 
 }

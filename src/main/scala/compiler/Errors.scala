@@ -48,6 +48,8 @@ object Errors {
 
   case class Redefinition(name: String) extends CompilerError
 
+  case class DefinitionWithoutBody(name: String) extends CompilerError
+
   case class AssignmentError(token: EvaluationErrorToken) extends CompilerError
 
   case class FileError(arg: String, throwable: Throwable) extends CompilerError

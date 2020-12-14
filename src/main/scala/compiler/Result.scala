@@ -19,6 +19,12 @@ case class Result[+A](value: Either[List[CompilerError], A],
       case Right(value) => f(value, rest)
     }
 
+  def flatMapValue[B](f: A => Result[B]): Result[B] =
+    value match {
+      case Left(value) => Result(value, rest)
+      case Right(value) => f(value)
+    }
+
   def finishedParsingTokens(): Result[A] =
     if (rest.isEmpty) {
       this

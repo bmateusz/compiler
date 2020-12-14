@@ -34,7 +34,7 @@ object Main {
   def repl(): Unit =
     new Repl {
       override def read(): String =
-        StdIn.readLine("> ")
+        Option(StdIn.readLine("> ")).getOrElse("")
 
       override def println(elements: List[Element]): Unit =
         Console.out.println(elements)

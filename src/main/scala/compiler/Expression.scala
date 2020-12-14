@@ -3,7 +3,6 @@ package compiler
 import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Tokens._
 import compiler.elements.{Assignment, Block, Class, Definition}
-import compiler.Tokens.TokenListExtension
 
 import scala.annotation.tailrec
 import scala.util.chaining.scalaUtilChainingOps
@@ -55,15 +54,34 @@ case class Expression(tokens: List[EvaluatedToken]) {
     case (Floating(x) :: Floating(y) :: ys, Operator(Divide)) => Floating(y / x) :: ys
     case (StringLiteral(x) :: StringLiteral(y) :: ys, Operator(Add)) => StringLiteral(y + x) :: ys
     case (acc, other) => List(EvaluationError(UnexpectedEvaluation(acc, other)))
-  }.map {
+  }
+
+  def call(block: Block = Block.empty): List[EvaluatedToken] = evaluate(tokens, block).flatMap {
     case identifier: Identifier =>
       block.get(identifier) match {
         case Some(asg: Assignment) =>
-          asg.singleTokenOrIdentifier()
+          List(asg.singleTokenOrIdentifier())
         case _ =>
-          identifier
+          List(identifier)
       }
-    case other => other
+    case cd@CallDefinition(identifier, values) =>
+      block.get(identifier) match {
+        case Some(definition: Definition) =>
+          definition.call(values).value match {
+            case Left(_) =>
+              List(cd)
+            case Right(block) =>
+              block.expression match {
+                case Some(expr) =>
+                  expr.evaluate(block)
+                case None =>
+                  List(cd)
+              }
+          }
+        case _ =>
+          List(cd)
+      }
+    case other => List(other)
   }
 
   private def dot(block: Block, cli: ClassInstance, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
