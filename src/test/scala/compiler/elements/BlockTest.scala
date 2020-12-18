@@ -1,6 +1,7 @@
 package compiler.elements
 
 import compiler.Errors.Redefinition
+import compiler.Expression.{FullEvaluation, SimpleEvaluation}
 import compiler.Tokens.{CallDefinition, ClassInstance, Comma, Floating, Identifier, Integer, Multiply, Operator, ParsedCall, StringLiteral}
 import compiler.elements.Parameters.Parameter
 import compiler.{CompilerSpecs, Expression, Types, elements}
@@ -114,8 +115,17 @@ class BlockTest extends CompilerSpecs {
         def x(n: Int) = 3 + n
       """))
     val expr = parseExpressionSuccess("x(4)")
-    assert(expr.evaluate(evaluated) === List(CallDefinition(Identifier("x"), List(List(Integer(4))))))
-    assert(expr.call(evaluated) === List(Integer(7)))
+    assert(expr.evaluate(evaluated, SimpleEvaluation) === List(CallDefinition(Identifier("x"), List(List(Integer(4))))))
+    assert(expr.evaluate(evaluated, FullEvaluation) === List(Integer(7)))
+  }
+
+  it should "full evaluate definition" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        def incByThree(n: Int) = 3 + n
+      """))
+    val expr = parseExpressionSuccess("incByThree(5) + 4")
+    assert(expr.evaluate(evaluated, FullEvaluation) === List(Integer(12)))
   }
 
 }

@@ -1,6 +1,7 @@
 package compiler.elements
 
 import compiler.Errors.AssignmentError
+import compiler.Expression.EvaluationMode
 import compiler.Tokens.{EvaluatedToken, EvaluationError, Identifier, Indentation, Token, ValueToken}
 import compiler.{Expression, Result}
 
@@ -8,8 +9,8 @@ import scala.annotation.tailrec
 
 case class Assignment(name: Identifier,
                       expression: Expression) extends Element {
-  override def evaluate(block: Block, rest: List[Token]): Result[Assignment] =
-    expression.evaluate(block) match {
+  override def evaluate(block: Block, rest: List[Token], em: EvaluationMode): Result[Assignment] =
+    expression.evaluate(block, em) match {
       case EvaluationError(token) :: _ =>
         Result(AssignmentError(token), rest)
       case xs =>

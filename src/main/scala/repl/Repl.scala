@@ -1,6 +1,7 @@
 package repl
 
 import compiler.Errors.CompilerError
+import compiler.Expression.FullEvaluation
 import compiler.Tokens.EvaluatedToken
 import compiler.elements.{Block, Element}
 import compiler.{Expression, SourceFile}
@@ -27,7 +28,7 @@ trait Repl {
             case Right(newBlock) =>
               newBlock.expression match {
                 case Some(expr: Expression) =>
-                  printlnEvaluation(expr.call(newBlock))
+                  printlnEvaluation(expr.evaluate(newBlock, FullEvaluation))
                   repl(block)
                 case _ =>
                   newBlock.evaluate().value match {

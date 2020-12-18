@@ -1,6 +1,7 @@
 package compiler.elements
 
 import compiler.Errors.Redefinition
+import compiler.Expression.{EvaluationMode, FullEvaluation}
 import compiler.Tokens.{Class, Def, Enum, Equals, Identifier, Indentation, Token}
 import compiler.{Expression, Result}
 
@@ -29,11 +30,11 @@ case class Block(elements: List[Element],
   def get(identifier: Identifier): Option[Element] =
     elements.find(_.name.value == identifier.value)
 
-  def evaluate(parent: Block = Block.empty, rest: List[Token] = List.empty): Result[Block] =
+  def evaluate(parent: Block = Block.empty, rest: List[Token] = List.empty, em: EvaluationMode = FullEvaluation): Result[Block] =
     elements.foldLeft(Result(parent, rest)) {
       case (Result(Right(block), rest), curr) =>
         curr
-          .evaluate(block, rest)
+          .evaluate(block, rest, em)
           .flatMap {
             case (newElement, rest) =>
               block.add(newElement, rest)

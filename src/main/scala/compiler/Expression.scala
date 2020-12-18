@@ -1,6 +1,7 @@
 package compiler
 
 import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
+import compiler.Expression.{EvaluationMode, FullEvaluation, SimpleEvaluation}
 import compiler.Tokens._
 import compiler.elements.{Assignment, Block, Class, Definition}
 
@@ -9,17 +10,17 @@ import scala.util.chaining.scalaUtilChainingOps
 
 case class Expression(tokens: List[EvaluatedToken]) {
 
-  def evaluate(block: Block = Block.empty): List[EvaluatedToken] =
-    evaluate(tokens, block)
+  def evaluate(block: Block = Block.empty, em: EvaluationMode = SimpleEvaluation): List[EvaluatedToken] =
+    evaluate(tokens, block, em)
 
-  def evaluate(tokens: List[EvaluatedToken], block: Block): List[EvaluatedToken] = tokens.foldLeft(List.empty[EvaluatedToken]) {
+  def evaluate(tokens: List[EvaluatedToken], block: Block, em: EvaluationMode): List[EvaluatedToken] = tokens.foldLeft(List.empty[EvaluatedToken]) {
     case ((ee: EvaluationError) :: Nil, _) => List(ee)
     case ((field: Identifier) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
       dot(block, identifier, field, xs)
     case ((field: Identifier) :: (cli: ClassInstance) :: xs, Operator(Dot)) =>
       dot(block, cli, field, xs)
     case (acc, pc: ParsedCall) =>
-      parsedCall(block, pc, acc)
+      parsedCall(block, pc, acc, em)
     case (acc, identifier: Identifier) =>
       block.get(identifier) match {
         case Some(asg: Assignment) =>
@@ -54,9 +55,24 @@ case class Expression(tokens: List[EvaluatedToken]) {
     case (Floating(x) :: Floating(y) :: ys, Operator(Divide)) => Floating(y / x) :: ys
     case (StringLiteral(x) :: StringLiteral(y) :: ys, Operator(Add)) => StringLiteral(y + x) :: ys
     case (acc, other) => List(EvaluationError(UnexpectedEvaluation(acc, other)))
+  }.pipe { evaluatedTokens =>
+    em match {
+      case FullEvaluation =>
+        fullEvaluate(evaluatedTokens, block)
+      case SimpleEvaluation =>
+        evaluatedTokens
+    }
   }
 
-  def call(block: Block = Block.empty): List[EvaluatedToken] = evaluate(tokens, block).flatMap {
+  private def postEvaluation(em: EvaluationMode, elem: EvaluatedToken, block: Block, acc: List[EvaluatedToken]): List[EvaluatedToken] =
+    em match {
+      case FullEvaluation =>
+        fullEvaluate(List(elem), block) ++ acc
+      case SimpleEvaluation =>
+        elem :: acc
+    }
+
+  private def fullEvaluate(evaluatedTokens: List[EvaluatedToken], block: Block): List[EvaluatedToken] = evaluatedTokens.flatMap {
     case identifier: Identifier =>
       block.get(identifier) match {
         case Some(asg: Assignment) =>
@@ -117,23 +133,23 @@ case class Expression(tokens: List[EvaluatedToken]) {
         List(EvaluationError(UnexpectedIdentifier(identifier)))
     }
 
-  def parsedCall(block: Block, pc: ParsedCall, acc: List[EvaluatedToken]): List[EvaluatedToken] =
+  def parsedCall(block: Block, pc: ParsedCall, acc: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
     block.get(pc.identifier) match {
       case Some(cls: Class) =>
         pc.expression
           .tokens
           .splitByComma()
-          .map(evaluate(_, block))
+          .map(evaluate(_, block, em))
           .pipe { tokens =>
-            ClassInstance(pc.identifier, tokens) :: acc
+            postEvaluation(em, ClassInstance(pc.identifier, tokens), block, acc)
           }
       case Some(df: Definition) =>
         pc.expression
           .tokens
           .splitByComma()
-          .map(evaluate(_, block))
+          .map(evaluate(_, block, em))
           .pipe { tokens =>
-            CallDefinition(pc.identifier, tokens) :: acc
+            postEvaluation(em, CallDefinition(pc.identifier, tokens), block, acc)
           }
       case Some(other) =>
         List(EvaluationError(UnexpectedIdentifier(other.name)))
@@ -143,6 +159,12 @@ case class Expression(tokens: List[EvaluatedToken]) {
 }
 
 object Expression {
+
+  sealed trait EvaluationMode
+
+  case object FullEvaluation extends EvaluationMode
+
+  case object SimpleEvaluation extends EvaluationMode
 
   def parse(tokens: List[Token]): Result[Expression] =
     parse(tokens, List.empty, List.empty, None)
