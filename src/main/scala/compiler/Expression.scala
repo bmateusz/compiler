@@ -83,13 +83,13 @@ case class Expression(tokens: List[EvaluatedToken]) {
     case cd@CallDefinition(identifier, values) =>
       block.get(identifier) match {
         case Some(definition: Definition) =>
-          definition.call(values).value match {
+          definition.call(values, block.filtered).value match {
             case Left(_) =>
               List(cd)
             case Right(block) =>
               block.expression match {
                 case Some(expr) =>
-                  expr.evaluate(block)
+                  expr.evaluate(block, FullEvaluation)
                 case None =>
                   List(cd)
               }
@@ -97,7 +97,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
         case _ =>
           List(cd)
       }
-    case other => List(other)
+    case other =>
+      List(other)
   }
 
   private def dot(block: Block, cli: ClassInstance, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =

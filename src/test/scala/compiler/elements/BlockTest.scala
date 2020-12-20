@@ -32,7 +32,8 @@ class BlockTest extends CompilerSpecs {
         )),
         Definition(
           Identifier("function"), Parameters(
-          List(Parameter(Identifier("parameter"), Types.Integer))),
+            List(Parameter(Identifier("parameter"), Types.Integer))
+          ),
           Some(Types.Integer),
           Some(Block(List.empty, Some(Expression(List(Integer(6), Integer(2), Operator(Multiply))))))
         )
@@ -126,6 +127,17 @@ class BlockTest extends CompilerSpecs {
       """))
     val expr = parseExpressionSuccess("incByThree(5) + 4")
     assert(expr.evaluate(evaluated, FullEvaluation) === List(Integer(12)))
+  }
+
+  it should "full evaluate transitive definition" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        def a(str: String) = "a" + str
+        def b(str: String) = a("b" + str)
+        def c(str: String) = b("c" + str)
+      """))
+    val expr = parseExpressionSuccess("c(\"d\") + \"e\"")
+    assert(expr.evaluate(evaluated, FullEvaluation) === List(StringLiteral("abcde")))
   }
 
 }

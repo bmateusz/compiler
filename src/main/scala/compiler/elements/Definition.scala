@@ -1,21 +1,21 @@
 package compiler.elements
 
 import compiler.Errors.{DefinitionWithoutBody, ExpectedIdentifier, UnexpectedToken}
-import compiler.{Expression, Result}
 import compiler.Tokens.{Equals, EvaluatedToken, Identifier, Token}
 import compiler.Types.Type
+import compiler.{Expression, Result}
 
 case class Definition(name: Identifier,
                       parameters: Parameters,
                       returnType: Option[Type],
                       block: Option[Block]) extends Element {
-  def call(values: List[List[EvaluatedToken]]): Result[Block] =
+  def call(values: List[List[EvaluatedToken]], parent: Block): Result[Block] =
     block match {
       case Some(definitionBlock) =>
         parameters
           .values
           .zip(values)
-          .foldLeft(Result(Block.empty)) { case (currBlock, (parameter, value)) =>
+          .foldLeft(Result(parent)) { case (currBlock, (parameter, value)) =>
             currBlock.flatMapValue(_.add(Assignment(parameter.identifier, Expression(value)), List.empty))
           }
           .flatMapValue(parameterBlock => parameterBlock.evaluate(definitionBlock))
