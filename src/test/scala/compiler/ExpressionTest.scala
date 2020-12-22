@@ -98,6 +98,18 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
     assert(expr.evaluate() === List(EvaluationError(DivisionByZero)))
   }
 
+  it should "evaluate an unary operator error" in {
+    val expr = parseExpressionSuccess("- \"a\"")
+    assert(expr.tokens === List(StringLiteral("a"), Operator(Negate)))
+    assert(expr.evaluate() === List(UnaryOperatorError(Negate, StringLiteral("a"))))
+  }
+
+  it should "evaluate an operator error" in {
+    val expr = parseExpressionSuccess("2 + \"a\"")
+    assert(expr.tokens === List(Integer(2), StringLiteral("a"), Operator(Add)))
+    assert(expr.evaluate() === List(OperatorError(Add, Integer(2), StringLiteral("a"))))
+  }
+
   it should "report error for unmatched left parenthesis" in {
     val error = parseExpressionError("(3 * (2 + 1)")
     assert(error === List(UnmatchedLeftParenthesis()))

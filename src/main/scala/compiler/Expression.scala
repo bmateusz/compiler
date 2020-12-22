@@ -31,29 +31,9 @@ case class Expression(tokens: List[EvaluatedToken]) {
           identifier :: acc
       }
     case (acc, cli: ClassInstance) => cli :: acc
-    case (acc, token: Integer) => token :: acc
-    case (acc, token: Floating) => token :: acc
-    case (acc, token: StringLiteral) => token :: acc
-    case (Integer(x) :: xs, Operator(Negate)) => Integer(-x) :: xs
-    case (Floating(x) :: xs, Operator(Negate)) => Floating(-x) :: xs
-    case (Integer(x) :: Integer(y) :: ys, Operator(Add)) => Integer(y + x) :: ys
-    case (Integer(x) :: Integer(y) :: ys, Operator(Subtract)) => Integer(y - x) :: ys
-    case (Integer(x) :: Integer(y) :: ys, Operator(Multiply)) => Integer(y * x) :: ys
-    case (Integer(x) :: Integer(y) :: ys, Operator(Divide)) if x != 0 => Integer(y / x) :: ys
-    case (Integer(_) :: Integer(_) :: _, Operator(Divide)) => List(EvaluationError(DivisionByZero))
-    case (Floating(x) :: Integer(y) :: ys, Operator(Add)) => Floating(y + x) :: ys
-    case (Floating(x) :: Integer(y) :: ys, Operator(Subtract)) => Floating(y - x) :: ys
-    case (Floating(x) :: Integer(y) :: ys, Operator(Multiply)) => Floating(y * x) :: ys
-    case (Floating(x) :: Integer(y) :: ys, Operator(Divide)) => Floating(y / x) :: ys
-    case (Integer(x) :: Floating(y) :: ys, Operator(Add)) => Floating(y + x) :: ys
-    case (Integer(x) :: Floating(y) :: ys, Operator(Subtract)) => Floating(y - x) :: ys
-    case (Integer(x) :: Floating(y) :: ys, Operator(Multiply)) => Floating(y * x) :: ys
-    case (Integer(x) :: Floating(y) :: ys, Operator(Divide)) => Floating(y / x) :: ys
-    case (Floating(x) :: Floating(y) :: ys, Operator(Add)) => Floating(y + x) :: ys
-    case (Floating(x) :: Floating(y) :: ys, Operator(Subtract)) => Floating(y - x) :: ys
-    case (Floating(x) :: Floating(y) :: ys, Operator(Multiply)) => Floating(y * x) :: ys
-    case (Floating(x) :: Floating(y) :: ys, Operator(Divide)) => Floating(y / x) :: ys
-    case (StringLiteral(x) :: StringLiteral(y) :: ys, Operator(Add)) => StringLiteral(y + x) :: ys
+    case (acc, token: ValueToken) => token :: acc
+    case ((x: ValueToken) :: xs, Operator(Negate)) => unaryOperator(x, xs)
+    case ((x: ValueToken) :: (y: ValueToken) :: ys, Operator(op)) => operator(x, y, ys, op)
     case (acc, other) => List(EvaluationError(UnexpectedEvaluation(acc, other)))
   }.pipe { evaluatedTokens =>
     em match {
@@ -63,6 +43,36 @@ case class Expression(tokens: List[EvaluatedToken]) {
         evaluatedTokens
     }
   }
+
+  def unaryOperator(x: ValueToken, xs: List[EvaluatedToken]): List[EvaluatedToken] =
+    x match {
+      case Integer(integer) => Integer(-integer) :: xs
+      case Floating(double) => Floating(-double) :: xs
+      case value: StringLiteral => List(UnaryOperatorError(Negate, value))
+    }
+
+  def operator(x: ValueToken, y: ValueToken, ys: List[EvaluatedToken], op: Operators): List[EvaluatedToken] =
+    (x, y, op) match {
+      case (Integer(x), Integer(y), Add) => Integer(y + x) :: ys
+      case (Integer(x), Integer(y), Subtract) => Integer(y - x) :: ys
+      case (Integer(x), Integer(y), Multiply) => Integer(y * x) :: ys
+      case (Integer(x), Integer(y), Divide) if x != 0 => Integer(y / x) :: ys
+      case (Integer(_), Integer(_), Divide) => List(EvaluationError(DivisionByZero))
+      case (Floating(x), Integer(y), Add) => Floating(y + x) :: ys
+      case (Floating(x), Integer(y), Subtract) => Floating(y - x) :: ys
+      case (Floating(x), Integer(y), Multiply) => Floating(y * x) :: ys
+      case (Floating(x), Integer(y), Divide) => Floating(y / x) :: ys
+      case (Integer(x), Floating(y), Add) => Floating(y + x) :: ys
+      case (Integer(x), Floating(y), Subtract) => Floating(y - x) :: ys
+      case (Integer(x), Floating(y), Multiply) => Floating(y * x) :: ys
+      case (Integer(x), Floating(y), Divide) => Floating(y / x) :: ys
+      case (Floating(x), Floating(y), Add) => Floating(y + x) :: ys
+      case (Floating(x), Floating(y), Subtract) => Floating(y - x) :: ys
+      case (Floating(x), Floating(y), Multiply) => Floating(y * x) :: ys
+      case (Floating(x), Floating(y), Divide) => Floating(y / x) :: ys
+      case (StringLiteral(x), StringLiteral(y), Add) => StringLiteral(y + x) :: ys
+      case (a, b, op) => List(OperatorError(op, b, a))
+    }
 
   private def postEvaluation(em: EvaluationMode, elem: EvaluatedToken, block: Block, acc: List[EvaluatedToken]): List[EvaluatedToken] =
     em match {

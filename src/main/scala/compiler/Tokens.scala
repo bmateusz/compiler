@@ -278,6 +278,14 @@ object Tokens {
     override val value: String = token.value
   }
 
+  case class UnaryOperatorError(operator: Operators, token: EvaluatedToken) extends EvaluatedToken {
+    override val value: String = s"${operator.value} ${token.value}"
+  }
+
+  case class OperatorError(operator: Operators, a: EvaluatedToken, b: EvaluatedToken) extends EvaluatedToken {
+    override val value: String = s"${a.value} ${operator.value} ${b.value}"
+  }
+
   sealed trait EvaluationErrorToken {
     val value: String
   }
