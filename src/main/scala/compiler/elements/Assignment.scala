@@ -3,18 +3,20 @@ package compiler.elements
 import compiler.Errors.AssignmentError
 import compiler.Expression.EvaluationMode
 import compiler.Tokens.{EvaluatedToken, EvaluationError, Identifier, Indentation, Token, ValueToken}
-import compiler.{Expression, Result}
+import compiler.Types.Type
+import compiler.{Expression, Result, Types}
 
 import scala.annotation.tailrec
 
 case class Assignment(name: Identifier,
+                      typ: Option[Type],
                       expression: Expression) extends Element {
   override def evaluate(block: Block, rest: List[Token], em: EvaluationMode): Result[Assignment] =
     expression.evaluate(block, em) match {
       case EvaluationError(token) :: _ =>
         Result(AssignmentError(token), rest)
       case xs =>
-        Result(Assignment(name, Expression(xs)), rest)
+        Result(Assignment(name, typ, Expression(xs)), rest)
     }
 
   def constantOrIdentifier(): List[EvaluatedToken] =
@@ -34,15 +36,15 @@ case class Assignment(name: Identifier,
 object Assignment {
 
   @tailrec
-  def parse(identifier: Identifier, tokens: List[Token]): Result[Assignment] =
+  def parse(identifier: Identifier, typ: Option[Identifier], tokens: List[Token]): Result[Assignment] =
     tokens match {
       case Indentation(_) :: xs =>
-        parse(identifier, xs)
+        parse(identifier, typ, xs)
       case xs =>
         Expression
           .parse(xs)
           .flatMap { (expression, rest) =>
-            Result(Assignment(identifier, expression), rest)
+            Result(Assignment(identifier, typ.map(t => Types.parse(t.value)), expression), rest)
           }
     }
 

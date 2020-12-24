@@ -24,9 +24,9 @@ class BlockTest extends CompilerSpecs {
     val block = compileSuccess(exampleCode)
     assert(block === Block(
       List(
-        Assignment(Identifier("x"), Expression(List(Integer(1)))),
-        Assignment(Identifier("y"), Expression(List(Floating(3.14)))),
-        Assignment(Identifier("z"), Expression(List(StringLiteral("hello")))),
+        Assignment(Identifier("x"), None, Expression(List(Integer(1)))),
+        Assignment(Identifier("y"), None, Expression(List(Floating(3.14)))),
+        Assignment(Identifier("z"), None, Expression(List(StringLiteral("hello")))),
         Class(Identifier("A"), Parameters(
           List(Parameter(Identifier("z"), Types.String))
         )),
@@ -60,7 +60,7 @@ class BlockTest extends CompilerSpecs {
     assert(block === Block(
       List(
         elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String)))),
-        elements.Assignment(Identifier("a"), Expression(List(ParsedCall(Identifier("A"), Expression(List(Integer(33), Comma, StringLiteral("str")))))))
+        elements.Assignment(Identifier("a"), None, Expression(List(ParsedCall(Identifier("A"), Expression(List(Integer(33), Comma, StringLiteral("str")))))))
       ),
       None
     ))
@@ -68,7 +68,7 @@ class BlockTest extends CompilerSpecs {
     assert(evaluated === Block(
       List(
         elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String)))),
-        elements.Assignment(Identifier("a"), Expression(List(ClassInstance(Identifier("A"), List(List(Integer(33)), List(StringLiteral("str")))))))),
+        elements.Assignment(Identifier("a"), None, Expression(List(ClassInstance(Identifier("A"), List(List(Integer(33)), List(StringLiteral("str")))))))),
       None
     ))
     val expr = parseExpressionSuccess("a.n")

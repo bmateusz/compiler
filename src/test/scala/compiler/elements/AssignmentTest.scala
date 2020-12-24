@@ -11,7 +11,17 @@ class AssignmentTest extends CompilerSpecs {
     val block = compileSuccess("x = 3")
     assert(block === Block(
       List(
-        Assignment(Identifier("x"), Expression(List(Integer(3))))
+        Assignment(Identifier("x"), None, Expression(List(Integer(3))))
+      ),
+      None
+    ))
+  }
+
+  it should "parse simple assignment with type hint" in {
+    val block = compileSuccess("x: Int = 3")
+    assert(block === Block(
+      List(
+        Assignment(Identifier("x"), Some(Types.Integer), Expression(List(Integer(3))))
       ),
       None
     ))
@@ -25,7 +35,7 @@ class AssignmentTest extends CompilerSpecs {
       """)
     assert(block === Block(
       List(
-        elements.Assignment(Identifier("x"), Expression(List(Integer(3), Integer(3), Operator(Add))))
+        elements.Assignment(Identifier("x"), None, Expression(List(Integer(3), Integer(3), Operator(Add))))
       ),
       None
     ))

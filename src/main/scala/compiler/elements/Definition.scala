@@ -16,7 +16,7 @@ case class Definition(name: Identifier,
           .values
           .zip(values)
           .foldLeft(Result(parent)) { case (currBlock, (parameter, value)) =>
-            currBlock.flatMapValue(_.add(Assignment(parameter.identifier, Expression(value)), List.empty))
+            currBlock.flatMapValue(_.add(Assignment(parameter.identifier, None, Expression(value)), List.empty))
           }
           .flatMapValue(parameterBlock => parameterBlock.evaluate(definitionBlock))
       case None =>

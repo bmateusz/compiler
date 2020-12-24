@@ -124,7 +124,7 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
     val expr = parseExpressionSuccess("1 + x - 3")
     assert(expr.tokens === List(Integer(1), Identifier("x"), Operator(Add), Integer(3), Operator(Subtract)))
     val block = Block(
-      List(Assignment(Identifier("x"), Expression(List(Integer(100))))),
+      List(Assignment(Identifier("x"), None, Expression(List(Integer(100))))),
       None
     )
     assert(expr.evaluate(block) === List(Integer(98)))
@@ -136,7 +136,7 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
     val block = Block(
       List(
         Class(Identifier("A"), Parameters(List(Parameter(Identifier("a"), Types.Integer)))),
-        Assignment(Identifier("x"), Expression(List(ClassInstance(Identifier("A"), List(List(Integer(1)))))))
+        Assignment(Identifier("x"), None, Expression(List(ClassInstance(Identifier("A"), List(List(Integer(1)))))))
       ),
       None
     )

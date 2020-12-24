@@ -2,7 +2,7 @@ package compiler.elements
 
 import compiler.Errors.Redefinition
 import compiler.Expression.{EvaluationMode, FullEvaluation}
-import compiler.Tokens.{Class, Def, Enum, Equals, Identifier, Indentation, Token}
+import compiler.Tokens.{Class, Colon, Def, Enum, Equals, Identifier, Indentation, Token}
 import compiler.{Expression, Result}
 
 import scala.annotation.tailrec
@@ -46,7 +46,7 @@ case class Block(elements: List[Element],
   def filtered: Block =
     copy(
       elements.filter {
-        case Assignment(_, _) => false
+        case Assignment(_, _, _) => false
         case _ => true
       },
       None
@@ -95,9 +95,15 @@ object Block {
           .flatMap { (enm, rest) =>
             parse(block.add(enm, rest), indentation)
           }
+      case (identifier: Identifier) :: Colon :: (typ: Identifier) :: Equals :: xs =>
+        Assignment
+          .parse(identifier, Some(typ), xs)
+          .flatMap { (assignment, rest) =>
+            parse(block.add(assignment, rest), indentation)
+          }
       case (identifier: Identifier) :: Equals :: xs =>
         Assignment
-          .parse(identifier, xs)
+          .parse(identifier, None, xs)
           .flatMap { (assignment, rest) =>
             parse(block.add(assignment, rest), indentation)
           }
