@@ -164,7 +164,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
           .splitByComma()
           .map(evaluate(_, block, em))
           .pipe { tokens =>
-            postEvaluation(em, CallDefinition(pc.identifier, List(tokens)), block, acc)
+            postEvaluation(em, CallDefinition(pc.identifier, tokens), block, acc)
           }
       case Some(other) =>
         List(EvaluationError(UnexpectedIdentifier(other.name)))

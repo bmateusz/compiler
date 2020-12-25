@@ -9,14 +9,14 @@ case class Definition(name: Identifier,
                       parameters: Parameters,
                       returnType: Option[Type],
                       block: Option[Block]) extends Element {
-  def call(values: List[List[EvaluatedToken]], parent: Block): Result[Block] =
+  def call(values: List[EvaluatedToken], parent: Block): Result[Block] =
     block match {
       case Some(definitionBlock) =>
         parameters
           .values
           .zip(values)
           .foldLeft(Result(parent)) { case (currBlock, (parameter, value)) =>
-            currBlock.flatMapValue(_.add(Assignment(parameter.identifier, None, Expression(value)), List.empty))
+            currBlock.flatMapValue(_.add(Assignment(parameter.identifier, None, Expression(List(value))), List.empty))
           }
           .flatMapValue(parameterBlock => parameterBlock.evaluate(definitionBlock))
       case None =>

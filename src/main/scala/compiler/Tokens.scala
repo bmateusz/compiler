@@ -314,7 +314,7 @@ object Tokens {
     override val value: String = s"instance ${identifier.value}($values)"
   }
 
-  case class CallDefinition(identifier: Identifier, values: List[List[EvaluatedToken]]) extends EvaluatedToken {
+  case class CallDefinition(identifier: Identifier, values: List[EvaluatedToken]) extends EvaluatedToken {
     override val value: String = s"call ${identifier.value}($values)"
   }
 

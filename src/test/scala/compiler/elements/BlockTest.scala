@@ -116,7 +116,7 @@ class BlockTest extends CompilerSpecs {
         def x(n: Int) = 3 + n
       """))
     val expr = parseExpressionSuccess("x(4)")
-    assert(expr.evaluate(evaluated, SimpleEvaluation) === CallDefinition(Identifier("x"), List(List(Integer(4)))))
+    assert(expr.evaluate(evaluated, SimpleEvaluation) === CallDefinition(Identifier("x"), List(Integer(4))))
     assert(expr.evaluate(evaluated, FullEvaluation) === Integer(7))
   }
 
