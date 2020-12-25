@@ -68,11 +68,11 @@ class BlockTest extends CompilerSpecs {
     assert(evaluated === Block(
       List(
         elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String)))),
-        elements.Assignment(Identifier("a"), None, Expression(List(ClassInstance(Identifier("A"), List(List(Integer(33)), List(StringLiteral("str")))))))),
+        elements.Assignment(Identifier("a"), None, Expression(List(ClassInstance(Identifier("A"), List(Integer(33), StringLiteral("str"))))))),
       None
     ))
     val expr = parseExpressionSuccess("a.n")
-    assert(expr.evaluate(evaluated) === List(Integer(33)))
+    assert(expr.evaluate(evaluated) === Integer(33))
   }
 
   it should "parse assignment of a class of class" in {
@@ -84,7 +84,7 @@ class BlockTest extends CompilerSpecs {
         b = B(a, 2)
       """))
     val expr = parseExpressionSuccess("b.a.n * b.m")
-    assert(expr.evaluate(evaluated) === List(Integer(66)))
+    assert(expr.evaluate(evaluated) === Integer(66))
   }
 
   it should "parse inline assignment of a class of class" in {
@@ -96,7 +96,7 @@ class BlockTest extends CompilerSpecs {
         x = C(B(A(121)))
       """))
     val expr = parseExpressionSuccess("x.b.a.n")
-    assert(expr.evaluate(evaluated) === List(Integer(121)))
+    assert(expr.evaluate(evaluated) === Integer(121))
   }
 
   it should "parse assignment of a class aliased" in {
@@ -107,7 +107,7 @@ class BlockTest extends CompilerSpecs {
         b = a
       """))
     val expr = parseExpressionSuccess("b.n")
-    assert(expr.evaluate(evaluated) === List(Integer(2)))
+    assert(expr.evaluate(evaluated) === Integer(2))
   }
 
   it should "parse call of a definition" in {
@@ -116,8 +116,8 @@ class BlockTest extends CompilerSpecs {
         def x(n: Int) = 3 + n
       """))
     val expr = parseExpressionSuccess("x(4)")
-    assert(expr.evaluate(evaluated, SimpleEvaluation) === List(CallDefinition(Identifier("x"), List(List(Integer(4))))))
-    assert(expr.evaluate(evaluated, FullEvaluation) === List(Integer(7)))
+    assert(expr.evaluate(evaluated, SimpleEvaluation) === CallDefinition(Identifier("x"), List(List(Integer(4)))))
+    assert(expr.evaluate(evaluated, FullEvaluation) === Integer(7))
   }
 
   it should "full evaluate definition" in {
@@ -126,7 +126,7 @@ class BlockTest extends CompilerSpecs {
         def incByThree(n: Int) = 3 + n
       """))
     val expr = parseExpressionSuccess("incByThree(5) + 4")
-    assert(expr.evaluate(evaluated, FullEvaluation) === List(Integer(12)))
+    assert(expr.evaluate(evaluated, FullEvaluation) === Integer(12))
   }
 
   it should "full evaluate transitive definition" in {
@@ -137,7 +137,7 @@ class BlockTest extends CompilerSpecs {
         def c(str: String) = b("c" + str)
       """))
     val expr = parseExpressionSuccess("c(\"d\") + \"e\"")
-    assert(expr.evaluate(evaluated, FullEvaluation) === List(StringLiteral("abcde")))
+    assert(expr.evaluate(evaluated, FullEvaluation) === StringLiteral("abcde"))
   }
 
 }

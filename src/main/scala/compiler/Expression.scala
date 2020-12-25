@@ -10,10 +10,10 @@ import scala.util.chaining.scalaUtilChainingOps
 
 case class Expression(tokens: List[EvaluatedToken]) {
 
-  def evaluate(block: Block = Block.empty, em: EvaluationMode = SimpleEvaluation): List[EvaluatedToken] =
+  def evaluate(block: Block = Block.empty, em: EvaluationMode = SimpleEvaluation): EvaluatedToken =
     evaluate(tokens, block, em)
 
-  def evaluate(tokens: List[EvaluatedToken], block: Block, em: EvaluationMode): List[EvaluatedToken] = tokens.foldLeft(List.empty[EvaluatedToken]) {
+  def evaluate(tokens: List[EvaluatedToken], block: Block, em: EvaluationMode): EvaluatedToken = tokens.foldLeft(List.empty[EvaluatedToken]) {
     case ((ee: EvaluationError) :: Nil, _) => List(ee)
     case ((field: Identifier) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
       dot(block, identifier, field, xs)
@@ -42,6 +42,10 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case SimpleEvaluation =>
         evaluatedTokens
     }
+  }.pipe {
+    case Nil => Pass
+    case token :: Nil => token
+    case more => EvaluationError(TooManyEvaluatedToken(more))
   }
 
   def unaryOperator(x: ValueToken, xs: List[EvaluatedToken]): List[EvaluatedToken] =
@@ -99,7 +103,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
             case Right(block) =>
               block.expression match {
                 case Some(expr) =>
-                  expr.evaluate(block, FullEvaluation)
+                  List(expr.evaluate(block, FullEvaluation))
                 case None =>
                   List(cd)
               }
@@ -116,7 +120,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case Some(cls: Class) =>
         cls.parameters.findParameter(field) match {
           case Some((parameter, n)) =>
-            cli.values(n) ++ xs
+            cli.values(n) +: xs
           case None =>
             List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
         }
@@ -160,7 +164,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
           .splitByComma()
           .map(evaluate(_, block, em))
           .pipe { tokens =>
-            postEvaluation(em, CallDefinition(pc.identifier, tokens), block, acc)
+            postEvaluation(em, CallDefinition(pc.identifier, List(tokens)), block, acc)
           }
       case Some(other) =>
         List(EvaluationError(UnexpectedIdentifier(other.name)))

@@ -16,8 +16,8 @@ class ReplTest extends CompilerSpecs {
     override def println(elements: List[Element]): Unit =
       results.addOne(elements.toString)
 
-    override def printlnEvaluation(tokens: List[Tokens.EvaluatedToken]): Unit =
-      results.addOne(tokens.toString)
+    override def printlnEvaluation(token: Tokens.EvaluatedToken): Unit =
+      results.addOne(token.toString)
 
     override def printlnError(errors: List[Errors.CompilerError]): Unit =
       results.addOne(errors.toString)
@@ -26,7 +26,7 @@ class ReplTest extends CompilerSpecs {
   it should "parse expression" in {
     val repl = MockRepl(mutable.Queue("12 + 4"))
     repl.repl()
-    assert(repl.results.toList === List("List(Integer(16))"))
+    assert(repl.results.toList === List("Integer(16)"))
   }
 
   it should "parse assignment" in {
@@ -38,19 +38,19 @@ class ReplTest extends CompilerSpecs {
   it should "evaluate assignments" in {
     val repl = MockRepl(mutable.Queue("x = 12", "y = 24", "x + y"))
     repl.repl()
-    assert(repl.results.lastOption === Some("List(Integer(36))"))
+    assert(repl.results.lastOption === Some("Integer(36)"))
   }
 
   it should "evaluate class assignments" in {
     val repl = MockRepl(mutable.Queue("class A(x:Int)", "a = A(232)", "a.x"))
     repl.repl()
-    assert(repl.results.lastOption === Some("List(Integer(232))"))
+    assert(repl.results.lastOption === Some("Integer(232)"))
   }
 
   it should "evaluate multiple class assignments" in {
     val repl = MockRepl(mutable.Queue("class A(x:Int)", "a = A(232)", "b = A(444)", "b.x"))
     repl.repl()
-    assert(repl.results.lastOption === Some("List(Integer(444))"))
+    assert(repl.results.lastOption === Some("Integer(444)"))
   }
 
   it should "parse invalid block" in {

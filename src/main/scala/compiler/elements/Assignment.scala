@@ -13,10 +13,10 @@ case class Assignment(name: Identifier,
                       expression: Expression) extends Element {
   override def evaluate(block: Block, rest: List[Token], em: EvaluationMode): Result[Assignment] =
     expression.evaluate(block, em) match {
-      case EvaluationError(token) :: _ =>
+      case EvaluationError(token) =>
         Result(AssignmentError(token), rest)
-      case xs =>
-        Result(Assignment(name, typ, Expression(xs)), rest)
+      case other =>
+        Result(Assignment(name, typ, Expression(List(other))), rest)
     }
 
   def constantOrIdentifier(): List[EvaluatedToken] =

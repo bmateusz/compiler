@@ -14,7 +14,7 @@ trait Repl {
 
   def println(elements: List[Element]): Unit
 
-  def printlnEvaluation(tokens: List[EvaluatedToken]): Unit
+  def printlnEvaluation(tokens: EvaluatedToken): Unit
 
   def printlnError(errors: List[CompilerError]): Unit
 

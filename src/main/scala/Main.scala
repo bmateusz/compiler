@@ -39,8 +39,8 @@ object Main {
       override def println(elements: List[Element]): Unit =
         Console.out.println(elements)
 
-      override def printlnEvaluation(tokens: List[Tokens.EvaluatedToken]): Unit =
-        Console.out.println(tokens.mkString(" "))
+      override def printlnEvaluation(token: Tokens.EvaluatedToken): Unit =
+        Console.out.println(token)
 
       override def printlnError(errors: List[CompilerError]): Unit =
         Console.err.println(errors.mkString("\n"))

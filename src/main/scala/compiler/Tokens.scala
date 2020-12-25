@@ -302,7 +302,15 @@ object Tokens {
     override val value: String = s"${token.value}, ${acc.map(_.value)}"
   }
 
-  case class ClassInstance(identifier: Identifier, values: List[List[EvaluatedToken]]) extends EvaluatedToken {
+  case class TooManyEvaluatedToken(tokens: List[EvaluatedToken]) extends EvaluationErrorToken {
+    override val value: String = tokens.map(_.value).mkString(", ")
+  }
+
+  case object Pass extends EvaluatedToken {
+    override val value: String = "pass"
+  }
+
+  case class ClassInstance(identifier: Identifier, values: List[EvaluatedToken]) extends EvaluatedToken {
     override val value: String = s"instance ${identifier.value}($values)"
   }
 
