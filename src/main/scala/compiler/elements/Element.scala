@@ -6,7 +6,7 @@ import compiler.Result
 import compiler.Tokens.{Identifier, Token}
 
 trait Element {
-  val name: Identifier
+  def name: Identifier
 
   def evaluate(block: Block, rest: List[Token], em: EvaluationMode): Result[Element] =
     block.get(name) match {

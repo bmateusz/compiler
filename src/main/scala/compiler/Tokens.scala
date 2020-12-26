@@ -71,7 +71,7 @@ object Tokens {
   }
 
   sealed trait EvaluatedToken {
-    val value: String
+    def value: String
 
     def length: Int = value.length
   }
@@ -81,7 +81,7 @@ object Tokens {
   sealed trait Token extends ParsedToken
 
   case class Indentation(override val length: Int) extends Token {
-    override val value: String = "\n" + " " * length
+    override def value: String = "\n" + " " * length
   }
 
   case object Def extends Token {
@@ -145,9 +145,9 @@ object Tokens {
   }
 
   sealed trait Operators {
-    val value: String
-    val precedence: Int
-    val leftAssociative: Boolean
+    def value: String
+    def precedence: Int
+    def leftAssociative: Boolean
 
     def hasGreaterPrecedenceThan(other: Operators): Boolean =
       precedence > other.precedence || (precedence == other.precedence && other.leftAssociative)
@@ -190,7 +190,7 @@ object Tokens {
   }
 
   case class Operator(op: Operators) extends Token {
-    override val value: String = op.value
+    override def value: String = op.value
   }
 
   object SimpleTokens {
@@ -259,15 +259,15 @@ object Tokens {
   }
 
   case class Integer(integer: Long) extends ValueToken {
-    override val value: String = integer.toString
+    override def value: String = integer.toString
   }
 
   case class Floating(double: Double) extends ValueToken {
-    override val value: String = double.toString
+    override def value: String = double.toString
   }
 
   case class ParsedCall(identifier: Identifier, expression: Expression) extends ParsedToken {
-    override val value: String = s"${identifier.value}(${expression.tokens})"
+    override def value: String = s"${identifier.value}(${expression.tokens})"
   }
 
   case object EndMarker extends ParsedToken {
@@ -275,19 +275,19 @@ object Tokens {
   }
 
   case class EvaluationError(token: EvaluationErrorToken) extends EvaluatedToken {
-    override val value: String = token.value
+    override def value: String = token.value
   }
 
   case class UnaryOperatorError(operator: Operators, token: EvaluatedToken) extends EvaluatedToken {
-    override val value: String = s"${operator.value} ${token.value}"
+    override def value: String = s"${operator.value} ${token.value}"
   }
 
   case class OperatorError(operator: Operators, a: EvaluatedToken, b: EvaluatedToken) extends EvaluatedToken {
-    override val value: String = s"${a.value} ${operator.value} ${b.value}"
+    override def value: String = s"${a.value} ${operator.value} ${b.value}"
   }
 
   sealed trait EvaluationErrorToken {
-    val value: String
+    def value: String
   }
 
   case object DivisionByZero extends EvaluationErrorToken {
@@ -295,15 +295,15 @@ object Tokens {
   }
 
   case class UnexpectedIdentifier(token: Token) extends EvaluationErrorToken {
-    override val value: String = token.value
+    override def value: String = token.value
   }
 
   case class UnexpectedEvaluation(acc: List[EvaluatedToken], token: EvaluatedToken) extends EvaluationErrorToken {
-    override val value: String = s"${token.value}, ${acc.map(_.value)}"
+    override def value: String = s"${token.value}, ${acc.map(_.value)}"
   }
 
   case class TooManyEvaluatedToken(tokens: List[EvaluatedToken]) extends EvaluationErrorToken {
-    override val value: String = tokens.map(_.value).mkString(", ")
+    override def value: String = tokens.map(_.value).mkString(", ")
   }
 
   case object Pass extends EvaluatedToken {
@@ -311,11 +311,11 @@ object Tokens {
   }
 
   case class ClassInstance(identifier: Identifier, values: List[EvaluatedToken]) extends EvaluatedToken {
-    override val value: String = s"instance ${identifier.value}($values)"
+    override def value: String = s"instance ${identifier.value}($values)"
   }
 
   case class CallDefinition(identifier: Identifier, values: List[EvaluatedToken]) extends EvaluatedToken {
-    override val value: String = s"call ${identifier.value}($values)"
+    override def value: String = s"call ${identifier.value}($values)"
   }
 
 }

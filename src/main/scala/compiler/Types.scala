@@ -6,7 +6,7 @@ object Types {
     simpleTypesMap.getOrElse(name, UnknownType(name))
 
   sealed trait Type {
-    val name: String
+    def name: String
   }
 
   case class UnknownType(override val name: String) extends Type
