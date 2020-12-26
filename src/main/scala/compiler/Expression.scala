@@ -52,7 +52,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
     x match {
       case Integer(integer) => Integer(-integer) :: xs
       case Floating(double) => Floating(-double) :: xs
-      case value: StringLiteral => List(UnaryOperatorError(Negate, value))
+      case value: StringLiteral => List(EvaluationError(UnaryOperatorError(Negate, value)))
     }
 
   def operator(x: ValueToken, y: ValueToken, ys: List[EvaluatedToken], op: Operators): List[EvaluatedToken] =
@@ -75,7 +75,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case (Floating(x), Floating(y), Multiply) => Floating(y * x) :: ys
       case (Floating(x), Floating(y), Divide) => Floating(y / x) :: ys
       case (StringLiteral(x), StringLiteral(y), Add) => StringLiteral(y + x) :: ys
-      case (a, b, op) => List(OperatorError(op, b, a))
+      case (a, b, op) => List(EvaluationError(OperatorError(op, b, a)))
     }
 
   private def postEvaluation(em: EvaluationMode, elem: EvaluatedToken, block: Block, acc: List[EvaluatedToken]): List[EvaluatedToken] =

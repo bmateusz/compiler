@@ -278,16 +278,16 @@ object Tokens {
     override def value: String = token.value
   }
 
-  case class UnaryOperatorError(operator: Operators, token: EvaluatedToken) extends EvaluatedToken {
+  sealed trait EvaluationErrorToken {
+    def value: String
+  }
+
+  case class UnaryOperatorError(operator: Operators, token: EvaluatedToken) extends EvaluationErrorToken {
     override def value: String = s"${operator.value} ${token.value}"
   }
 
-  case class OperatorError(operator: Operators, a: EvaluatedToken, b: EvaluatedToken) extends EvaluatedToken {
+  case class OperatorError(operator: Operators, a: EvaluatedToken, b: EvaluatedToken) extends EvaluationErrorToken {
     override def value: String = s"${a.value} ${operator.value} ${b.value}"
-  }
-
-  sealed trait EvaluationErrorToken {
-    def value: String
   }
 
   case object DivisionByZero extends EvaluationErrorToken {
