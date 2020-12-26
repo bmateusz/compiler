@@ -310,12 +310,12 @@ object Tokens {
     override val value: String = "pass"
   }
 
-  case class ClassInstance(identifier: Identifier, values: List[EvaluatedToken]) extends EvaluatedToken {
-    override def value: String = s"instance ${identifier.value}($values)"
+  case class ClassInstance(cls: elements.Class, values: List[EvaluatedToken]) extends EvaluatedToken {
+    override def value: String = s"instance ${cls.name.value}($values)"
   }
 
-  case class CallDefinition(identifier: Identifier, values: List[EvaluatedToken]) extends EvaluatedToken {
-    override def value: String = s"call ${identifier.value}($values)"
+  case class CallDefinition(definition: elements.Definition, values: List[EvaluatedToken]) extends EvaluatedToken {
+    override def value: String = s"call ${definition.name.value}($values)"
   }
 
 }

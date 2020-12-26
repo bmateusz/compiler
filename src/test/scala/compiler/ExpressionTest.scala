@@ -133,10 +133,11 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
   it should "evaluate class field" in {
     val expr = parseExpressionSuccess("1 + x.a - 3")
     assert(expr.tokens === List(Integer(1), Identifier("x"), Identifier("a"), Operator(Dot), Operator(Add), Integer(3), Operator(Subtract)))
+    val cls = Class(Identifier("A"), Parameters(List(Parameter(Identifier("a"), Types.Integer))))
     val block = Block(
       List(
-        Class(Identifier("A"), Parameters(List(Parameter(Identifier("a"), Types.Integer)))),
-        Assignment(Identifier("x"), None, Expression(List(ClassInstance(Identifier("A"), List(Integer(1))))))
+        cls,
+        Assignment(Identifier("x"), None, Expression(List(ClassInstance(cls, List(Integer(1))))))
       ),
       None
     )

@@ -2,7 +2,7 @@ package compiler.elements
 
 import compiler.Errors.Redefinition
 import compiler.Expression.{FullEvaluation, SimpleEvaluation}
-import compiler.Tokens.{CallDefinition, ClassInstance, Comma, Floating, Identifier, Integer, Multiply, Operator, ParsedCall, StringLiteral}
+import compiler.Tokens.{Add, CallDefinition, ClassInstance, Comma, Floating, Identifier, Integer, Multiply, Operator, ParsedCall, StringLiteral}
 import compiler.elements.Parameters.Parameter
 import compiler.{CompilerSpecs, Expression, Types, elements}
 
@@ -65,10 +65,11 @@ class BlockTest extends CompilerSpecs {
       None
     ))
     val evaluated = evaluateBlock(block)
+    val cls = elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String))))
     assert(evaluated === Block(
       List(
-        elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String)))),
-        elements.Assignment(Identifier("a"), None, Expression(List(ClassInstance(Identifier("A"), List(Integer(33), StringLiteral("str"))))))),
+        cls,
+        elements.Assignment(Identifier("a"), None, Expression(List(ClassInstance(cls, List(Integer(33), StringLiteral("str"))))))),
       None
     ))
     val expr = parseExpressionSuccess("a.n")
@@ -116,7 +117,8 @@ class BlockTest extends CompilerSpecs {
         def x(n: Int) = 3 + n
       """))
     val expr = parseExpressionSuccess("x(4)")
-    assert(expr.evaluate(evaluated, SimpleEvaluation) === CallDefinition(Identifier("x"), List(Integer(4))))
+    val definitino = Definition(Identifier("x"), Parameters(List(Parameter(Identifier("n"), Types.Integer))), None, Some(Block(List(), Some(Expression(List(Integer(3), Identifier("n"), Operator(Add)))))))
+    assert(expr.evaluate(evaluated, SimpleEvaluation) === CallDefinition(definitino, List(Integer(4))))
     assert(expr.evaluate(evaluated, FullEvaluation) === Integer(7))
   }
 

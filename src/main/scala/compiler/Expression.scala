@@ -94,38 +94,28 @@ case class Expression(tokens: List[EvaluatedToken]) {
         case _ =>
           List(identifier)
       }
-    case cd@CallDefinition(identifier, values) =>
-      block.get(identifier) match {
-        case Some(definition: Definition) =>
-          definition.call(values, block.filtered).value match {
-            case Left(_) =>
-              List(cd)
-            case Right(block) =>
-              block.expression match {
-                case Some(expr) =>
-                  List(expr.evaluate(block, FullEvaluation))
-                case None =>
-                  List(cd)
-              }
-          }
-        case _ =>
+    case cd@CallDefinition(definition, values) =>
+      definition.call(values, block.filtered).value match {
+        case Left(_) =>
           List(cd)
+        case Right(block) =>
+          block.expression match {
+            case Some(expr) =>
+              List(expr.evaluate(block, FullEvaluation))
+            case None =>
+              List(cd)
+          }
       }
     case other =>
       List(other)
   }
 
   private def dot(block: Block, cli: ClassInstance, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
-    block.get(cli.identifier) match {
-      case Some(cls: Class) =>
-        cls.parameters.findParameter(field) match {
-          case Some((parameter, n)) =>
-            cli.values(n) +: xs
-          case None =>
-            List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
-        }
+    cli.cls.parameters.findParameter(field) match {
+      case Some((parameter, n)) =>
+        cli.values(n) +: xs
       case None =>
-        List(EvaluationError(UnexpectedIdentifier(cli.identifier)))
+        List(EvaluationError(UnexpectedIdentifier(cli.cls.name)))
     }
 
   @tailrec
@@ -156,7 +146,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
           .splitByComma()
           .map(evaluate(_, block, em))
           .pipe { tokens =>
-            postEvaluation(em, ClassInstance(pc.identifier, tokens), block, acc)
+            postEvaluation(em, ClassInstance(cls, tokens), block, acc)
           }
       case Some(df: Definition) =>
         pc.expression
@@ -164,7 +154,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
           .splitByComma()
           .map(evaluate(_, block, em))
           .pipe { tokens =>
-            postEvaluation(em, CallDefinition(pc.identifier, tokens), block, acc)
+            postEvaluation(em, CallDefinition(df, tokens), block, acc)
           }
       case Some(other) =>
         List(EvaluationError(UnexpectedIdentifier(other.name)))
