@@ -32,7 +32,7 @@ class ReplTest extends CompilerSpecs {
   it should "parse assignment" in {
     val repl = MockRepl(mutable.Queue("x = 1"))
     repl.repl()
-    assert(repl.results.toList === List("List(Assignment(Identifier(x),None,Expression(List(Integer(1)))))"))
+    assert(repl.results.toList === List("List(Assignment(Identifier(x),Some(Integer),Expression(List(Integer(1)))))"))
   }
 
   it should "evaluate assignments" in {

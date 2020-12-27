@@ -1,8 +1,9 @@
 package compiler.elements
 
-import compiler.Errors.Redefinition
+import compiler.Errors.{Redefinition, TypeError}
 import compiler.Expression.{FullEvaluation, SimpleEvaluation}
 import compiler.Tokens.{Add, CallDefinition, ClassInstance, Comma, Floating, Identifier, Integer, Multiply, Operator, ParsedCall, StringLiteral}
+import compiler.Types.UnknownType
 import compiler.elements.Parameters.Parameter
 import compiler.{CompilerSpecs, Expression, Types, elements}
 
@@ -69,7 +70,7 @@ class BlockTest extends CompilerSpecs {
     assert(evaluated === Block(
       List(
         cls,
-        elements.Assignment(Identifier("a"), None, Expression(List(ClassInstance(cls, List(Integer(33), StringLiteral("str"))))))),
+        elements.Assignment(Identifier("a"), Some(UnknownType("A")), Expression(List(ClassInstance(cls, List(Integer(33), StringLiteral("str"))))))),
       None
     ))
     val expr = parseExpressionSuccess("a.n")
@@ -140,6 +141,14 @@ class BlockTest extends CompilerSpecs {
       """))
     val expr = parseExpressionSuccess("c(\"d\") + \"e\"")
     assert(expr.evaluate(evaluated, FullEvaluation) === StringLiteral("abcde"))
+  }
+
+  it should "check types in assignment" in {
+    val evaluated = evaluateBlockError(compileSuccess(
+      """
+        x: Int = "must be type error"
+      """))
+    assert(evaluated === List(TypeError(Types.String, Types.Integer)))
   }
 
 }

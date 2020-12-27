@@ -43,4 +43,7 @@ trait CompilerSpecs extends AnyFlatSpec with EitherValues {
   def evaluateBlock(block: Block): Block =
     block.evaluate().value.right.value
 
+  def evaluateBlockError(block: Block): List[CompilerError] =
+    block.evaluate().value.left.value
+
 }

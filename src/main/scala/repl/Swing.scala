@@ -2,9 +2,9 @@ package repl
 
 import compiler.Errors.CompilerError
 import compiler.Expression.FullEvaluation
+import compiler.SourceFile
 import compiler.Tokens.EvaluatedToken
 import compiler.elements.{Block, Element}
-import compiler.{Expression, SourceFile}
 
 import java.awt.event._
 import java.awt.{Font, GridBagConstraints, GridBagLayout}
@@ -15,7 +15,7 @@ object Swing {
 
   private val newline = "\n"
 
-  private def createAndShowGUI(): Unit = { //Create and set up the window.
+  private def createAndShowGUI(): Unit = {
     val frame = new JFrame("CompilerUi")
     frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
     frame.add(new CompilerUi)
@@ -80,12 +80,10 @@ object Swing {
                     case Left(evaluationError) =>
                       setOutputError(evaluationError)
                     case Right(evaluatedBlock) =>
-                      newBlock.expression match {
-                        case Some(expr: Expression) =>
-                          setOutput(evaluatedBlock.sortedElements, Some(expr.evaluate(evaluatedBlock, FullEvaluation)))
-                        case _ =>
-                          setOutput(evaluatedBlock.sortedElements, None)
-                      }
+                      setOutput(
+                        evaluatedBlock.sortedElements,
+                        newBlock.expression.map(_.evaluate(evaluatedBlock, FullEvaluation))
+                      )
                   }
                 case Left(compileError) =>
                   setOutputError(compileError)

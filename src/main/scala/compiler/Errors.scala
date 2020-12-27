@@ -52,6 +52,8 @@ object Errors {
 
   case class AssignmentError(token: EvaluationErrorToken) extends CompilerError
 
+  case class TypeError(calculated: Type, provided: Type) extends CompilerError
+
   case class FileError(arg: String, throwable: Throwable) extends CompilerError
 
   case class UnparsedTokens(tokens: List[Token]) extends CompilerError

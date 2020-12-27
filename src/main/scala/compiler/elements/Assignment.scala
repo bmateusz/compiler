@@ -1,6 +1,6 @@
 package compiler.elements
 
-import compiler.Errors.AssignmentError
+import compiler.Errors.{AssignmentError, TypeError}
 import compiler.Expression.EvaluationMode
 import compiler.Tokens.{EvaluatedToken, EvaluationError, Identifier, Indentation, Token, ValueToken}
 import compiler.Types.Type
@@ -15,8 +15,17 @@ case class Assignment(name: Identifier,
     expression.evaluate(block, em) match {
       case EvaluationError(token) =>
         Result(AssignmentError(token), rest)
-      case other =>
-        Result(Assignment(name, typ, Expression(List(other))), rest)
+      case evaluatedToken =>
+        val calculatedType = Types.fromEvaluatedToken(evaluatedToken)
+        typ match {
+          case Some(providedType) =>
+            if (calculatedType == providedType)
+              Result(Assignment(name, typ, Expression(List(evaluatedToken))), rest)
+            else
+              Result(TypeError(calculatedType, providedType), rest)
+          case None =>
+            Result(Assignment(name, Some(calculatedType), Expression(List(evaluatedToken))), rest)
+        }
     }
 
   def constantOrIdentifier(): List[EvaluatedToken] =
