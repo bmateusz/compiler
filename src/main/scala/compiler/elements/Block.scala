@@ -58,63 +58,67 @@ object Block {
   val empty: Block =
     Block(List.empty, None)
 
-  def parse(result: Result[Block], indentation: List[Indentation]): Result[Block] =
-    result.flatMap((block, rest) => parse(rest, block, indentation))
+  def parse(result: Result[Block], indentation: List[Indentation], exprs: Boolean): Result[Block] =
+    result.flatMap((block, rest) => parse(rest, block, indentation, exprs))
 
   @tailrec
-  def parse(tokens: List[Token], block: Block, indentation: List[Indentation]): Result[Block] =
+  def parse(tokens: List[Token], block: Block, indentation: List[Indentation], exprs: Boolean): Result[Block] =
     tokens match {
       case (current: Indentation) :: xs =>
-        indentation match {
-          case Indentation(length) :: _ if current.length == length =>
-            parse(xs, block, indentation)
-          case Indentation(length) :: _ if current.length > length =>
-            parse(xs, block, indentation :+ current)
-          case Indentation(length) :: Nil if current.length < length =>
-            Result(block, tokens)
-          case Indentation(length) :: indentationRest if current.length < length =>
-            parse(xs, block, indentationRest)
-          case Nil =>
-            parse(xs, block, List(current))
+        indentation.lastOption match {
+          case Some(Indentation(length)) if current.length == length =>
+            parse(xs, block, indentation, exprs)
+          case Some(Indentation(length)) if current.length > length =>
+            parse(xs, block, indentation :+ current, exprs)
+          case Some(Indentation(length)) if current.length < length =>
+            if (indentation.size == 1)
+              Result(block, tokens)
+            else
+              parse(xs, block, indentation.filter(current.length < _.length), exprs)
+          case None =>
+            parse(xs, block, List(current), exprs)
         }
       case Def :: xs =>
         Definition
           .parse(xs, top(indentation))
           .flatMap { (definition, rest) =>
-            parse(block.add(definition, rest), indentation)
+            parse(block.add(definition, rest), indentation, exprs)
           }
       case Class :: xs =>
         compiler.elements.Class
           .parse(xs, top(indentation))
           .flatMap { (cls, rest) =>
-            parse(block.add(cls, rest), indentation)
+            parse(block.add(cls, rest), indentation, exprs)
           }
       case Enum :: xs =>
         compiler.elements.Enum
           .parse(xs)
           .flatMap { (enm, rest) =>
-            parse(block.add(enm, rest), indentation)
+            parse(block.add(enm, rest), indentation, exprs)
           }
       case (identifier: Identifier) :: Colon :: (typ: Identifier) :: Equals :: xs =>
         Assignment
           .parse(identifier, Some(typ), xs)
           .flatMap { (assignment, rest) =>
-            parse(block.add(assignment, rest), indentation)
+            parse(block.add(assignment, rest), indentation, exprs)
           }
       case (identifier: Identifier) :: Equals :: xs =>
         Assignment
           .parse(identifier, None, xs)
           .flatMap { (assignment, rest) =>
-            parse(block.add(assignment, rest), indentation)
+            parse(block.add(assignment, rest), indentation, exprs)
           }
       case Nil =>
         Result(block)
       case others =>
-        Expression
-          .parse(others)
-          .flatMap { (expr, rest) =>
-            Result(block.set(expr), rest)
-          }
+        if (exprs)
+          Expression
+            .parse(others)
+            .flatMap { (expr, rest) =>
+              Result(block.set(expr), rest)
+            }
+        else
+          Result(block, others)
     }
 
   private def top(indentations: List[Indentation]) =

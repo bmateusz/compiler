@@ -151,4 +151,15 @@ class BlockTest extends CompilerSpecs {
     assert(evaluated === List(TypeError(Types.String, Types.Integer)))
   }
 
+  it should "handle indentation of classes and defs" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        class A(x: Int)
+          def t() = 3 + x
+
+        a = A(3)
+      """))
+    assert(evaluated.elements.size === 2)
+  }
+
 }
