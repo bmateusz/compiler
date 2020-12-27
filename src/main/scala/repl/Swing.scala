@@ -17,7 +17,7 @@ object Swing {
 
   private def createAndShowGUI(): Unit = { //Create and set up the window.
     val frame = new JFrame("CompilerUi")
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+    frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
     frame.add(new CompilerUi)
     frame.pack()
     frame.setVisible(true)
