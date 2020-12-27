@@ -2,14 +2,15 @@ package compiler.elements
 
 import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType}
 import compiler.Result
-import compiler.Tokens.{Identifier, Token}
+import compiler.Tokens.{Identifier, Indentation, Token}
 
 case class Class(name: Identifier,
-                 parameters: Parameters) extends Element
+                 parameters: Parameters,
+                 block: Block) extends Element
 
 object Class {
 
-  def parse(tokens: List[Token]): Result[Class] =
+  def parse(tokens: List[Token], indentation: Indentation): Result[Class] =
     tokens match {
       case (identifier: Identifier) :: xs =>
         Parameters
@@ -18,10 +19,12 @@ object Class {
             case ((_, Some(typ)), rest) =>
               Result(UnexpectedReturnType(typ), rest)
             case ((parameters, None), rest) =>
-              Result(
-                Class(identifier, parameters),
-                rest
-              )
+              Block.parse(rest, Block.empty, List(indentation.right)).flatMap { (resultBlock, resultRest) =>
+                Result(
+                  Class(identifier, parameters, resultBlock),
+                  resultRest
+                )
+              }
           }
       case other :: xs =>
         Result(ExpectedIdentifier(Some(other)), xs)

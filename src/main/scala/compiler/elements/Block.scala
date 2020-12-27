@@ -79,13 +79,13 @@ object Block {
         }
       case Def :: xs =>
         Definition
-          .parse(xs)
+          .parse(xs, top(indentation))
           .flatMap { (definition, rest) =>
             parse(block.add(definition, rest), indentation)
           }
       case Class :: xs =>
         compiler.elements.Class
-          .parse(xs)
+          .parse(xs, top(indentation))
           .flatMap { (cls, rest) =>
             parse(block.add(cls, rest), indentation)
           }
@@ -116,5 +116,8 @@ object Block {
             Result(block.set(expr), rest)
           }
     }
+
+  private def top(indentations: List[Indentation]) =
+    indentations.lastOption.getOrElse(Indentation(0))
 
 }

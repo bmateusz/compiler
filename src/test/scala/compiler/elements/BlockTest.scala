@@ -30,7 +30,7 @@ class BlockTest extends CompilerSpecs {
         Assignment(Identifier("z"), None, Expression(List(StringLiteral("hello")))),
         Class(Identifier("A"), Parameters(
           List(Parameter(Identifier("z"), Types.String))
-        )),
+        ), Block.empty),
         Definition(
           Identifier("function"), Parameters(
             List(Parameter(Identifier("parameter"), Types.Integer))
@@ -60,13 +60,13 @@ class BlockTest extends CompilerSpecs {
       """)
     assert(block === Block(
       List(
-        elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String)))),
+        elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String))), Block.empty),
         elements.Assignment(Identifier("a"), None, Expression(List(ParsedCall(Identifier("A"), Expression(List(Integer(33), Comma, StringLiteral("str")))))))
       ),
       None
     ))
     val evaluated = evaluateBlock(block)
-    val cls = elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String))))
+    val cls = elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String))), Block.empty)
     assert(evaluated === Block(
       List(
         cls,

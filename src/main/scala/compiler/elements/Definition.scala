@@ -1,7 +1,7 @@
 package compiler.elements
 
 import compiler.Errors.{DefinitionWithoutBody, ExpectedIdentifier, UnexpectedToken}
-import compiler.Tokens.{Equals, EvaluatedToken, Identifier, Token}
+import compiler.Tokens.{Equals, EvaluatedToken, Identifier, Indentation, Token}
 import compiler.Types.Type
 import compiler.{Expression, Result}
 
@@ -26,14 +26,14 @@ case class Definition(name: Identifier,
 
 object Definition {
 
-  def parse(tokens: List[Token]): Result[Definition] =
+  def parse(tokens: List[Token], indentation: Indentation): Result[Definition] =
     tokens match {
       case (identifier: Identifier) :: xs =>
         Parameters
           .parse(xs)
           .flatMap {
             case ((parameters, returnType), Equals :: rest) =>
-              Block.parse(rest, Block.empty, List.empty).flatMap { (resultBlock, resultRest) =>
+              Block.parse(rest, Block.empty, List(indentation.right)).flatMap { (resultBlock, resultRest) =>
                 Result(
                   Definition(identifier, parameters, returnType, Some(resultBlock)),
                   resultRest
