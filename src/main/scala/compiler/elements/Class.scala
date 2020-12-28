@@ -19,7 +19,7 @@ object Class {
             case ((_, Some(typ)), rest) =>
               Result(UnexpectedReturnType(typ), rest)
             case ((parameters, None), rest) =>
-              Block.parse(rest, Block.empty, List(indentation.right), exprs = false).flatMap { (resultBlock, resultRest) =>
+              Block.parse(rest, Block.empty, Some(indentation.right), exprs = false).flatMap { (resultBlock, resultRest) =>
                 Result(
                   Class(identifier, parameters, resultBlock),
                   resultRest

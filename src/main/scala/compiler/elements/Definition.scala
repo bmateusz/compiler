@@ -33,7 +33,7 @@ object Definition {
           .parse(xs)
           .flatMap {
             case ((parameters, returnType), Equals :: rest) =>
-              Block.parse(rest, Block.empty, List(indentation), exprs = true).flatMap { (resultBlock, resultRest) =>
+              Block.parse(rest, Block.empty, Some(indentation.right), exprs = true).flatMap { (resultBlock, resultRest) =>
                 Result(
                   Definition(identifier, parameters, returnType, Some(resultBlock)),
                   resultRest

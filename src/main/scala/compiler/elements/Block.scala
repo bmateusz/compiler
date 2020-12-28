@@ -58,25 +58,22 @@ object Block {
   val empty: Block =
     Block(List.empty, None)
 
-  def parse(result: Result[Block], indentation: List[Indentation], exprs: Boolean): Result[Block] =
+  def parse(result: Result[Block], indentation: Option[Indentation], exprs: Boolean): Result[Block] =
     result.flatMap((block, rest) => parse(rest, block, indentation, exprs))
 
   @tailrec
-  def parse(tokens: List[Token], block: Block, indentation: List[Indentation], exprs: Boolean): Result[Block] =
+  def parse(tokens: List[Token], block: Block, indentation: Option[Indentation], exprs: Boolean): Result[Block] =
     tokens match {
       case (current: Indentation) :: xs =>
-        indentation.lastOption match {
+        indentation match {
           case Some(Indentation(length)) if current.length == length =>
             parse(xs, block, indentation, exprs)
           case Some(Indentation(length)) if current.length > length =>
-            parse(xs, block, indentation :+ current, exprs)
+            parse(xs, block, Some(current), exprs)
           case Some(Indentation(length)) if current.length < length =>
-            if (indentation.size == 1)
-              Result(block, tokens)
-            else
-              parse(xs, block, indentation.filter(current.length < _.length), exprs)
+            Result(block, tokens)
           case None =>
-            parse(xs, block, List(current), exprs)
+            parse(xs, block, Some(current), exprs)
         }
       case Def :: xs =>
         Definition
@@ -121,7 +118,7 @@ object Block {
           Result(block, others)
     }
 
-  private def top(indentations: List[Indentation]) =
-    indentations.lastOption.getOrElse(Indentation(0))
+  private def top(indentations: Option[Indentation]) =
+    indentations.getOrElse(Indentation(0))
 
 }

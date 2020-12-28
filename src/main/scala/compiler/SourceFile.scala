@@ -12,7 +12,7 @@ class SourceFile(val tokens: List[Token]) {
 
   def compile(block: Block = Block.empty): Result[Block] =
     Block
-      .parse(tokens, block, List.empty)
+      .parse(tokens, block, None, exprs = true)
       .finishedParsingTokens()
 }
 

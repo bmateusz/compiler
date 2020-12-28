@@ -153,13 +153,11 @@ class BlockTest extends CompilerSpecs {
 
   it should "handle indentation of classes and defs" in {
     val evaluated = evaluateBlock(compileSuccess(
-      """
-        class A(x: Int)
-          def t() = 3 + x
-
-        a = A(3)
-      """))
-    assert(evaluated.elements.size === 2)
+      """class A(x: Int)
+        |  def t() = 3 + x
+        |a = A(3)
+        |""".stripMargin))
+    assert(evaluated.elements.map(_.name.value) === List("A", "a"))
   }
 
 }

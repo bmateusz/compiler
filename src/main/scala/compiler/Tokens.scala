@@ -83,7 +83,7 @@ object Tokens {
   case class Indentation(override val length: Int) extends Token {
     override def value: String = "\n" + " " * length
 
-    def right: Indentation = copy(length + 2)
+    def right: Indentation = copy(length + 1)
   }
 
   case object Def extends Token {
