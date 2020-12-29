@@ -20,6 +20,8 @@ object Line {
       .span(isWhitespace)
       .pipe { case (whitespaces, rest) =>
         tokenize(rest) match {
+          case Right(tokens) if tokens.isEmpty =>
+            Result(new Line(List.empty, number))
           case Right(tokens) =>
             Result(new Line(Indentation(whitespaces.length) +: tokens, number))
           case Left(rest) =>

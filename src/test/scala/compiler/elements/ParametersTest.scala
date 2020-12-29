@@ -25,7 +25,7 @@ class ParametersTest extends CompilerSpecs {
             a: Int
             b: String
           )""")
-    assert(source.tokens.length === 13)
+    assert(source.tokens.length === 12)
     val params = Parameters.parse(source.tokens)
     assert(params.right.value === (Parameters(List(
       Parameter(Identifier("a"), Types.Integer),

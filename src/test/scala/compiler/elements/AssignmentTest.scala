@@ -48,7 +48,7 @@ class AssignmentTest extends CompilerSpecs {
           = 3 + 3
       """
     )
-    assert(block === List(UnparsedTokens(List(Equals, Integer(3), Operator(Add), Integer(3), Indentation(6)))))
+    assert(block === List(UnparsedTokens(List(Indentation(10), Equals, Integer(3), Operator(Add), Integer(3)))))
   }
 
   it should "report error if expression is bad" in {
