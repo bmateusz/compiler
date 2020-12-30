@@ -1,7 +1,7 @@
 package compiler.elements
 
-import compiler.Errors.{ExpectedColon, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, ExpectedType, NotUniqueParameters}
-import compiler.Tokens.{Colon, Identifier}
+import compiler.Errors.{ExpectedColon, ExpectedIdentifier, ExpectedRightParenthesis, ExpectedType, NotUniqueParameters}
+import compiler.Tokens.{Colon, Equals, Identifier, Integer, RightParenthesis}
 import compiler.Types.UnknownType
 import compiler.elements.Parameters.Parameter
 import compiler.{CompilerSpecs, Types}
@@ -55,11 +55,20 @@ class ParametersTest extends CompilerSpecs {
     assert(params.left.value === List(ExpectedRightParenthesis(None)))
   }
 
-  it should "recognize missing left parenthesis" in {
+  it should "pass on missing parameter list" in {
     val source = parseSuccess("""a: Float)""")
     assert(source.tokens.length === 5)
     val params = Parameters.parse(source.tokens)
-    assert(params.left.value === List(ExpectedLeftParenthesis(Some(Identifier("a")))))
+    assert(params.right.value === (Parameters.empty, None))
+    assert(params.rest === List(Identifier("a"), Colon, Identifier("Float"), RightParenthesis))
+  }
+
+  it should "parse type hint only" in {
+    val source = parseSuccess(""": Int = 2""")
+    assert(source.tokens.length === 5)
+    val params = Parameters.parse(source.tokens)
+    assert(params.right.value === (Parameters.empty, Some(Types.Integer)))
+    assert(params.rest === List(Equals, Integer(2)))
   }
 
   it should "recognize missing identifier" in {

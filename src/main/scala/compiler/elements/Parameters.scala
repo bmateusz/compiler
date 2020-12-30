@@ -43,8 +43,10 @@ object Parameters {
           case _ =>
             Result(ExpectedRightParenthesis(None))
         }
-      case other =>
-        Result(ExpectedLeftParenthesis(other.headOption))
+      case Colon :: Identifier(returnType) :: rest =>
+        Result((Parameters.empty, Some(Types.parse(returnType))), rest)
+      case rest =>
+        Result((Parameters.empty, None), rest)
     }
 
   @tailrec

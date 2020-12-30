@@ -16,7 +16,7 @@ class EnumTest extends CompilerSpecs {
     ))
   }
 
-  it should "parse simple class with line break" in {
+  it should "parse simple enum with line break" in {
     val block = compileSuccess(
       """
       enum A(

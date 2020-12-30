@@ -8,6 +8,16 @@ import compiler.{CompilerSpecs, Types, elements}
 
 class ClassTest extends CompilerSpecs {
 
+  it should "parse empty class" in {
+    val block = compileSuccess("class A")
+    assert(block === Block(
+      List(
+        Class(Identifier("A"), Parameters.empty, Block.empty)
+      ),
+      None
+    ))
+  }
+
   it should "parse simple class" in {
     val block = compileSuccess("class A(x: Int)")
     assert(block === Block(
