@@ -1,9 +1,10 @@
 package compiler
 
 import compiler.Errors.{UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
+import compiler.Expression.FullEvaluation
 import compiler.Tokens._
 import compiler.elements.Parameters.Parameter
-import compiler.elements.{Assignment, Block, Class, Parameters}
+import compiler.elements.{Assignment, Block, Class, Definition, Parameters}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
@@ -120,6 +121,18 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
     assert(error === List(UnmatchedRightParenthesis()))
   }
 
+  it should "report error for invalid identifier" in {
+    val expr = parseExpressionSuccess("1 + x - 3")
+    assert(expr.tokens === List(Integer(1), Identifier("x"), Operator(Add), Integer(3), Operator(Subtract)))
+    val block = Block(
+      List.empty,
+      None
+    )
+    val evaluationError = EvaluationError(UnexpectedEvaluation(List(Identifier("x"), Integer(1)), Operator(Add)))
+    assert(expr.evaluate(block) === evaluationError)
+    assert(expr.evaluate(block, FullEvaluation) === evaluationError)
+  }
+
   it should "evaluate identifier" in {
     val expr = parseExpressionSuccess("1 + x - 3")
     assert(expr.tokens === List(Integer(1), Identifier("x"), Operator(Add), Integer(3), Operator(Subtract)))
@@ -128,6 +141,16 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
       None
     )
     assert(expr.evaluate(block) === Integer(98))
+  }
+
+  it should "evaluate definition" in {
+    val expr = parseExpressionSuccess("1 + x - 3")
+    assert(expr.tokens === List(Integer(1), Identifier("x"), Operator(Add), Integer(3), Operator(Subtract)))
+    val block = Block(
+      List(Definition(Identifier("x"), Parameters.empty, None, Some(Block(List.empty, Some(Expression(List(Integer(100)))))))),
+      None
+    )
+    assert(expr.evaluate(block, FullEvaluation) === Integer(98))
   }
 
   it should "evaluate class field" in {

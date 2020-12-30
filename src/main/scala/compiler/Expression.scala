@@ -25,6 +25,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
       block.get(identifier) match {
         case Some(asg: Assignment) =>
           asg.constantOrIdentifier ++ acc
+        case Some(definition: Definition) =>
+          postEvaluation(em, CallDefinition(definition, List.empty), block, acc)
         case Some(other) =>
           List(EvaluationError(UnexpectedIdentifier(other.name)))
         case None =>
