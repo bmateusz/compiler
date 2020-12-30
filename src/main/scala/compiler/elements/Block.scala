@@ -66,12 +66,11 @@ object Block {
     tokens match {
       case (current: Indentation) :: xs =>
         indentation match {
-          case Some(Indentation(length)) if current.length == length =>
-            parse(xs, block, indentation, exprs)
-          case Some(Indentation(length)) if current.length > length =>
-            parse(xs, block, Some(current), exprs)
-          case Some(Indentation(length)) if current.length < length =>
-            Result(block, tokens)
+          case Some(Indentation(previousLength)) =>
+            if (current.length >= previousLength)
+              parse(xs, block, Some(current), exprs)
+            else
+              Result(block, tokens)
           case None =>
             parse(xs, block, Some(current), exprs)
         }
