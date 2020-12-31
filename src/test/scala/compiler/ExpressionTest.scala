@@ -3,8 +3,7 @@ package compiler
 import compiler.Errors.{UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Expression.FullEvaluation
 import compiler.Tokens._
-import compiler.elements.Parameters.Parameter
-import compiler.elements.{Assignment, Block, Class, Definition, Parameters}
+import compiler.elements.{Assignment, Block}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
@@ -141,30 +140,6 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
       None
     )
     assert(expr.evaluate(block) === Integer(98))
-  }
-
-  it should "evaluate definition" in {
-    val expr = parseExpressionSuccess("1 + x - 3")
-    assert(expr.tokens === List(Integer(1), Identifier("x"), Operator(Add), Integer(3), Operator(Subtract)))
-    val block = Block(
-      List(Definition(Identifier("x"), Parameters.empty, None, Some(Block(List.empty, Some(Expression(List(Integer(100)))))))),
-      None
-    )
-    assert(expr.evaluate(block, FullEvaluation) === Integer(98))
-  }
-
-  it should "evaluate class field" in {
-    val expr = parseExpressionSuccess("1 + x.a - 3")
-    assert(expr.tokens === List(Integer(1), Identifier("x"), Identifier("a"), Operator(Dot), Operator(Add), Integer(3), Operator(Subtract)))
-    val cls = Class(Identifier("A"), Parameters(List(Parameter(Identifier("a"), Types.Integer))), Block.empty)
-    val block = Block(
-      List(
-        cls,
-        Assignment(Identifier("x"), None, Expression(List(ClassInstance(cls, List(Integer(1))))))
-      ),
-      None
-    )
-    assert(expr.evaluate(block) === Integer(-1))
   }
 
 }
