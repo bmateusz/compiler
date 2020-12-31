@@ -108,7 +108,14 @@ case class Expression(tokens: List[EvaluatedToken]) {
         case Right(block) =>
           block.expression match {
             case Some(expr) =>
-              List(expr.evaluate(block, FullEvaluation))
+              val result = expr.evaluate(block, FullEvaluation)
+              val typ = Types.fromEvaluatedToken(result)
+              definition.returnType match {
+                case Some(returnType) if returnType != typ =>
+                  List(EvaluationError(DefinitionReturnTypeMismatch(definition.returnType.get, typ)))
+                case _ =>
+                  List(result)
+              }
             case None =>
               List(cd)
           }

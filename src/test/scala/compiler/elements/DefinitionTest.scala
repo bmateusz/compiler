@@ -2,7 +2,7 @@ package compiler.elements
 
 import compiler.Errors.{ExpectedIdentifier, UnexpectedToken, UnparsedTokens}
 import compiler.Expression.{FullEvaluation, SimpleEvaluation}
-import compiler.Tokens.{Add, CallDefinition, Colon, Comma, EvaluationError, Floating, Identifier, Integer, LeftParenthesis, Operator, ParameterTypeError, ParameterTypeMismatchError, ParsedCall, RightParenthesis, StringLiteral, Subtract}
+import compiler.Tokens.{Add, CallDefinition, Colon, Comma, DefinitionReturnTypeMismatch, EvaluationError, Floating, Identifier, Integer, LeftParenthesis, Operator, ParameterTypeError, ParameterTypeMismatchError, ParsedCall, RightParenthesis, StringLiteral, Subtract}
 import compiler.elements.Parameters.Parameter
 import compiler.{CompilerSpecs, Expression, Types, elements}
 
@@ -112,6 +112,15 @@ class DefinitionTest extends CompilerSpecs {
       """))
     val expr = parseExpressionSuccess("c(\"d\") + \"e\"")
     assert(expr.evaluate(evaluated, FullEvaluation) === StringLiteral("abcde"))
+  }
+
+  it should "report error on mismatched return type" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        def x: String = 3
+      """))
+    val expr = parseExpressionSuccess("x")
+    assert(expr.evaluate(evaluated, FullEvaluation) === EvaluationError(DefinitionReturnTypeMismatch(Types.String, Types.Integer)))
   }
 
 }

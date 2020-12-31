@@ -298,7 +298,12 @@ object Tokens {
   case class ParameterTypeError(expected: Type, got: Type) extends EvaluationErrorToken {
     override def value: String = s"expected: ${expected.name}, got: ${got.name}"
   }
+
   case class ParameterTypeMismatchError(expected: List[Parameter], got: List[EvaluatedToken]) extends EvaluationErrorToken {
+    override def value: String = s"expected: ${expected}, got: ${got}"
+  }
+
+  case class DefinitionReturnTypeMismatch(expected: Type, got: Type) extends EvaluationErrorToken {
     override def value: String = s"expected: ${expected}, got: ${got}"
   }
 
