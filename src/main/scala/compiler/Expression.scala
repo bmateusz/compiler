@@ -3,7 +3,7 @@ package compiler
 import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Expression.{EvaluationMode, FullEvaluation, SimpleEvaluation}
 import compiler.Tokens._
-import compiler.elements.{Assignment, Block, Class, Definition}
+import compiler.elements.{Assignment, Block, Class, Definition, Parameters}
 
 import scala.annotation.tailrec
 import scala.util.chaining.scalaUtilChainingOps
@@ -25,8 +25,13 @@ case class Expression(tokens: List[EvaluatedToken]) {
       block.get(identifier) match {
         case Some(asg: Assignment) =>
           asg.constantOrIdentifier ++ acc
-        case Some(definition: Definition) =>
-          postEvaluation(em, CallDefinition(definition, List.empty), block, acc)
+        case Some(df: Definition) =>
+          checkParameterList(df.parameters, List.empty) match {
+            case Some(evaluationError) =>
+              List(evaluationError)
+            case None =>
+              postEvaluation(em, CallDefinition(df, List.empty), block, acc)
+          }
         case Some(other) =>
           List(EvaluationError(UnexpectedIdentifier(other.name)))
         case None =>
@@ -147,22 +152,46 @@ case class Expression(tokens: List[EvaluatedToken]) {
           .tokens
           .splitByComma()
           .map(evaluate(_, block, em))
+          .filter(_ != Pass)
           .pipe { tokens =>
-            postEvaluation(em, ClassInstance(cls, tokens), block, acc)
+            checkParameterList(cls.parameters, tokens) match {
+              case Some(evaluationError) =>
+                List(evaluationError)
+              case None =>
+                postEvaluation(em, ClassInstance(cls, tokens), block, acc)
+            }
           }
       case Some(df: Definition) =>
         pc.expression
           .tokens
           .splitByComma()
           .map(evaluate(_, block, em))
+          .filter(_ != Pass)
           .pipe { tokens =>
-            postEvaluation(em, CallDefinition(df, tokens), block, acc)
+            checkParameterList(df.parameters, tokens) match {
+              case Some(evaluationError) =>
+                List(evaluationError)
+              case None =>
+                postEvaluation(em, CallDefinition(df, tokens), block, acc)
+            }
           }
       case Some(other) =>
         List(EvaluationError(UnexpectedIdentifier(other.name)))
       case None =>
         pc.identifier :: acc
     }
+
+  def checkParameterList(parameters: Parameters, tokens: List[EvaluatedToken]): Option[EvaluationError] =
+    if (parameters.values.length == tokens.length)
+      parameters.values.zip(tokens.map(Types.fromEvaluatedToken)).find {
+        case (parameter, value) =>
+          parameter.typ != value
+      }.map {
+        case (parameter, value) => EvaluationError(ParameterTypeError(parameter.typ, value))
+      }
+    else
+      Some(EvaluationError(ParameterTypeMismatchError(parameters.values, tokens)))
+
 }
 
 object Expression {

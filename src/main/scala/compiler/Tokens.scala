@@ -1,5 +1,8 @@
 package compiler
 
+import compiler.Types.Type
+import compiler.elements.Parameters.Parameter
+
 import scala.util.matching.UnanchoredRegex
 
 object Tokens {
@@ -290,6 +293,13 @@ object Tokens {
 
   case class OperatorError(operator: Operators, a: EvaluatedToken, b: EvaluatedToken) extends EvaluationErrorToken {
     override def value: String = s"${a.value} ${operator.value} ${b.value}"
+  }
+
+  case class ParameterTypeError(expected: Type, got: Type) extends EvaluationErrorToken {
+    override def value: String = s"expected: ${expected.name}, got: ${got.name}"
+  }
+  case class ParameterTypeMismatchError(expected: List[Parameter], got: List[EvaluatedToken]) extends EvaluationErrorToken {
+    override def value: String = s"expected: ${expected}, got: ${got}"
   }
 
   case object DivisionByZero extends EvaluationErrorToken {
