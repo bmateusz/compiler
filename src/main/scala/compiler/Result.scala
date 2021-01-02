@@ -31,8 +31,8 @@ case class Result[+A](value: Either[List[CompilerError], A],
     } else {
       val error = UnparsedTokens(rest)
       value match {
-        case Left(value) => Result(value :+ error, List.empty)
-        case Right(value) => Result(Left(List(error)), List.empty)
+        case Left(value) => Result(value :+ error, Nil)
+        case Right(value) => Result(Left(List(error)), Nil)
       }
     }
 }

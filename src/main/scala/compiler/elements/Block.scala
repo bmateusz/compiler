@@ -36,7 +36,7 @@ case class Block(elements: List[Element],
       .find(_.name.value == identifier.value)
       .orElse(parent.flatMap(_.get(identifier)))
 
-  def evaluate(parent: Block = Block.empty, rest: List[Token] = List.empty, em: EvaluationMode = FullEvaluation): Result[Block] =
+  def evaluate(parent: Block = Block.empty, rest: List[Token] = Nil, em: EvaluationMode = FullEvaluation): Result[Block] =
     elements.foldLeft(Result(parent, rest)) {
       case (Result(Right(block), rest), curr) =>
         curr
@@ -62,7 +62,7 @@ case class Block(elements: List[Element],
 object Block {
 
   val empty: Block =
-    Block(List.empty, None)
+    Block(Nil, None)
 
   def parse(result: Result[Block], indentation: Option[Indentation], exprs: Boolean): Result[Block] =
     result.flatMap((block, rest) => parse(rest, block, indentation, exprs))

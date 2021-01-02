@@ -13,7 +13,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
   def evaluate(block: Block = Block.empty, em: EvaluationMode = SimpleEvaluation): EvaluatedToken =
     evaluate(tokens, block, em)
 
-  def evaluate(tokens: List[EvaluatedToken], block: Block, em: EvaluationMode): EvaluatedToken = tokens.foldLeft(List.empty[EvaluatedToken]) {
+  def evaluate(tokens: List[EvaluatedToken], block: Block, em: EvaluationMode): EvaluatedToken = tokens.foldLeft(Nil: List[EvaluatedToken]) {
     case ((ee: EvaluationError) :: Nil, _) => List(ee)
     case ((field: Identifier) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
       dot(block, identifier, field, xs)
@@ -29,11 +29,11 @@ case class Expression(tokens: List[EvaluatedToken]) {
         case Some(asg: Assignment) =>
           asg.constantOrIdentifier ++ acc
         case Some(df: Definition) =>
-          checkParameterList(df.parameters, List.empty) match {
+          checkParameterList(df.parameters, Nil) match {
             case Some(evaluationError) =>
               List(evaluationError)
             case None =>
-              postEvaluation(em, CallDefinition(df, List.empty), block, acc)
+              postEvaluation(em, CallDefinition(df, Nil), block, acc)
           }
         case Some(other) =>
           List(EvaluationError(UnexpectedIdentifier(other.name)))
@@ -218,7 +218,7 @@ object Expression {
   case object SimpleEvaluation extends EvaluationMode
 
   def parse(tokens: List[Token]): Result[Expression] =
-    parse(tokens, List.empty, List.empty, None)
+    parse(tokens, Nil, Nil, None)
 
   /**
    * Shunting-yard algorithm by Edsger W. Dijkstra

@@ -32,7 +32,7 @@ object Enum {
         right match {
           case RightParenthesis :: rest =>
             Result(
-              parseEnums(left, Enum(name, List.empty)),
+              parseEnums(left, Enum(name, Nil)),
               rest
             ).flatMap { (result, rest) =>
               result.notUniqueIdentifiers() match {

@@ -38,7 +38,7 @@ class ParametersTest extends CompilerSpecs {
       """()""")
     assert(source.tokens.length === 3)
     val params = Parameters.parse(source.tokens)
-    assert(params.right.value === (Parameters(List.empty), None))
+    assert(params.right.value === (Parameters(Nil), None))
   }
 
   it should "report error for not unique parameter" in {

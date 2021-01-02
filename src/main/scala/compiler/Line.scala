@@ -21,7 +21,7 @@ object Line {
       .pipe { case (whitespaces, rest) =>
         tokenize(rest) match {
           case Right(tokens) if tokens.isEmpty =>
-            Result(new Line(List.empty, number))
+            Result(new Line(Nil, number))
           case Right(tokens) =>
             Result(new Line(Indentation(whitespaces.length) +: tokens, number))
           case Left(rest) =>
@@ -30,7 +30,7 @@ object Line {
       }
 
   @tailrec
-  def tokenize(line: String, tokens: List[Token] = List.empty): Either[String, List[Token]] =
+  def tokenize(line: String, tokens: List[Token] = Nil): Either[String, List[Token]] =
     if (line.isEmpty) {
       Right(tokens)
     } else {

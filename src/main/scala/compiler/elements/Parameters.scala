@@ -23,7 +23,7 @@ object Parameters {
 
   case class Parameter(identifier: Identifier, typ: Type)
 
-  val empty: Parameters = Parameters(List.empty)
+  val empty: Parameters = Parameters(Nil)
 
   @tailrec
   def parse(tokens: List[Token]): Result[(Parameters, Option[Type])] =

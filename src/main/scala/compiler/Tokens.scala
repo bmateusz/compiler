@@ -67,7 +67,7 @@ object Tokens {
         case Some((0, value: Int)) =>
           tokens.splitAt(value - 1)
         case _ =>
-          (tokens, List.empty)
+          (tokens, Nil)
       }
 
     def splitByComma(): List[List[T]] =

@@ -92,7 +92,7 @@ object Swing {
               setOutputError(compileError)
           }
         } else {
-          setOutput(List.empty, None)
+          setOutput(Nil, None)
         }
       }
     }
