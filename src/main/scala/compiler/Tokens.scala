@@ -1,6 +1,7 @@
 package compiler
 
 import compiler.Types.Type
+import compiler.elements.Element
 import compiler.elements.Parameters.Parameter
 
 import scala.util.matching.UnanchoredRegex
@@ -313,6 +314,10 @@ object Tokens {
 
   case class UnexpectedIdentifier(token: Token) extends EvaluationErrorToken {
     override def value: String = token.value
+  }
+
+  case class UnexpectedIdentifierAfterDot(element: Element) extends EvaluationErrorToken {
+    override def value: String = element.name.value
   }
 
   case class UnexpectedEvaluation(acc: List[EvaluatedToken], token: EvaluatedToken) extends EvaluationErrorToken {

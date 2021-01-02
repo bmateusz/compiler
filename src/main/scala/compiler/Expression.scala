@@ -19,6 +19,9 @@ case class Expression(tokens: List[EvaluatedToken]) {
       dot(block, identifier, field, xs)
     case ((field: Identifier) :: (cli: ClassInstance) :: xs, Operator(Dot)) =>
       dot(block, cli, field, xs)
+    case ((field: Identifier) :: (pc: ParsedCall) :: xs, Operator(Dot)) =>
+      // dot(block, pc.identifier, field, xs)
+      Integer(321) +: xs // TODO finish
     case (acc, pc: ParsedCall) =>
       parsedCall(block, pc, acc, em)
     case (acc, identifier: Identifier) =>
@@ -102,7 +105,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
           List(identifier)
       }
     case cd@CallDefinition(definition, values) =>
-      definition.call(values, block.filtered).value match {
+      definition.call(values, block.filtered /* TODO not correct */).value match {
         case Left(_) =>
           List(cd)
         case Right(block) =>
@@ -129,7 +132,12 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case Some((parameter, n)) =>
         cli.values(n) +: xs
       case None =>
-        List(EvaluationError(UnexpectedIdentifier(cli.cls.name)))
+        cli.cls.block.get(field) match {
+          case Some(other) =>
+            List(EvaluationError(UnexpectedIdentifierAfterDot(other)))
+          case None =>
+            List(EvaluationError(UnexpectedIdentifier(cli.cls.name)))
+        }
     }
 
   @tailrec
@@ -147,7 +155,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
             List(EvaluationError(UnexpectedIdentifier(field)))
         }
       case Some(other) =>
-        List(EvaluationError(UnexpectedIdentifier(field)))
+        List(EvaluationError(UnexpectedIdentifierAfterDot(other)))
       case None =>
         List(EvaluationError(UnexpectedIdentifier(identifier)))
     }
@@ -185,7 +193,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case Some(other) =>
         List(EvaluationError(UnexpectedIdentifier(other.name)))
       case None =>
-        pc.identifier :: acc
+        acc :+ pc
     }
 
   def checkParameterList(parameters: Parameters, tokens: List[EvaluatedToken]): Option[EvaluationError] =

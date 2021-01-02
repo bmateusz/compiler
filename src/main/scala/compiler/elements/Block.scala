@@ -8,7 +8,8 @@ import compiler.{Expression, Result}
 import scala.annotation.tailrec
 
 case class Block(elements: List[Element],
-                 expression: Option[Expression]) {
+                 expression: Option[Expression],
+                 parent: Option[Block] = None) {
   def sortedElements: List[Element] =
     elements
       .sortBy(_.name.value)
@@ -24,11 +25,16 @@ case class Block(elements: List[Element],
         rest
       )
 
-  def set(expression: Expression): Block =
+  def setExpression(expression: Expression): Block =
     copy(expression = Some(expression))
 
+  def setParent(block: Block): Block =
+    copy(parent = Some(block))
+
   def get(identifier: Identifier): Option[Element] =
-    elements.find(_.name.value == identifier.value)
+    elements
+      .find(_.name.value == identifier.value)
+      .orElse(parent.flatMap(_.get(identifier)))
 
   def evaluate(parent: Block = Block.empty, rest: List[Token] = List.empty, em: EvaluationMode = FullEvaluation): Result[Block] =
     elements.foldLeft(Result(parent, rest)) {
@@ -70,7 +76,7 @@ object Block {
             if (current.length >= previousLength)
               parse(xs, block, Some(current), exprs)
             else
-              Result(block, tokens)
+              finishBlock(block, tokens)
           case None =>
             parse(xs, block, Some(current), exprs)
         }
@@ -105,17 +111,20 @@ object Block {
             parse(block.add(assignment, rest), indentation, exprs)
           }
       case Nil =>
-        Result(block)
+        finishBlock(block, Nil)
       case others =>
         if (exprs)
           Expression
             .parse(others)
             .flatMap { (expr, rest) =>
-              Result(block.set(expr), rest)
+              finishBlock(block.setExpression(expr), rest)
             }
         else
-          Result(block, others)
+          finishBlock(block, others)
     }
+
+  private def finishBlock(block: Block, others: List[Token]) =
+    Result(block, others)
 
   private def top(indentations: Option[Indentation]) =
     indentations.getOrElse(Indentation(0))

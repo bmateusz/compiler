@@ -136,4 +136,15 @@ class ClassTest extends CompilerSpecs {
     assert(expr.evaluate(evaluated) === Integer(2))
   }
 
+  it should "parse definition inside a class" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        class A(n: Int)
+          def x(m: Int): Int = m + n + 1
+        a = A(20)
+      """))
+    val expr = parseExpressionSuccess("a.x(300)")
+    assert(expr.evaluate(evaluated) === Integer(321))
+  }
+
 }
