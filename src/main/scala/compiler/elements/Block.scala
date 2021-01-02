@@ -48,15 +48,6 @@ case class Block(elements: List[Element],
       case (left@Result(_, _), curr) =>
         left
     }
-
-  def filtered: Block =
-    copy(
-      elements.filter {
-        case Assignment(_, _, _) => false
-        case _ => true
-      },
-      None
-    )
 }
 
 object Block {

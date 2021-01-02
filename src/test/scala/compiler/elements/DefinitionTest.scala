@@ -89,7 +89,12 @@ class DefinitionTest extends CompilerSpecs {
         def x(n: Int) = 3 + n
       """))
     val expr = parseExpressionSuccess("x(4)")
-    val definitino = Definition(Identifier("x"), Parameters(List(Parameter(Identifier("n"), Types.Integer))), None, Some(Block(List(), Some(Expression(List(Integer(3), Identifier("n"), Operator(Add)))))))
+    val definitino = Definition(
+      Identifier("x"),
+      Parameters(List(Parameter(Identifier("n"), Types.Integer))),
+      None,
+      Some(Block(List(), Some(Expression(List(Integer(3), Identifier("n"), Operator(Add)))), Some(Block(List(),None,None))))
+    )
     assert(expr.evaluate(evaluated, SimpleEvaluation) === CallDefinition(definitino, List(Integer(4))))
     assert(expr.evaluate(evaluated, FullEvaluation) === Integer(7))
   }

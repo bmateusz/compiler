@@ -1,12 +1,21 @@
 package compiler.elements
 
-import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType}
+import compiler.Errors.{ExpectedIdentifier, Redefinition, UnexpectedReturnType}
+import compiler.Expression.EvaluationMode
 import compiler.Result
 import compiler.Tokens.{Identifier, Indentation, Token}
 
 case class Class(name: Identifier,
                  parameters: Parameters,
-                 block: Block) extends Element
+                 innerBlock: Block) extends Element {
+  override def evaluate(block: Block, rest: List[Token], em: EvaluationMode): Result[Element] =
+    block.get(name) match {
+      case Some(value) =>
+        Result(Redefinition(name.value), rest)
+      case None =>
+        Result(copy(innerBlock = block.setParent(block)), rest)
+    }
+}
 
 object Class {
 

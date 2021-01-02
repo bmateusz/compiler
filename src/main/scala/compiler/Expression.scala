@@ -19,9 +19,10 @@ case class Expression(tokens: List[EvaluatedToken]) {
       dot(block, identifier, field, xs)
     case ((field: Identifier) :: (cli: ClassInstance) :: xs, Operator(Dot)) =>
       dot(block, cli, field, xs)
-    case ((field: Identifier) :: (pc: ParsedCall) :: xs, Operator(Dot)) =>
-      // dot(block, pc.identifier, field, xs)
-      Integer(321) +: xs // TODO finish
+    case ((pc: ParsedCall) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
+       dot(block, identifier, pc, xs, em)
+      // parsedCall(block, pc, xs, em)
+      // Integer(321) +: xs // TODO finish
     case (acc, pc: ParsedCall) =>
       parsedCall(block, pc, acc, em)
     case (acc, identifier: Identifier) =>
@@ -33,7 +34,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
             case Some(evaluationError) =>
               List(evaluationError)
             case None =>
-              postEvaluation(em, CallDefinition(df, Nil), block, acc)
+              postEvaluation(CallDefinition(df, Nil), block, acc, em)
           }
         case Some(other) =>
           List(EvaluationError(UnexpectedIdentifier(other.name)))
@@ -88,7 +89,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case (a, b, op) => List(EvaluationError(OperatorError(op, b, a)))
     }
 
-  private def postEvaluation(em: EvaluationMode, elem: EvaluatedToken, block: Block, acc: List[EvaluatedToken]): List[EvaluatedToken] =
+  private def postEvaluation(elem: EvaluatedToken, block: Block, acc: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
     em match {
       case FullEvaluation =>
         fullEvaluate(List(elem), block) ++ acc
@@ -105,7 +106,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
           List(identifier)
       }
     case cd@CallDefinition(definition, values) =>
-      definition.call(values, block.filtered /* TODO not correct */).value match {
+      definition.call(values).value match {
         case Left(_) =>
           List(cd)
         case Right(block) =>
@@ -132,7 +133,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case Some((parameter, n)) =>
         cli.values(n) +: xs
       case None =>
-        cli.cls.block.get(field) match {
+        cli.cls.innerBlock.get(field) match {
           case Some(other) =>
             List(EvaluationError(UnexpectedIdentifierAfterDot(other)))
           case None =>
@@ -160,6 +161,21 @@ case class Expression(tokens: List[EvaluatedToken]) {
         List(EvaluationError(UnexpectedIdentifier(identifier)))
     }
 
+  private def dot(block: Block, identifier: Identifier, pc: ParsedCall, xs: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
+    block.get(identifier) match {
+      case Some(asg: Assignment) =>
+        asg.expression.tokens match {
+          case (cli: ClassInstance) :: Nil =>
+            parsedCall(cli.cls.innerBlock, pc, xs, em)
+          case other =>
+            List(EvaluationError(UnexpectedIdentifier(pc.identifier)))
+        }
+      case Some(other) =>
+        List(EvaluationError(UnexpectedIdentifierAfterDot(other)))
+      case None =>
+        List(EvaluationError(UnexpectedIdentifier(identifier)))
+    }
+
   def parsedCall(block: Block, pc: ParsedCall, acc: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
     block.get(pc.identifier) match {
       case Some(cls: Class) =>
@@ -173,7 +189,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
               case Some(evaluationError) =>
                 List(evaluationError)
               case None =>
-                postEvaluation(em, ClassInstance(cls, tokens), block, acc)
+                postEvaluation(ClassInstance(cls, tokens), block, acc, em)
             }
           }
       case Some(df: Definition) =>
@@ -187,13 +203,13 @@ case class Expression(tokens: List[EvaluatedToken]) {
               case Some(evaluationError) =>
                 List(evaluationError)
               case None =>
-                postEvaluation(em, CallDefinition(df, tokens), block, acc)
+                postEvaluation(CallDefinition(df, tokens), block, acc, em)
             }
           }
       case Some(other) =>
         List(EvaluationError(UnexpectedIdentifier(other.name)))
       case None =>
-        acc :+ pc
+        pc +: acc
     }
 
   def checkParameterList(parameters: Parameters, tokens: List[EvaluatedToken]): Option[EvaluationError] =

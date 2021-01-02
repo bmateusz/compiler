@@ -1,6 +1,7 @@
 package compiler.elements
 
-import compiler.Errors.{DefinitionWithoutBody, ExpectedIdentifier, UnexpectedToken}
+import compiler.Errors.{DefinitionWithoutBody, ExpectedIdentifier, Redefinition, UnexpectedToken}
+import compiler.Expression.EvaluationMode
 import compiler.Tokens.{Equals, EvaluatedToken, Identifier, Indentation, Token}
 import compiler.Types.Type
 import compiler.{Expression, Result}
@@ -8,14 +9,22 @@ import compiler.{Expression, Result}
 case class Definition(name: Identifier,
                       parameters: Parameters,
                       returnType: Option[Type],
-                      block: Option[Block]) extends Element {
-  def call(values: List[EvaluatedToken], parent: Block): Result[Block] =
-    block match {
+                      innerBlock: Option[Block]) extends Element {
+  override def evaluate(block: Block, rest: List[Token], em: EvaluationMode): Result[Element] =
+    block.get(name) match {
+      case Some(value) =>
+        Result(Redefinition(name.value), rest)
+      case None =>
+        Result(copy(innerBlock = innerBlock.map(_.setParent(block))), rest)
+    }
+
+  def call(values: List[EvaluatedToken]): Result[Block] =
+    innerBlock match {
       case Some(definitionBlock) =>
         parameters
           .values
           .zip(values)
-          .foldLeft(Result(parent)) { case (currBlock, (parameter, value)) =>
+          .foldLeft(Result(Block.empty)) { case (currBlock, (parameter, value)) =>
             currBlock.flatMapValue(_.add(Assignment(parameter.identifier, None, Expression(List(value))), Nil))
           }
           .flatMapValue(parameterBlock => parameterBlock.evaluate(definitionBlock))

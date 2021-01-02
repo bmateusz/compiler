@@ -1,6 +1,7 @@
 package compiler.elements
 
 import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType, UnparsedTokens}
+import compiler.Expression.FullEvaluation
 import compiler.Tokens.{Add, ClassInstance, Colon, Comma, Dot, Identifier, Integer, LeftParenthesis, Operator, ParsedCall, RightParenthesis, StringLiteral, Subtract}
 import compiler.Types.UnknownType
 import compiler.elements.Parameters.Parameter
@@ -90,7 +91,7 @@ class ClassTest extends CompilerSpecs {
       None
     ))
     val evaluated = evaluateBlock(block)
-    val cls = elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String))), Block.empty)
+    val cls = elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String))), Block(List(),None,Some(Block(List(),None,None))))
     assert(evaluated === Block(
       List(
         cls,
@@ -144,7 +145,8 @@ class ClassTest extends CompilerSpecs {
         a = A(20)
       """))
     val expr = parseExpressionSuccess("a.x(300)")
-    assert(expr.evaluate(evaluated) === Integer(321))
+    assert(expr.evaluate(evaluated) === ParsedCall(Identifier("x"),Expression(List(Integer(300)))))
+    // assert(expr.evaluate(evaluated, FullEvaluation) === Integer(321))
   }
 
 }
