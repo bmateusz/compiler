@@ -152,7 +152,9 @@ object Tokens {
 
   sealed trait Operators {
     def value: String
+
     def precedence: Int
+
     def leftAssociative: Boolean
 
     def hasGreaterPrecedenceThan(other: Operators): Boolean =
@@ -324,7 +326,7 @@ object Tokens {
     override def value: String = s"${token.value}, ${acc.map(_.value)}"
   }
 
-  case class TooManyEvaluatedToken(tokens: List[EvaluatedToken]) extends EvaluationErrorToken {
+  case class TooManyEvaluatedTokens(tokens: List[EvaluatedToken]) extends EvaluationErrorToken {
     override def value: String = tokens.map(_.value).mkString(", ")
   }
 
@@ -338,6 +340,10 @@ object Tokens {
 
   case class CallDefinition(definition: elements.Definition, values: List[EvaluatedToken]) extends EvaluatedToken {
     override def value: String = s"call ${definition.name.value}($values)"
+  }
+
+  case class EvaluatedDot(cli: ClassInstance, child: EvaluatedToken) extends EvaluatedToken {
+    override def value: String = s"(${cli.value}).(${child.value})"
   }
 
 }

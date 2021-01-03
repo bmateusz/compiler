@@ -2,7 +2,7 @@ package compiler.elements
 
 import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType, UnparsedTokens}
 import compiler.Expression.FullEvaluation
-import compiler.Tokens.{Add, ClassInstance, Colon, Comma, Dot, Identifier, Integer, LeftParenthesis, Operator, ParsedCall, RightParenthesis, StringLiteral, Subtract}
+import compiler.Tokens.{Add, CallDefinition, ClassInstance, Colon, Comma, Dot, EvaluatedDot, Identifier, Integer, LeftParenthesis, Operator, ParsedCall, RightParenthesis, StringLiteral, Subtract}
 import compiler.Types.UnknownType
 import compiler.elements.Parameters.Parameter
 import compiler.{CompilerSpecs, Expression, Types, elements}
@@ -91,7 +91,7 @@ class ClassTest extends CompilerSpecs {
       None
     ))
     val evaluated = evaluateBlock(block)
-    val cls = elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String))), Block(List(),None,Some(Block(List(),None,None))))
+    val cls = elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String))), Block(List(), None, Some(Block(List(), None, None))))
     assert(evaluated === Block(
       List(
         cls,
@@ -145,8 +145,46 @@ class ClassTest extends CompilerSpecs {
         a = A(20)
       """))
     val expr = parseExpressionSuccess("a.x(300)")
-    assert(expr.evaluate(evaluated) === ParsedCall(Identifier("x"),Expression(List(Integer(300)))))
-    // assert(expr.evaluate(evaluated, FullEvaluation) === Integer(321))
+    val definition = Definition(
+      Identifier("x"),
+      Parameters(List(Parameter(Identifier("m"), Types.Integer))),
+      Some(Types.Integer),
+      Some(Block(List(), Some(Expression(List(Identifier("m"), Identifier("n"), Operator(Add), Integer(1), Operator(Add)))), None))
+    )
+    val cls = elements.Class(
+      Identifier("A"),
+      Parameters(List(Parameter(Identifier("n"), Types.Integer))),
+      Block(List(Definition(Identifier("x"), Parameters(List(Parameter(Identifier("m"), Types.Integer))), Some(Types.Integer), Some(Block(List(), Some(Expression(List(Identifier("m"), Identifier("n"), Operator(Add), Integer(1), Operator(Add)))), None)))), None, Some(Block(List(), None, None)))
+    )
+
+    assert(expr.evaluate(evaluated) === EvaluatedDot(ClassInstance(cls, List(Integer(20))), CallDefinition(definition, List(Integer(300)))))
+
+    assert(expr.evaluate(evaluated, FullEvaluation) === Integer(321))
+  }
+
+  it should "parse parameterless definition inside a class" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        class A(n: Int)
+          def x: Int = n + 1
+        a = A(20)
+      """))
+    val expr = parseExpressionSuccess("a.x")
+    val definition = Definition(
+      Identifier("x"),
+      Parameters.empty,
+      Some(Types.Integer),
+      Some(Block(List(), Some(Expression(List(Identifier("n"), Integer(1), Operator(Add)))), None))
+    )
+    val cls = elements.Class(
+      Identifier("A"),
+      Parameters(List(Parameter(Identifier("n"), Types.Integer))),
+      Block(List(Definition(Identifier("x"), Parameters.empty, Some(Types.Integer), Some(Block(List(), Some(Expression(List(Identifier("n"), Integer(1), Operator(Add)))), None)))), None, Some(Block(List(), None, None)))
+    )
+
+    assert(expr.evaluate(evaluated) === EvaluatedDot(ClassInstance(cls, List(Integer(20))), CallDefinition(definition, Nil)))
+
+    assert(expr.evaluate(evaluated, FullEvaluation) === Integer(21))
   }
 
 }

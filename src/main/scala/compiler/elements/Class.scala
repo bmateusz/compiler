@@ -13,7 +13,7 @@ case class Class(name: Identifier,
       case Some(value) =>
         Result(Redefinition(name.value), rest)
       case None =>
-        Result(copy(innerBlock = block.setParent(block)), rest)
+        Result(copy(innerBlock = innerBlock.setParent(block)), rest)
     }
 }
 

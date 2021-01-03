@@ -20,11 +20,9 @@ case class Expression(tokens: List[EvaluatedToken]) {
     case ((field: Identifier) :: (cli: ClassInstance) :: xs, Operator(Dot)) =>
       dot(block, cli, field, xs)
     case ((pc: ParsedCall) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
-       dot(block, identifier, pc, xs, em)
-      // parsedCall(block, pc, xs, em)
-      // Integer(321) +: xs // TODO finish
+      dot(block, identifier, pc, xs, em)
     case (acc, pc: ParsedCall) =>
-      parsedCall(block, pc, acc, em)
+      parsedCall(block, pc, None, acc, em)
     case (acc, identifier: Identifier) =>
       block.get(identifier) match {
         case Some(asg: Assignment) =>
@@ -56,7 +54,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
   }.pipe {
     case Nil => Pass
     case token :: Nil => token
-    case more => EvaluationError(TooManyEvaluatedToken(more))
+    case more => EvaluationError(TooManyEvaluatedTokens(more))
   }
 
   def unaryOperator(x: ValueToken, xs: List[EvaluatedToken]): List[EvaluatedToken] =
@@ -109,10 +107,10 @@ case class Expression(tokens: List[EvaluatedToken]) {
       definition.call(values).value match {
         case Left(_) =>
           List(cd)
-        case Right(block) =>
-          block.expression match {
+        case Right(definitionBlock) =>
+          definitionBlock.expression match {
             case Some(expr) =>
-              val result = expr.evaluate(block, FullEvaluation)
+              val result = expr.evaluate(definitionBlock.setParent(block), FullEvaluation)
               val typ = Types.fromEvaluatedToken(result)
               definition.returnType match {
                 case Some(returnType) if returnType != typ =>
@@ -124,6 +122,13 @@ case class Expression(tokens: List[EvaluatedToken]) {
               List(cd)
           }
       }
+    case ed@EvaluatedDot(cli, cd@CallDefinition(definition, values)) =>
+      classInstanceToBlock(cli).value match {
+        case Left(error) =>
+          List(ed)
+        case Right(cliBlock) =>
+          fullEvaluate(List(cd), cliBlock)
+      }
     case other =>
       List(other)
   }
@@ -134,6 +139,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
         cli.values(n) +: xs
       case None =>
         cli.cls.innerBlock.get(field) match {
+          case Some(df: Definition) =>
+            EvaluatedDot(cli, CallDefinition(df, Nil)) +: xs
           case Some(other) =>
             List(EvaluationError(UnexpectedIdentifierAfterDot(other)))
           case None =>
@@ -166,7 +173,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case Some(asg: Assignment) =>
         asg.expression.tokens match {
           case (cli: ClassInstance) :: Nil =>
-            parsedCall(cli.cls.innerBlock, pc, xs, em)
+            parsedCall(cli.cls.innerBlock, pc, Some(cli), xs, em)
           case other =>
             List(EvaluationError(UnexpectedIdentifier(pc.identifier)))
         }
@@ -176,7 +183,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
         List(EvaluationError(UnexpectedIdentifier(identifier)))
     }
 
-  def parsedCall(block: Block, pc: ParsedCall, acc: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
+  def parsedCall(block: Block, pc: ParsedCall, parent: Option[ClassInstance], acc: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
     block.get(pc.identifier) match {
       case Some(cls: Class) =>
         pc.expression
@@ -203,7 +210,14 @@ case class Expression(tokens: List[EvaluatedToken]) {
               case Some(evaluationError) =>
                 List(evaluationError)
               case None =>
-                postEvaluation(CallDefinition(df, tokens), block, acc, em)
+                val cd = CallDefinition(df, tokens)
+                val elem = parent match {
+                  case Some(value) =>
+                    EvaluatedDot(value, cd)
+                  case None =>
+                    cd
+                }
+                postEvaluation(elem, block, acc, em)
             }
           }
       case Some(other) =>
@@ -223,6 +237,14 @@ case class Expression(tokens: List[EvaluatedToken]) {
     else
       Some(EvaluationError(ParameterTypeMismatchError(parameters.values, tokens)))
 
+  def classInstanceToBlock(cli: ClassInstance): Result[Block] = {
+    cli.cls.parameters.values.zip(cli.values).foldLeft(Result(Block.empty)) {
+      case (acc, (param, value)) =>
+        acc.flatMapValue(
+          _.add(Assignment(param.identifier, Some(param.typ), Expression(List(value))), Nil)
+        )
+    }
+  }
 }
 
 object Expression {
