@@ -2,6 +2,7 @@ package compiler
 
 import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Expression.{EvaluationMode, FullEvaluation, SimpleEvaluation}
+import compiler.Result.ResultEither
 import compiler.Tokens._
 import compiler.elements.{Assignment, Block, Class, Definition, Parameters}
 
@@ -123,7 +124,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
           }
       }
     case ed@EvaluatedDot(cli, cd@CallDefinition(definition, values)) =>
-      classInstanceToBlock(cli).value match {
+      classInstanceToBlock(cli) match {
         case Left(error) =>
           List(ed)
         case Right(cliBlock) =>
@@ -237,13 +238,13 @@ case class Expression(tokens: List[EvaluatedToken]) {
     else
       Some(EvaluationError(ParameterTypeMismatchError(parameters.values, tokens)))
 
-  def classInstanceToBlock(cli: ClassInstance): Result[Block] = {
+  def classInstanceToBlock(cli: ClassInstance): ResultEither[Block] = {
     cli.cls.parameters.values.zip(cli.values).foldLeft(Result(Block.empty)) {
       case (acc, (param, value)) =>
         acc.flatMapValue(
           _.add(Assignment(param.identifier, Some(param.typ), Expression(List(value))), Nil)
         )
-    }
+    }.finishedParsingTokens()
   }
 }
 

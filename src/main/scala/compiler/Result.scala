@@ -1,11 +1,12 @@
 package compiler
 
 import compiler.Errors.{CompilerError, UnparsedTokens}
+import compiler.Result.ResultEither
 import compiler.Tokens.Token
 
 import scala.util.chaining.scalaUtilChainingOps
 
-case class Result[+A](value: Either[List[CompilerError], A],
+case class Result[+A](value: ResultEither[A],
                       rest: List[Token]) {
   def map[B](f: A => B): Result[B] =
     value match {
@@ -25,19 +26,21 @@ case class Result[+A](value: Either[List[CompilerError], A],
       case Right(value) => f(value)
     }
 
-  def finishedParsingTokens(): Result[A] =
+  def finishedParsingTokens(): ResultEither[A] =
     if (rest.isEmpty) {
-      this
+      value
     } else {
       val error = UnparsedTokens(rest)
       value match {
-        case Left(value) => Result(value :+ error, Nil)
-        case Right(value) => Result(Left(List(error)), Nil)
+        case Left(value) => Left(value :+ error)
+        case Right(_) => Left(List(error))
       }
     }
 }
 
 object Result {
+
+  type ResultEither[+A] = Either[List[CompilerError], A]
 
   implicit class ResultOps[+A](result: List[Result[A]]) {
     def mapEither[B](mapLefts: List[List[CompilerError]] => List[CompilerError],
@@ -54,7 +57,7 @@ object Result {
         }
   }
 
-  def apply[A](value: Either[List[CompilerError], A], rest: List[Token]): Result[A] =
+  def apply[A](value: ResultEither[A], rest: List[Token]): Result[A] =
     new Result(value, rest)
 
   def apply[A](success: A): Result[A] =

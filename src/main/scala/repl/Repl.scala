@@ -24,14 +24,14 @@ trait Repl {
     if (str.nonEmpty) {
       SourceFile.parse(str) match {
         case Right(source) =>
-          source.compile(block).value match {
+          source.compile(block) match {
             case Right(newBlock) =>
               newBlock.expression match {
                 case Some(expr: Expression) =>
                   printlnEvaluation(expr.evaluate(newBlock, FullEvaluation))
                   repl(block)
                 case _ =>
-                  newBlock.evaluate().value match {
+                  newBlock.evaluate().finishedParsingTokens() match {
                     case Left(evaluationError) =>
                       printlnError(evaluationError)
                       repl(block)

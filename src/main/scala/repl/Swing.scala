@@ -74,9 +74,9 @@ object Swing {
         if (text.nonEmpty) {
           SourceFile.parse(text) match {
             case Right(source) =>
-              source.compile(Block.empty).value match {
+              source.compile(Block.empty) match {
                 case Right(newBlock) =>
-                  newBlock.evaluate().value match {
+                  newBlock.evaluate().finishedParsingTokens() match {
                     case Left(evaluationError) =>
                       setOutputError(evaluationError)
                     case Right(evaluatedBlock) =>

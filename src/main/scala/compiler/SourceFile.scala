@@ -1,6 +1,7 @@
 package compiler
 
 import compiler.Errors.CompilerError
+import compiler.Result.ResultEither
 import compiler.Tokens.Token
 import compiler.elements.Block
 
@@ -10,7 +11,7 @@ class SourceFile(val tokens: List[Token]) {
   override def toString: String =
     tokens.map(_.value).mkString(" ")
 
-  def compile(block: Block = Block.empty): Result[Block] =
+  def compile(block: Block = Block.empty): ResultEither[Block] =
     Block
       .parse(tokens, block, None, exprs = true)
       .finishedParsingTokens()
