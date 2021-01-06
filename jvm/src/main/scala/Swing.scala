@@ -49,10 +49,11 @@ object Swing {
     add(outputScrollPane, c)
 
     val evaluator: Evaluator = new Evaluator {
-      override def setOutput(elements: List[Element], token: Option[EvaluatedToken]): Unit =
+      override def setOutput(elements: List[Element], token: Option[EvaluatedToken], source: SourceFile): Unit =
         outputTextArea.setText(
           elements.mkString("", newline, newline) +
-            token.map(newline + _ + newline).getOrElse("")
+            token.map(newline + "Result: " + _ + newline).getOrElse("") +
+            source.tokens.mkString(newline + "Tokens: ", " ", newline)
         )
 
       override def setOutputError(errors: List[CompilerError], source: Option[SourceFile]): Unit =

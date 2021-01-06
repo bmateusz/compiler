@@ -13,28 +13,36 @@ object EvaluatorJs {
   def main(in: html.Input,
            out: html.Div): Unit = {
 
+    def listToUl(list: List[_]): String =
+      list.map(e => s"<li>$e</li>").mkString("<ul>", "", "</ul>")
+
     def setTextOutput(string: String): Unit =
-      out.innerHTML = s"<pre>$string</pre>"
+      out.innerHTML = s"$string"
 
     def evaluator: Evaluator = new Evaluator {
-      val newline = "\n"
 
-      override def setOutput(elements: List[Element], token: Option[Tokens.EvaluatedToken]): Unit =
+      override def setOutput(elements: List[Element], token: Option[Tokens.EvaluatedToken], source: SourceFile): Unit =
         setTextOutput(
-          elements.mkString("", newline, newline) +
-            token.map(newline + _ + newline).getOrElse("")
+          "<p>Elements:</p>" +
+            listToUl(elements) +
+            token.map(t => "<p>Result:</p>" + listToUl(t :: Nil)).getOrElse("") +
+            "Tokens:" + listToUl(source.tokens)
         )
 
       override def setOutputError(errors: List[Errors.CompilerError], source: Option[SourceFile]): Unit =
         setTextOutput(
-          errors.mkString("", newline, newline) +
-            source.map(_.tokens.mkString("Tokens: ", " ", newline)).getOrElse("")
+          "<p>Errors:</p>" +
+            listToUl(errors) +
+            source.map(s => "<p>Tokens:</p>" + listToUl(s.tokens)).getOrElse("")
         )
+
     }
 
-    in.onkeyup = { (e: dom.Event) =>
+    in.oninput = { (e: dom.Event) =>
       evaluator.evaluate(in.value)
     }
+
+    evaluator.evaluate(in.value)
 
   }
 

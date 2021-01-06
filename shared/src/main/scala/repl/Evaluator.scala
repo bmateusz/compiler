@@ -8,7 +8,7 @@ import compiler.elements.{Block, Element}
 
 trait Evaluator {
 
-  def setOutput(elements: List[Element], token: Option[EvaluatedToken]): Unit
+  def setOutput(elements: List[Element], token: Option[EvaluatedToken], source: SourceFile): Unit
 
   def setOutputError(errors: List[CompilerError], source: Option[SourceFile]): Unit
 
@@ -23,7 +23,8 @@ trait Evaluator {
               case Right(evaluatedBlock) =>
                 setOutput(
                   evaluatedBlock.sortedElements,
-                  newBlock.expression.map(_.evaluate(evaluatedBlock, FullEvaluation))
+                  newBlock.expression.map(_.evaluate(evaluatedBlock, FullEvaluation)),
+                  source
                 )
             }
           case Left(compileError) =>
