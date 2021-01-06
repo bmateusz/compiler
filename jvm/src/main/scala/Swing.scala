@@ -1,4 +1,5 @@
 import compiler.Errors.CompilerError
+import compiler.SourceFile
 import compiler.Tokens.EvaluatedToken
 import compiler.elements.Element
 import repl.Evaluator
@@ -54,8 +55,11 @@ object Swing {
             token.map(newline + _ + newline).getOrElse("")
         )
 
-      override def setOutputError(errors: List[CompilerError]): Unit =
-        outputTextArea.setText(errors.mkString("", newline, newline))
+      override def setOutputError(errors: List[CompilerError], source: Option[SourceFile]): Unit =
+        outputTextArea.setText(
+          errors.mkString("", newline, newline) +
+            source.map(_.tokens.mkString("Tokens: ", " ", newline)).getOrElse("")
+        )
     }
 
     class MyDocumentListener extends DocumentListener {

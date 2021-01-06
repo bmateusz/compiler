@@ -1,5 +1,5 @@
 import compiler.elements.Element
-import compiler.{Errors, Tokens}
+import compiler.{Errors, SourceFile, Tokens}
 import org.scalajs.dom
 import org.scalajs.dom.html
 import repl.Evaluator
@@ -25,8 +25,11 @@ object EvaluatorJs {
             token.map(newline + _ + newline).getOrElse("")
         )
 
-      override def setOutputError(errors: List[Errors.CompilerError]): Unit =
-        setTextOutput(errors.mkString("", newline, newline))
+      override def setOutputError(errors: List[Errors.CompilerError], source: Option[SourceFile]): Unit =
+        setTextOutput(
+          errors.mkString("", newline, newline) +
+            source.map(_.tokens.mkString("Tokens: ", " ", newline)).getOrElse("")
+        )
     }
 
     in.onkeyup = { (e: dom.Event) =>

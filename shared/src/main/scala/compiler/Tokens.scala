@@ -4,14 +4,15 @@ import compiler.Types.Type
 import compiler.elements.Element
 import compiler.elements.Parameters.Parameter
 
-import scala.util.matching.UnanchoredRegex
+import scala.util.chaining.scalaUtilChainingOps
 
 object Tokens {
 
   def parse(line: String): Option[Token] =
     findSimpleToken(line)
       .orElse(findStringLiteral(line))
-      .orElse(findRegexToken(line))
+      .orElse(findNumberLiteral(line))
+      .orElse(findLiteral(line))
 
   def findSimpleToken(line: String): Option[Token] =
     SimpleTokens.simpleTokens.find(token => line.startsWith(token.value))
@@ -31,24 +32,83 @@ object Tokens {
       .zipWithIndex
       .find(_._1 < 0)
       .flatMap {
-        case (-2, value: Int) =>
-          Some(StringLiteral(line.slice(1, value - 1)))
+        case (-2, index: Int) =>
+          Some(WideToken(StringLiteral(line.slice(1, index - 1)), index))
         case _ =>
           None
       }
 
-  val floatRegex: UnanchoredRegex = "^(\\d+)(\\.\\d+(?:[eE]-?\\d+)?)?".r.unanchored
-  val literalRegex: UnanchoredRegex = "^([a-zA-Z](?:[0-9a-zA-Z_-]*[0-9a-zA-Z])?)".r.unanchored
+  // val floatRegex: UnanchoredRegex = "^(\\d+)(\\.\\d+(?:[eE]-?\\d+)?)?".r.unanchored
+  def findNumberLiteral(line: String): Option[Token] =
+    line
+      .scanLeft(0) {
+        case (0, char: Char) =>
+          if (isDigit(char)) 1 else -1
+        case (1, char: Char) =>
+          if (isDigit(char)) 1 else if (char == '.') 2 else -1
+        case (2, char: Char) =>
+          if (isDigit(char)) 3 else -1
+        case (3, char: Char) =>
+          if (isDigit(char)) 3 else if (char == 'e' || char == 'E') 4 else -1
+        case (4, char: Char) =>
+          if (isDigitOrMinus(char)) 5 else -1
+        case (5, char: Char) =>
+          if (isDigit(char)) 5 else -1
+        case _ =>
+          -1
+      }
+      .takeWhile(_ >= 0)
+      .pipe { result =>
+        if (result.isEmpty)
+          None
+        else {
+          val len = result.size - 1
+          result.last match {
+            case 1 =>
+              Some(WideToken(Integer(line.take(len).toLong), len))
+            case 3 | 5 =>
+              Some(WideToken(Floating(line.take(len).toDouble), len))
+            case _ =>
+              None
+          }
+        }
+      }
 
-  def findRegexToken(line: String): Option[Token] =
-    line match {
-      case floatRegex(a, null) => Some(Integer(a.toLong))
-      case floatRegex(a, b) => Some(Floating(s"$a$b".toDouble))
-      case literalRegex(literal) => Some(Identifier(literal))
-      case _ => None
-    }
+  // val literalRegex: UnanchoredRegex = "^([a-zA-Z](?:[0-9a-zA-Z_-]*[0-9a-zA-Z])?)".r.unanchored
+  def findLiteral(line: String): Option[Token] =
+    line
+      .scanLeft(0) {
+        case (0, char: Char) =>
+          if (isLetter(char)) 1 else -1
+        case (1 | 2, char: Char) =>
+          if (isLetterOrDigit(char)) 1 else if (isHyphen(char)) 2 else -1
+        case _ =>
+          -1
+      }
+      .takeWhile(_ >= 0)
+      .pipe { result =>
+        if (result.isEmpty)
+          None
+        else
+          result.last match {
+            case 1 =>
+              Some(Identifier(line.take(result.size - 1)))
+            case _ =>
+              None
+          }
+      }
 
-  def splitBySeparator[T](list: List[T], sep: T): List[List[T]] =
+  private def isDigit(char: Char): Boolean = char >= '0' && char <= '9'
+
+  private def isDigitOrMinus(char: Char): Boolean = isDigit(char) || char == '-'
+
+  private def isLetter(char: Char): Boolean = (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z')
+
+  private def isLetterOrDigit(char: Char): Boolean = isLetter(char) || isDigit(char)
+
+  private def isHyphen(char: Char): Boolean = char == '-' || char == '_'
+
+  private def splitBySeparator[T](list: List[T], sep: T): List[List[T]] =
     list.span(_ != sep) match {
       case (hd, _ :: tl) => hd :: splitBySeparator(tl, sep)
       case (hd, _) => List(hd)
@@ -88,6 +148,10 @@ object Tokens {
     override def value: String = "\n" + " " * length
 
     def right: Indentation = copy(length + 1)
+  }
+
+  case class WideToken(wrapped: Token, override val length: Int) extends Token {
+    override def value: String = wrapped.value
   }
 
   case object Def extends Token {
@@ -262,9 +326,7 @@ object Tokens {
 
   sealed trait ValueToken extends Token
 
-  case class StringLiteral(override val value: String) extends ValueToken {
-    override def length: Int = value.length + 2 // the ""
-  }
+  case class StringLiteral(override val value: String) extends ValueToken
 
   case class Integer(integer: Long) extends ValueToken {
     override def value: String = integer.toString

@@ -10,7 +10,7 @@ trait Evaluator {
 
   def setOutput(elements: List[Element], token: Option[EvaluatedToken]): Unit
 
-  def setOutputError(errors: List[CompilerError]): Unit
+  def setOutputError(errors: List[CompilerError], source: Option[SourceFile]): Unit
 
   def evaluate(string: String): Unit =
     SourceFile.parse(string) match {
@@ -19,7 +19,7 @@ trait Evaluator {
           case Right(newBlock) =>
             newBlock.evaluate().finishedParsingTokens() match {
               case Left(evaluationError) =>
-                setOutputError(evaluationError)
+                setOutputError(evaluationError, Some(source))
               case Right(evaluatedBlock) =>
                 setOutput(
                   evaluatedBlock.sortedElements,
@@ -27,10 +27,10 @@ trait Evaluator {
                 )
             }
           case Left(compileError) =>
-            setOutputError(compileError)
+            setOutputError(compileError, Some(source))
         }
       case Left(compileError) =>
-        setOutputError(compileError)
+        setOutputError(compileError, None)
     }
 
 }

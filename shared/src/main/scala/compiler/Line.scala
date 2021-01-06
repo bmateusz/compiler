@@ -1,10 +1,9 @@
 package compiler
 
-import java.lang.Character.isWhitespace
-
 import compiler.Errors.InvalidToken
-import compiler.Tokens.{Indentation, Token}
+import compiler.Tokens.{Indentation, Token, WideToken}
 
+import java.lang.Character.isWhitespace
 import scala.annotation.tailrec
 import scala.util.chaining.scalaUtilChainingOps
 
@@ -35,6 +34,8 @@ object Line {
       Right(tokens)
     } else {
       Tokens.parse(line) match {
+        case Some(wideToken: WideToken) =>
+          tokenize(line.drop(wideToken.length).dropWhile(isWhitespace), tokens :+ wideToken.wrapped)
         case Some(identifier) =>
           tokenize(line.drop(identifier.length).dropWhile(isWhitespace), tokens :+ identifier)
         case None =>
