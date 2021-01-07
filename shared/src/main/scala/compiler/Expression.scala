@@ -18,8 +18,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
     case ((ee: EvaluationError) :: Nil, _) => List(ee)
     case ((field: Identifier) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
       dot(block, identifier, field, xs)
-    case ((field: Identifier) :: (cli: ClassInstance) :: xs, Operator(Dot)) =>
-      dot(block, cli, field, xs)
+    case ((field: Identifier) :: (ec: EvaluatedClass) :: xs, Operator(Dot)) =>
+      dot(block, ec, field, xs)
     case ((pc: ParsedCall) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
       dot(block, identifier, pc, xs, em)
     case (acc, pc: ParsedCall) =>
@@ -35,6 +35,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
             case None =>
               postEvaluation(CallDefinition(df, Nil), block, acc, em)
           }
+        case Some(cls: Class) =>
+          ClassStatic(cls) :: acc
         case Some(other) =>
           List(EvaluationError(UnexpectedIdentifier(other.name)))
         case None =>
@@ -123,29 +125,36 @@ case class Expression(tokens: List[EvaluatedToken]) {
               List(cd)
           }
       }
-    case ed@EvaluatedDot(cli, cd@CallDefinition(definition, values)) =>
+    case ed@EvaluatedDot(cli, child) =>
       classInstanceToBlock(cli) match {
         case Left(error) =>
           List(ed)
         case Right(cliBlock) =>
-          fullEvaluate(List(cd), cliBlock)
+          fullEvaluate(List(child), cliBlock)
       }
     case other =>
       List(other)
   }
 
-  private def dot(block: Block, cli: ClassInstance, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
-    cli.cls.parameters.findParameter(field) match {
+  private def dot(block: Block, ec: EvaluatedClass, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
+    ec.cls.parameters.findParameter(field) match {
       case Some((parameter, n)) =>
-        cli.values(n) +: xs
+        ec match {
+          case ClassInstance(cls, values) =>
+            values(n) :: xs
+          case ClassStatic(cls) =>
+            List(EvaluationError(NotStatic(cls.name, parameter.identifier)))
+        }
       case None =>
-        cli.cls.innerBlock.get(field) match {
+        ec.cls.innerBlock.get(field) match {
           case Some(df: Definition) =>
-            EvaluatedDot(cli, CallDefinition(df, Nil)) +: xs
+            EvaluatedDot(ec, CallDefinition(df, Nil)) :: xs
+          case Some(asg: Assignment) =>
+            EvaluatedDot(ec, asg.singleTokenOrIdentifier()) :: xs
           case Some(other) =>
             List(EvaluationError(UnexpectedIdentifierAfterDot(other)))
           case None =>
-            List(EvaluationError(UnexpectedIdentifier(cli.cls.name)))
+            List(EvaluationError(UnexpectedIdentifier(ec.cls.name)))
         }
     }
 
@@ -224,7 +233,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case Some(other) =>
         List(EvaluationError(UnexpectedIdentifier(other.name)))
       case None =>
-        pc +: acc
+        pc :: acc
     }
 
   def checkParameterList(parameters: Parameters, tokens: List[EvaluatedToken]): Option[EvaluationError] =
@@ -238,13 +247,18 @@ case class Expression(tokens: List[EvaluatedToken]) {
     else
       Some(EvaluationError(ParameterTypeMismatchError(parameters.values, tokens)))
 
-  def classInstanceToBlock(cli: ClassInstance): ResultEither[Block] = {
-    cli.cls.parameters.values.zip(cli.values).foldLeft(Result(Block.empty)) {
-      case (acc, (param, value)) =>
-        acc.flatMapValue(
-          _.add(Assignment(param.identifier, Some(param.typ), Expression(List(value))), Nil)
-        )
-    }.finishedParsingTokens()
+  def classInstanceToBlock(ec: EvaluatedClass): ResultEither[Block] = {
+    ec match {
+      case ClassInstance(cls, values) =>
+        cls.parameters.values.zip(values).foldLeft(Result(Block.empty)) {
+          case (acc, (param, value)) =>
+            acc.flatMapValue(
+              _.add(Assignment(param.identifier, Some(param.typ), Expression(List(value))), Nil)
+            )
+        }.finishedParsingTokens()
+      case ClassStatic(cls) =>
+        Right(Block.empty)
+    }
   }
 }
 
@@ -287,7 +301,7 @@ object Expression {
           case Operator(currOp) if currOp.hasGreaterPrecedenceThan(op) => true
           case _ => false
         }
-        parse(xs, outputStack ++ left, Operator(op) +: right, Some(token))
+        parse(xs, outputStack ++ left, Operator(op) :: right, Some(token))
       case (token@LeftParenthesis) :: xs =>
         lastToken match {
           case Some(identifier: Identifier) =>
@@ -297,13 +311,13 @@ object Expression {
               case (left, right) =>
                 parse(left) match {
                   case Result(Right(innerExpression: Expression), _: List[Token]) =>
-                    parse(right, outputStack.init :+ ParsedCall(identifier, innerExpression), token +: operatorStack, Some(RightParenthesis))
+                    parse(right, outputStack.init :+ ParsedCall(identifier, innerExpression), token :: operatorStack, Some(RightParenthesis))
                   case err =>
                     err
                 }
             }
           case _ =>
-            parse(xs, outputStack, token +: operatorStack, Some(token))
+            parse(xs, outputStack, token :: operatorStack, Some(token))
         }
       case (token@RightParenthesis) :: xs =>
         operatorStack.span {

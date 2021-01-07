@@ -384,6 +384,10 @@ object Tokens {
     override def value: String = element.name.value
   }
 
+  case class NotStatic(className: Identifier, identifier: Identifier) extends EvaluationErrorToken {
+    override def value: String = s"${className.value} ${identifier.value}"
+  }
+
   case class UnexpectedEvaluation(acc: List[EvaluatedToken], token: EvaluatedToken) extends EvaluationErrorToken {
     override def value: String = s"${token.value}, ${acc.map(_.value)}"
   }
@@ -396,16 +400,24 @@ object Tokens {
     override val value: String = "pass"
   }
 
-  case class ClassInstance(cls: elements.Class, values: List[EvaluatedToken]) extends EvaluatedToken {
+  sealed trait EvaluatedClass extends EvaluatedToken {
+    val cls: elements.Class
+  }
+
+  case class ClassInstance(cls: elements.Class, values: List[EvaluatedToken]) extends EvaluatedClass {
     override def value: String = s"instance ${cls.name.value}($values)"
+  }
+
+  case class ClassStatic(cls: elements.Class) extends EvaluatedClass {
+    override def value: String = s"static ${cls.name.value}"
   }
 
   case class CallDefinition(definition: elements.Definition, values: List[EvaluatedToken]) extends EvaluatedToken {
     override def value: String = s"call ${definition.name.value}($values)"
   }
 
-  case class EvaluatedDot(cli: ClassInstance, child: EvaluatedToken) extends EvaluatedToken {
-    override def value: String = s"(${cli.value}).(${child.value})"
+  case class EvaluatedDot(ec: EvaluatedClass, child: EvaluatedToken) extends EvaluatedToken {
+    override def value: String = s"(${ec.value}).(${child.value})"
   }
 
 }

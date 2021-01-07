@@ -22,7 +22,7 @@ object Line {
           case Right(tokens) if tokens.isEmpty =>
             Result(new Line(Nil, number))
           case Right(tokens) =>
-            Result(new Line(Indentation(whitespaces.length) +: tokens, number))
+            Result(new Line(Indentation(whitespaces.length) :: tokens, number))
           case Left(rest) =>
             Result(InvalidToken(number, string, rest))
         }

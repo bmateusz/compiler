@@ -2,7 +2,7 @@ package compiler.elements
 
 import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType, UnparsedTokens}
 import compiler.Expression.FullEvaluation
-import compiler.Tokens.{Add, CallDefinition, ClassInstance, Colon, Comma, Dot, EvaluatedDot, Identifier, Integer, LeftParenthesis, Operator, ParsedCall, RightParenthesis, StringLiteral, Subtract}
+import compiler.Tokens.{Add, CallDefinition, ClassInstance, ClassStatic, Colon, Comma, Dot, EvaluatedDot, Identifier, Integer, LeftParenthesis, Operator, ParsedCall, RightParenthesis, StringLiteral, Subtract}
 import compiler.Types.UnknownType
 import compiler.elements.Parameters.Parameter
 import compiler.{CompilerSpecs, Expression, Types, elements}
@@ -154,7 +154,7 @@ class ClassTest extends CompilerSpecs {
     val cls = elements.Class(
       Identifier("A"),
       Parameters(List(Parameter(Identifier("n"), Types.Integer))),
-      Block(List(Definition(Identifier("x"), Parameters(List(Parameter(Identifier("m"), Types.Integer))), Some(Types.Integer), Some(Block(List(), Some(Expression(List(Identifier("m"), Identifier("n"), Operator(Add), Integer(1), Operator(Add)))), None)))), None, Some(Block(List(), None, None)))
+      Block(List(definition), None, Some(Block(List(), None, None)))
     )
 
     assert(expr.evaluate(evaluated) === EvaluatedDot(ClassInstance(cls, List(Integer(20))), CallDefinition(definition, List(Integer(300)))))
@@ -179,12 +179,55 @@ class ClassTest extends CompilerSpecs {
     val cls = elements.Class(
       Identifier("A"),
       Parameters(List(Parameter(Identifier("n"), Types.Integer))),
-      Block(List(Definition(Identifier("x"), Parameters.empty, Some(Types.Integer), Some(Block(List(), Some(Expression(List(Identifier("n"), Integer(1), Operator(Add)))), None)))), None, Some(Block(List(), None, None)))
+      Block(List(definition), None, Some(Block(List(), None, None)))
     )
 
     assert(expr.evaluate(evaluated) === EvaluatedDot(ClassInstance(cls, List(Integer(20))), CallDefinition(definition, Nil)))
 
     assert(expr.evaluate(evaluated, FullEvaluation) === Integer(21))
+  }
+
+  it should "parse static definition inside a class" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        class A
+          def x: Int = 323
+      """))
+    val expr = parseExpressionSuccess("A.x")
+    val definition = Definition(
+      Identifier("x"),
+      Parameters.empty,
+      Some(Types.Integer),
+      Some(Block(List(), Some(Expression(List(Integer(323)))), None))
+    )
+    val cls = elements.Class(
+      Identifier("A"),
+      Parameters.empty,
+      Block(List(definition), None, Some(Block(List(), None, None)))
+    )
+
+    assert(expr.evaluate(evaluated) === EvaluatedDot(ClassStatic(cls), CallDefinition(definition, Nil)))
+
+    assert(expr.evaluate(evaluated, FullEvaluation) === Integer(323))
+  }
+
+  it should "parse static assignment inside a class" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        class A
+          x: Int = 324
+      """))
+    val expr = parseExpressionSuccess("A.x")
+    val assignment = Assignment(Identifier("x"), Some(Types.Integer), Expression(List(Integer(324))))
+    val cls = elements.Class(
+      Identifier("A"),
+      Parameters.empty,
+      Block(List(assignment), None, Some(Block(List(), None, None)))
+    )
+
+    assert(expr.evaluate(evaluated) === EvaluatedDot(ClassStatic(cls), Integer(324)))
+
+    assert(expr.evaluate(evaluated, FullEvaluation) === Integer(324))
   }
 
 }
