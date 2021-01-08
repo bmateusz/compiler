@@ -40,4 +40,9 @@ class LineTest extends CompilerSpecs {
     assert(line.tokens.tail.splitByComma() === List(List(Integer(1)), List(Integer(2)), List(Integer(3))))
   }
 
+  it should "ignore single line comment" in {
+    val line = parseLineSuccess("1 // comment")
+    assert(line.tokens === List(Indentation(0), Integer(1)))
+  }
+
 }

@@ -9,10 +9,17 @@ import scala.util.chaining.scalaUtilChainingOps
 object Tokens {
 
   def parse(line: String): Option[Token] =
-    findSimpleToken(line)
+    findComment(line)
+      .orElse(findSimpleToken(line))
       .orElse(findStringLiteral(line))
       .orElse(findNumberLiteral(line))
       .orElse(findLiteral(line))
+
+  def findComment(line: String): Option[Token] =
+    if (line.startsWith("//"))
+      Some(Comment(line.drop(2).trim, line.length))
+    else
+      None
 
   def findSimpleToken(line: String): Option[Token] =
     SimpleTokens.simpleTokens.find(token => line.startsWith(token.value))
@@ -152,6 +159,10 @@ object Tokens {
 
   case class WideToken(wrapped: Token, override val length: Int) extends Token {
     override def value: String = wrapped.value
+  }
+
+  case class Comment(string: String, override val length: Int) extends Token {
+    override def value: String = string
   }
 
   case object Def extends Token {

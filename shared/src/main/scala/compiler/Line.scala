@@ -1,7 +1,7 @@
 package compiler
 
 import compiler.Errors.InvalidToken
-import compiler.Tokens.{Indentation, Token, WideToken}
+import compiler.Tokens.{Comment, Indentation, Token, WideToken}
 
 import java.lang.Character.isWhitespace
 import scala.annotation.tailrec
@@ -34,6 +34,8 @@ object Line {
       Right(tokens)
     } else {
       Tokens.parse(line) match {
+        case Some(_: Comment) =>
+          Right(tokens)
         case Some(wideToken: WideToken) =>
           tokenize(line.drop(wideToken.length).dropWhile(isWhitespace), tokens :+ wideToken.wrapped)
         case Some(identifier) =>
