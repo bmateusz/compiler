@@ -230,7 +230,6 @@ class ClassTest extends CompilerSpecs {
     assert(expr.evaluate(evaluated, FullEvaluation) === Integer(324))
   }
 
-
   it should "parse multiple assignments inside a class" in {
     val evaluated = evaluateBlock(compileSuccess(
       """
@@ -241,6 +240,18 @@ class ClassTest extends CompilerSpecs {
       """))
     val expr = parseExpressionSuccess("A.x + A.y + A.z")
     assert(expr.evaluate(evaluated, FullEvaluation) === Integer(531))
+  }
+
+  it should "parse multiple expressions inside a class" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        class A
+          def x = 1
+          y: Int = 30
+          def z(n: Int): Int = 500 + n
+      """))
+    val expr = parseExpressionSuccess("A.x + A.y + A.z(7000)")
+    assert(expr.evaluate(evaluated, FullEvaluation) === Integer(7531))
   }
 
 }

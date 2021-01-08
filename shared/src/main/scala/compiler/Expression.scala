@@ -21,6 +21,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
       dot(block, identifier, field, xs)
     case ((field: Identifier) :: (ec: EvaluatedClass) :: xs, Operator(Dot)) =>
       dot(ec, field, xs)
+    case ((pc: ParsedCall) :: (ec: EvaluatedClass) :: xs, Operator(Dot)) =>
+      parsedCall(ec.cls.innerBlock, pc, None, xs, em)
     case ((pc: ParsedCall) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
       dot(block, identifier, pc, xs, em)
     case (acc, pc: ParsedCall) =>
