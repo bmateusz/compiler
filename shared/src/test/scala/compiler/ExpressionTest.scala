@@ -127,9 +127,8 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
       Nil,
       None
     )
-    val evaluationError = EvaluationError(UnexpectedEvaluation(List(Identifier("x"), Integer(1)), Operator(Add)))
-    assert(expr.evaluate(block) === evaluationError)
-    assert(expr.evaluate(block, FullEvaluation) === evaluationError)
+    assert(expr.evaluate(block) === EvaluatedOperator(Integer(3), EvaluatedOperator(Identifier("x"), Integer(1), Add), Subtract))
+    assert(expr.evaluate(block, FullEvaluation) === EvaluationError(UndefinedIdentifier(Identifier("x"))))
   }
 
   it should "evaluate identifier" in {

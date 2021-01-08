@@ -15,101 +15,112 @@ case class Expression(tokens: List[EvaluatedToken]) {
     evaluate(tokens, block, em)
 
   def evaluate(tokens: List[EvaluatedToken], block: Block, em: EvaluationMode): EvaluatedToken = tokens.foldLeft(Nil: List[EvaluatedToken]) {
-    case ((ee: EvaluationError) :: Nil, _) => List(ee)
+    case ((ee: EvaluationError) :: xs, _) =>
+      List(ee)
     case ((field: Identifier) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
       dot(block, identifier, field, xs)
     case ((field: Identifier) :: (ec: EvaluatedClass) :: xs, Operator(Dot)) =>
-      dot(block, ec, field, xs)
+      dot(ec, field, xs)
     case ((pc: ParsedCall) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
       dot(block, identifier, pc, xs, em)
     case (acc, pc: ParsedCall) =>
       parsedCall(block, pc, None, acc, em)
     case (acc, identifier: Identifier) =>
-      block.get(identifier) match {
-        case Some(asg: Assignment) =>
-          asg.constantOrIdentifier ++ acc
-        case Some(df: Definition) =>
-          checkParameterList(df.parameters, Nil) match {
-            case Some(evaluationError) =>
-              List(evaluationError)
-            case None =>
-              postEvaluation(CallDefinition(df, Nil), block, acc, em)
-          }
-        case Some(cls: Class) =>
-          ClassStatic(cls) :: acc
-        case Some(other) =>
-          List(EvaluationError(UnexpectedIdentifier(other.name)))
-        case None =>
-          identifier :: acc
-      }
-    case (acc, cli: ClassInstance) => cli :: acc
-    case (acc, token: ValueToken) => token :: acc
-    case ((x: ValueToken) :: xs, Operator(Negate)) => unaryOperator(x, xs)
-    case ((x: ValueToken) :: (y: ValueToken) :: ys, Operator(op)) => operator(x, y, ys, op)
-    case (acc, other) => List(EvaluationError(UnexpectedEvaluation(acc, other)))
-  }.pipe { evaluatedTokens =>
-    em match {
-      case FullEvaluation =>
-        fullEvaluate(evaluatedTokens, block)
-      case SimpleEvaluation =>
-        evaluatedTokens
-    }
+      evaluateIdentifier(block, identifier, acc, em)
+    case (acc, cli: ClassInstance) =>
+      cli :: acc
+    case (acc, token: ValueToken) =>
+      token :: acc
+    case ((x: ValueToken) :: xs, Operator(op@Negate)) =>
+      unaryOperator(x) :: xs
+    case ((x: EvaluatedToken) :: xs, Operator(op@Negate)) =>
+      EvaluatedUnaryOperator(op, x) :: xs
+    case ((x: ValueToken) :: (y: ValueToken) :: ys, Operator(op)) =>
+      operator(x, y, op) :: ys
+    case ((x: EvaluatedToken) :: (y: EvaluatedToken) :: ys, Operator(op)) =>
+      EvaluatedOperator(x, y, op) :: ys
+    case (acc, other) =>
+      List(EvaluationError(UnexpectedEvaluation(acc, other)))
   }.pipe {
     case Nil => Pass
-    case token :: Nil => token
+    case token :: Nil => em match {
+      case FullEvaluation =>
+        fullEvaluate(token, block)
+      case SimpleEvaluation =>
+        token
+    }
     case more => EvaluationError(TooManyEvaluatedTokens(more))
   }
 
-  def unaryOperator(x: ValueToken, xs: List[EvaluatedToken]): List[EvaluatedToken] =
-    x match {
-      case Integer(integer) => Integer(-integer) :: xs
-      case Floating(double) => Floating(-double) :: xs
-      case value: StringLiteral => List(EvaluationError(UnaryOperatorError(Negate, value)))
+  def evaluateIdentifier(block: Block, identifier: Identifier, acc: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
+    block.get(identifier) match {
+      case Some(asg: Assignment) =>
+        asg.constantOrIdentifier ++ acc
+      case Some(df: Definition) =>
+        checkParameterList(df.parameters, Nil) match {
+          case Some(evaluationError) =>
+            List(evaluationError)
+          case None =>
+            postEvaluation(CallDefinition(df, Nil), block, acc, em)
+        }
+      case Some(cls: Class) =>
+        ClassStatic(cls) :: acc
+      case Some(other) =>
+        List(EvaluationError(UnexpectedIdentifier(other.name)))
+      case None =>
+        identifier :: acc
     }
 
-  def operator(x: ValueToken, y: ValueToken, ys: List[EvaluatedToken], op: Operators): List[EvaluatedToken] =
+  def unaryOperator(x: ValueToken): EvaluatedToken =
+    x match {
+      case Integer(integer) => Integer(-integer)
+      case Floating(double) => Floating(-double)
+      case value: StringLiteral => EvaluationError(UnaryOperatorError(Negate, value))
+    }
+
+  def operator(x: ValueToken, y: ValueToken, op: Operators): EvaluatedToken =
     (x, y, op) match {
-      case (Integer(x), Integer(y), Add) => Integer(y + x) :: ys
-      case (Integer(x), Integer(y), Subtract) => Integer(y - x) :: ys
-      case (Integer(x), Integer(y), Multiply) => Integer(y * x) :: ys
-      case (Integer(x), Integer(y), Divide) if x != 0 => Integer(y / x) :: ys
-      case (Integer(_), Integer(_), Divide) => List(EvaluationError(DivisionByZero))
-      case (Floating(x), Integer(y), Add) => Floating(y + x) :: ys
-      case (Floating(x), Integer(y), Subtract) => Floating(y - x) :: ys
-      case (Floating(x), Integer(y), Multiply) => Floating(y * x) :: ys
-      case (Floating(x), Integer(y), Divide) => Floating(y / x) :: ys
-      case (Integer(x), Floating(y), Add) => Floating(y + x) :: ys
-      case (Integer(x), Floating(y), Subtract) => Floating(y - x) :: ys
-      case (Integer(x), Floating(y), Multiply) => Floating(y * x) :: ys
-      case (Integer(x), Floating(y), Divide) => Floating(y / x) :: ys
-      case (Floating(x), Floating(y), Add) => Floating(y + x) :: ys
-      case (Floating(x), Floating(y), Subtract) => Floating(y - x) :: ys
-      case (Floating(x), Floating(y), Multiply) => Floating(y * x) :: ys
-      case (Floating(x), Floating(y), Divide) => Floating(y / x) :: ys
-      case (StringLiteral(x), StringLiteral(y), Add) => StringLiteral(y + x) :: ys
-      case (a, b, op) => List(EvaluationError(OperatorError(op, b, a)))
+      case (Integer(x), Integer(y), Add) => Integer(y + x)
+      case (Integer(x), Integer(y), Subtract) => Integer(y - x)
+      case (Integer(x), Integer(y), Multiply) => Integer(y * x)
+      case (Integer(x), Integer(y), Divide) if x != 0 => Integer(y / x)
+      case (Integer(_), Integer(_), Divide) => EvaluationError(DivisionByZero)
+      case (Floating(x), Integer(y), Add) => Floating(y + x)
+      case (Floating(x), Integer(y), Subtract) => Floating(y - x)
+      case (Floating(x), Integer(y), Multiply) => Floating(y * x)
+      case (Floating(x), Integer(y), Divide) => Floating(y / x)
+      case (Integer(x), Floating(y), Add) => Floating(y + x)
+      case (Integer(x), Floating(y), Subtract) => Floating(y - x)
+      case (Integer(x), Floating(y), Multiply) => Floating(y * x)
+      case (Integer(x), Floating(y), Divide) => Floating(y / x)
+      case (Floating(x), Floating(y), Add) => Floating(y + x)
+      case (Floating(x), Floating(y), Subtract) => Floating(y - x)
+      case (Floating(x), Floating(y), Multiply) => Floating(y * x)
+      case (Floating(x), Floating(y), Divide) => Floating(y / x)
+      case (StringLiteral(x), StringLiteral(y), Add) => StringLiteral(y + x)
+      case (a, b, op) => EvaluationError(OperatorError(op, b, a))
     }
 
   private def postEvaluation(elem: EvaluatedToken, block: Block, acc: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
     em match {
       case FullEvaluation =>
-        fullEvaluate(List(elem), block) ++ acc
+        fullEvaluate(elem, block) :: acc
       case SimpleEvaluation =>
         elem :: acc
     }
 
-  private def fullEvaluate(evaluatedTokens: List[EvaluatedToken], block: Block): List[EvaluatedToken] = evaluatedTokens.flatMap {
+  private def fullEvaluate(evaluatedToken: EvaluatedToken, block: Block): EvaluatedToken = evaluatedToken match {
     case identifier: Identifier =>
       block.get(identifier) match {
         case Some(asg: Assignment) =>
-          List(asg.singleTokenOrIdentifier())
+          asg.singleTokenOrIdentifier()
         case _ =>
-          List(identifier)
+          EvaluationError(UndefinedIdentifier(identifier))
       }
     case cd@CallDefinition(definition, values) =>
       definition.call(values).value match {
         case Left(_) =>
-          List(cd)
+          cd
         case Right(definitionBlock) =>
           definitionBlock.expression match {
             case Some(expr) =>
@@ -117,26 +128,44 @@ case class Expression(tokens: List[EvaluatedToken]) {
               val typ = Types.fromEvaluatedToken(result)
               definition.returnType match {
                 case Some(returnType) if returnType != typ =>
-                  List(EvaluationError(DefinitionReturnTypeMismatch(definition.returnType.get, typ)))
+                  EvaluationError(DefinitionReturnTypeMismatch(definition.returnType.get, typ))
                 case _ =>
-                  List(result)
+                  result
               }
             case None =>
-              List(cd)
+              cd
           }
       }
     case ed@EvaluatedDot(cli, child) =>
       classInstanceToBlock(cli) match {
         case Left(error) =>
-          List(ed)
+          ed
         case Right(cliBlock) =>
-          fullEvaluate(List(child), cliBlock)
+          fullEvaluate(child, cliBlock)
+      }
+    case EvaluatedUnaryOperator(op: Operators, a: EvaluatedToken) =>
+      fullEvaluate(a, block) match {
+        case x: ValueToken =>
+          unaryOperator(x)
+        case x: EvaluatedToken =>
+          EvaluatedUnaryOperator(op, x)
+      }
+    case EvaluatedOperator(a: EvaluatedToken, b: EvaluatedToken, op: Operators) =>
+      (fullEvaluate(a, block), fullEvaluate(b, block)) match {
+        case (x: ValueToken, y: ValueToken) =>
+          operator(x, y, op)
+        case (err: EvaluationError, _) =>
+          err
+        case (_, err: EvaluationError) =>
+          err
+        case (x: EvaluatedToken, y: EvaluatedToken) =>
+          EvaluatedOperator(x, y, op)
       }
     case other =>
-      List(other)
+      other
   }
 
-  private def dot(block: Block, ec: EvaluatedClass, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
+  private def dot(ec: EvaluatedClass, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
     ec.cls.parameters.findParameter(field) match {
       case Some((parameter, n)) =>
         ec match {
@@ -166,7 +195,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
           case (v: ValueToken) :: Nil =>
             v :: xs
           case (cli: ClassInstance) :: Nil =>
-            dot(block, cli, field, xs)
+            dot(cli, field, xs)
           case (identifier: Identifier) :: Nil =>
             dot(block, identifier, field, xs)
           case other =>

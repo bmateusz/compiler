@@ -356,6 +356,10 @@ object Tokens {
     override def value: String = s"${operator.value} ${token.value}"
   }
 
+  case class UndefinedIdentifier(identifier: Identifier) extends EvaluationErrorToken {
+    override def value: String = s"${identifier.value}"
+  }
+
   case class OperatorError(operator: Operators, a: EvaluatedToken, b: EvaluatedToken) extends EvaluationErrorToken {
     override def value: String = s"${a.value} ${operator.value} ${b.value}"
   }
@@ -418,6 +422,14 @@ object Tokens {
 
   case class EvaluatedDot(ec: EvaluatedClass, child: EvaluatedToken) extends EvaluatedToken {
     override def value: String = s"(${ec.value}).(${child.value})"
+  }
+
+  case class EvaluatedUnaryOperator(op: Operators, a: EvaluatedToken) extends EvaluatedToken {
+    override def value: String = s"${op.value}${a.value}"
+  }
+
+  case class EvaluatedOperator(a: EvaluatedToken, b: EvaluatedToken, op: Operators) extends EvaluatedToken {
+    override def value: String = s"${a.value}${op.value}${b.value}"
   }
 
 }

@@ -74,7 +74,7 @@ class ClassTest extends CompilerSpecs {
       ),
       None
     )
-    assert(expr.evaluate(block) === Integer(-1))
+    assert(expr.evaluate(block, FullEvaluation) === Integer(-1))
   }
 
   it should "parse assignment of a class" in {
@@ -111,7 +111,7 @@ class ClassTest extends CompilerSpecs {
         b = B(a, 2)
       """))
     val expr = parseExpressionSuccess("b.a.n * b.m")
-    assert(expr.evaluate(evaluated) === Integer(66))
+    assert(expr.evaluate(evaluated, FullEvaluation) === Integer(66))
   }
 
   it should "parse inline assignment of a class of class" in {
@@ -228,6 +228,19 @@ class ClassTest extends CompilerSpecs {
     assert(expr.evaluate(evaluated) === EvaluatedDot(ClassStatic(cls), Integer(324)))
 
     assert(expr.evaluate(evaluated, FullEvaluation) === Integer(324))
+  }
+
+
+  it should "parse multiple assignments inside a class" in {
+    val evaluated = evaluateBlock(compileSuccess(
+      """
+        class A
+          x = 1
+          y: Int = 30
+          z: Int = 500
+      """))
+    val expr = parseExpressionSuccess("A.x + A.y + A.z")
+    assert(expr.evaluate(evaluated, FullEvaluation) === Integer(531))
   }
 
 }
