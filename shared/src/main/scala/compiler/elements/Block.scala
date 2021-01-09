@@ -2,7 +2,7 @@ package compiler.elements
 
 import compiler.Errors.Redefinition
 import compiler.Expression.{EvaluationMode, FullEvaluation}
-import compiler.Tokens.{Class, Colon, Def, Enum, Equals, Identifier, Indentation, Token}
+import compiler.Tokens.{Class, Colon, Comment, Def, Enum, Equals, Identifier, Indentation, Token}
 import compiler.{Expression, Result}
 
 import scala.annotation.tailrec
@@ -101,6 +101,8 @@ object Block {
           .flatMap { (assignment, rest) =>
             parse(block.add(assignment, rest), indentation, exprs)
           }
+      case (_: Comment) :: xs =>
+        parse(xs, block, indentation, exprs)
       case Nil =>
         finishBlock(block, Nil)
       case others =>

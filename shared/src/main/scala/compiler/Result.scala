@@ -26,6 +26,12 @@ case class Result[+A](value: ResultEither[A],
       case Right(value) => f(value)
     }
 
+  def getOrElse[B >: A](default: => B): B =
+    value match {
+      case Left(_) => default
+      case Right(value) => value
+    }
+
   def finishedParsingTokens(): ResultEither[A] =
     if (rest.isEmpty) {
       value

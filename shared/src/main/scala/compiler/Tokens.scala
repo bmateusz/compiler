@@ -9,17 +9,10 @@ import scala.util.chaining.scalaUtilChainingOps
 object Tokens {
 
   def parse(line: String): Option[Token] =
-    findComment(line)
-      .orElse(findSimpleToken(line))
+    findSimpleToken(line)
       .orElse(findStringLiteral(line))
       .orElse(findNumberLiteral(line))
       .orElse(findLiteral(line))
-
-  def findComment(line: String): Option[Token] =
-    if (line.startsWith("//"))
-      Some(Comment(line.drop(2).trim, line.length))
-    else
-      None
 
   def findSimpleToken(line: String): Option[Token] =
     SimpleTokens.simpleTokens.find(token => line.startsWith(token.value))
@@ -161,8 +154,34 @@ object Tokens {
     override def value: String = wrapped.value
   }
 
-  case class Comment(string: String, override val length: Int) extends Token {
+  sealed trait Comment extends Token
+
+  case object SingleCommentLiteral extends Comment {
+    override def value: String = "//"
+  }
+
+  case object CommentStartLiteral extends Comment {
+    override def value: String = "/*"
+  }
+
+  case class SingleComment(string: String) extends Comment {
+    override def value: String = s"//$string"
+  }
+
+  case class CommentStart(string: String) extends Comment {
+    override def value: String = s"/*$string"
+  }
+
+  case class CommentLine(string: String) extends Comment {
     override def value: String = string
+  }
+
+  case class CommentInline(string: String) extends Comment {
+    override def value: String = s"/*$string*/"
+  }
+
+  case class CommentEnd(string: String) extends Comment {
+    override def value: String = s"$string*/"
   }
 
   case object Def extends Token {
@@ -277,6 +296,8 @@ object Tokens {
   }
 
   object SimpleTokens {
+    val `//`: Token = SingleCommentLiteral
+    val `/*`: Token = CommentStartLiteral
     val `def`: Token = Def
     val `class`: Token = Class
     val `enum`: Token = Enum
@@ -299,6 +320,8 @@ object Tokens {
     val `/`: Token = Operator(Divide)
 
     val simpleTokens = List(
+      `//`,
+      `/*`,
       `def`,
       `:`,
       `=`,

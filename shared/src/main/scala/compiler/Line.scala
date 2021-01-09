@@ -1,7 +1,7 @@
 package compiler
 
 import compiler.Errors.InvalidToken
-import compiler.Tokens.{Comment, Indentation, Token, WideToken}
+import compiler.Tokens.{CommentEnd, CommentInline, CommentLine, CommentStart, CommentStartLiteral, Indentation, SingleComment, SingleCommentLiteral, Token, WideToken}
 
 import java.lang.Character.isWhitespace
 import scala.annotation.tailrec
@@ -10,9 +10,21 @@ import scala.util.chaining.scalaUtilChainingOps
 class Line(val tokens: List[Token],
            val number: Int) {
   override def toString: String = tokens.mkString(" ")
+
+  def endsWithCommentStart: Boolean = tokens.lastOption.exists {
+    case _: CommentStart => true
+    case _ => false
+  }
+
+  def startsWithCommentEnd: Boolean = tokens.headOption.exists {
+    case _: CommentEnd => true
+    case _ => false
+  }
 }
 
 object Line {
+
+  val empty = new Line(Nil, 0)
 
   def parse(string: String, number: Int): Result[Line] =
     string
@@ -34,15 +46,39 @@ object Line {
       Right(tokens)
     } else {
       Tokens.parse(line) match {
-        case Some(_: Comment) =>
-          Right(tokens)
+        case Some(SingleCommentLiteral) =>
+          Right(tokens :+ SingleComment(line.drop(2)))
+        case Some(CommentStartLiteral) =>
+          findCommentEnd(line) match {
+            case None =>
+              Right(tokens :+ CommentStart(line))
+            case Some(n) =>
+              val (begin, end) = line.splitAt(n)
+              tokenize(end.dropWhile(isWhitespace), tokens :+ CommentInline(begin.drop(2).dropRight(2)))
+          }
         case Some(wideToken: WideToken) =>
           tokenize(line.drop(wideToken.length).dropWhile(isWhitespace), tokens :+ wideToken.wrapped)
-        case Some(identifier) =>
-          tokenize(line.drop(identifier.length).dropWhile(isWhitespace), tokens :+ identifier)
+        case Some(token) =>
+          tokenize(line.drop(token.length).dropWhile(isWhitespace), tokens :+ token)
         case None =>
           Left(line)
       }
+    }
+
+  def parseInMultilineComment(line: String, number: Int): Result[Line] =
+    findCommentEnd(line) match {
+      case None =>
+        Result(new Line(CommentLine(line) :: Nil, number))
+      case Some(n) =>
+        val (begin, end) = line.splitAt(n)
+        parse(end, number)
+          .map(result => new Line(CommentEnd(begin) :: result.tokens, result.number))
+    }
+
+  def findCommentEnd(string: String): Option[Int] =
+    string.indexOf("*/") match {
+      case -1 => None
+      case n => Some(n + 2)
     }
 
 }

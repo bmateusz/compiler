@@ -362,6 +362,8 @@ object Expression {
         }
       case Indentation(_) :: xs if lastToken.isEmpty =>
         parse(xs, outputStack, operatorStack, lastToken)
+      case (_: Comment) :: xs =>
+        parse(xs, outputStack, operatorStack, lastToken)
       case Indentation(_) :: _ =>
         finishExpression(tokens, outputStack, operatorStack)
       case other :: xs =>

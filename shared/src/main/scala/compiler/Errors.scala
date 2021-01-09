@@ -58,4 +58,6 @@ object Errors {
 
   case class UnparsedTokens(tokens: List[Token]) extends CompilerError
 
+  case class CommentNotClosed() extends CompilerError
+
 }

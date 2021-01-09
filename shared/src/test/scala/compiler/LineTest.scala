@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Tokens.{Comma, Indentation, Integer, LeftParenthesis, RightParenthesis, TokenListExtension}
+import compiler.Tokens.{Comma, CommentInline, Indentation, Integer, LeftParenthesis, RightParenthesis, SingleComment, TokenListExtension}
 
 class LineTest extends CompilerSpecs {
 
@@ -42,7 +42,12 @@ class LineTest extends CompilerSpecs {
 
   it should "ignore single line comment" in {
     val line = parseLineSuccess("1 // comment")
-    assert(line.tokens === List(Indentation(0), Integer(1)))
+    assert(line.tokens === List(Indentation(0), Integer(1), SingleComment(" comment")))
+  }
+
+  it should "ignore single line closed comment" in {
+    val line = parseLineSuccess("1 /* one */ 2 /* two */")
+    assert(line.tokens === List(Indentation(0), Integer(1), CommentInline(" one "), Integer(2), CommentInline(" two ")))
   }
 
 }
