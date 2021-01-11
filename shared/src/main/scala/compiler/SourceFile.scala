@@ -25,19 +25,25 @@ object SourceFile {
   def parse(string: String): Either[List[CompilerError], SourceFile] =
     parse(string.linesIterator)
 
+  sealed trait LineParseMode
+
+  case object Normal extends LineParseMode
+
+  case object MultiLineComment extends LineParseMode
+
   def parse(lines: Iterator[String]): Either[List[CompilerError], SourceFile] =
     lines
       .zipWithIndex
-      .foldLeft((List.empty[Result[Line]], 0)) {
-        case ((acc, 0), (string, num)) =>
+      .foldLeft((List.empty[Result[Line]], Normal: LineParseMode)) {
+        case ((acc, Normal), (string, num)) =>
           val parsedLine = Line.parse(string, num)
-          (parsedLine :: acc, if (endsWithCommentStart(parsedLine)) 1 else 0)
-        case ((acc, 1), (string, num)) =>
+          (parsedLine :: acc, if (endsWithCommentStart(parsedLine)) MultiLineComment else Normal)
+        case ((acc, MultiLineComment), (string, num)) =>
           val parsedLine = Line.parseInMultilineComment(string, num)
-          (parsedLine :: acc, if (endMultilineCommentParsing(parsedLine)) 0 else 1)
+          (parsedLine :: acc, if (endMultilineCommentParsing(parsedLine)) Normal else MultiLineComment)
       }
       .pipe {
-        case (x :: xs, 1) if !endMultilineCommentParsing(x) =>
+        case (x :: xs, MultiLineComment) if !endMultilineCommentParsing(x) =>
           Result[Line](CommentNotClosed()) :: xs
         case (result, _) =>
           result

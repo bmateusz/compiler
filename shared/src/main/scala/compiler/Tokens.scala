@@ -17,56 +17,85 @@ object Tokens {
   def findSimpleToken(line: String): Option[Token] =
     SimpleTokens.simpleTokens.find(token => line.startsWith(token.value))
 
-  // val stringRegex: UnanchoredRegex = """^"((?:\\.|[^\\"])*)"""".r.unanchored
+  sealed trait StringParseMode
+
+  case object ExpectQuote extends StringParseMode
+
+  case object InString extends StringParseMode
+
+  case object InEscape extends StringParseMode
+
+  case object StringParseFailed extends StringParseMode
+
+  case object StringParseSuccess extends StringParseMode
+
   def findStringLiteral(line: String): Option[Token] =
     line
       .iterator
-      .scanLeft(0) {
-        case (0, '"') => 1
-        case (0, _) => -1
-        case (1, '\\') => 2
-        case (1, '"') => -2
-        case (1, _) => 1
-        case (2, _) => 1
+      .scanLeft(ExpectQuote: StringParseMode) {
+        case (ExpectQuote, '"') => InString
+        case (ExpectQuote, _) => StringParseFailed
+        case (InString, '\\') => InEscape
+        case (InString, '"') => StringParseSuccess
+        case (InString, _) => InString
+        case (InEscape, _) => InString
       }
       .zipWithIndex
-      .find(_._1 < 0)
+      .find {
+        case (StringParseSuccess | StringParseFailed, _) => true
+        case _ => false
+      }
       .flatMap {
-        case (-2, index: Int) =>
+        case (StringParseSuccess, index: Int) =>
           Some(WideToken(StringLiteral(line.slice(1, index - 1)), index))
         case _ =>
           None
       }
 
-  // val floatRegex: UnanchoredRegex = "^(\\d+)(\\.\\d+(?:[eE]-?\\d+)?)?".r.unanchored
+  sealed trait NumberParseMode
+
+  case object WaitForFirstDigit extends NumberParseMode
+
+  case object WaitForDigitOrPoint extends NumberParseMode
+
+  case object WaitForDigitAfterPoint extends NumberParseMode
+
+  case object WaitForDigitOrEAfterPoint extends NumberParseMode
+
+  case object WaitForDigitOrMinusAfterE extends NumberParseMode
+
+  case object WaitForDigitAfterE extends NumberParseMode
+
+  case object NumberParseFinished extends NumberParseMode
+
   def findNumberLiteral(line: String): Option[Token] =
     line
-      .scanLeft(0) {
-        case (0, char: Char) =>
-          if (isDigit(char)) 1 else -1
-        case (1, char: Char) =>
-          if (isDigit(char)) 1 else if (char == '.') 2 else -1
-        case (2, char: Char) =>
-          if (isDigit(char)) 3 else -1
-        case (3, char: Char) =>
-          if (isDigit(char)) 3 else if (char == 'e' || char == 'E') 4 else -1
-        case (4, char: Char) =>
-          if (isDigitOrMinus(char)) 5 else -1
-        case (5, char: Char) =>
-          if (isDigit(char)) 5 else -1
+      .scanLeft(WaitForFirstDigit: NumberParseMode) {
+        case (WaitForFirstDigit, char: Char) =>
+          if (isDigit(char)) WaitForDigitOrPoint else NumberParseFinished
+        case (WaitForDigitOrPoint, char: Char) =>
+          if (isDigit(char)) WaitForDigitOrPoint else if (char == '.') WaitForDigitAfterPoint else NumberParseFinished
+        case (WaitForDigitAfterPoint, char: Char) =>
+          if (isDigit(char)) WaitForDigitOrEAfterPoint else NumberParseFinished
+        case (WaitForDigitOrEAfterPoint, char: Char) =>
+          if (isDigit(char)) WaitForDigitOrEAfterPoint else if (char == 'e' || char == 'E') WaitForDigitOrMinusAfterE else NumberParseFinished
+        case (WaitForDigitOrMinusAfterE, char: Char) =>
+          if (isDigitOrMinus(char)) WaitForDigitAfterE else NumberParseFinished
+        case (WaitForDigitAfterE, char: Char) =>
+          if (isDigit(char)) WaitForDigitAfterE else NumberParseFinished
         case _ =>
-          -1
+          NumberParseFinished
       }
-      .takeWhile(_ >= 0)
+      .takeWhile(_ != NumberParseFinished)
       .pipe { result =>
         if (result.isEmpty)
           None
         else {
           val len = result.size - 1
           result.last match {
-            case 1 =>
+            case WaitForDigitOrPoint =>
               Some(WideToken(Integer(line.take(len).toLong), len))
-            case 3 | 5 =>
+            case WaitForDigitOrEAfterPoint | WaitForDigitAfterE =>
               Some(WideToken(Floating(line.take(len).toDouble), len))
             case _ =>
               None
@@ -74,24 +103,33 @@ object Tokens {
         }
       }
 
-  // val literalRegex: UnanchoredRegex = "^([a-zA-Z](?:[0-9a-zA-Z_-]*[0-9a-zA-Z])?)".r.unanchored
+  sealed trait LiteralParseMode
+
+  case object ExpectLetter extends LiteralParseMode
+
+  case object ExpectLetterOrDigit extends LiteralParseMode
+
+  case object ExpectLetterOrDigitAfterHyphen extends LiteralParseMode
+
+  case object LiteralParseFinished extends LiteralParseMode
+
   def findLiteral(line: String): Option[Token] =
     line
-      .scanLeft(0) {
-        case (0, char: Char) =>
-          if (isLetter(char)) 1 else -1
-        case (1 | 2, char: Char) =>
-          if (isLetterOrDigit(char)) 1 else if (isHyphen(char)) 2 else -1
+      .scanLeft(ExpectLetter: LiteralParseMode) {
+        case (ExpectLetter, char: Char) =>
+          if (isLetter(char)) ExpectLetterOrDigit else LiteralParseFinished
+        case (ExpectLetterOrDigit | ExpectLetterOrDigitAfterHyphen, char: Char) =>
+          if (isLetterOrDigit(char)) ExpectLetterOrDigit else if (isHyphen(char)) ExpectLetterOrDigitAfterHyphen else LiteralParseFinished
         case _ =>
-          -1
+          LiteralParseFinished
       }
-      .takeWhile(_ >= 0)
+      .takeWhile(_ != LiteralParseFinished)
       .pipe { result =>
         if (result.isEmpty)
           None
         else
           result.last match {
-            case 1 =>
+            case ExpectLetterOrDigit =>
               Some(Identifier(line.take(result.size - 1)))
             case _ =>
               None
