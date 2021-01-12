@@ -39,6 +39,7 @@ object Tokens {
         case (InString, '"') => StringParseSuccess
         case (InString, _) => InString
         case (InEscape, _) => InString
+        case (_, _) => StringParseFailed
       }
       .zipWithIndex
       .find {
@@ -54,35 +55,35 @@ object Tokens {
 
   sealed trait NumberParseMode
 
-  case object WaitForFirstDigit extends NumberParseMode
+  case object ExpectFirstDigit extends NumberParseMode
 
-  case object WaitForDigitOrPoint extends NumberParseMode
+  case object ExpectDigitOrPoint extends NumberParseMode
 
-  case object WaitForDigitAfterPoint extends NumberParseMode
+  case object ExpectDigitAfterPoint extends NumberParseMode
 
-  case object WaitForDigitOrEAfterPoint extends NumberParseMode
+  case object ExpectDigitOrEAfterPoint extends NumberParseMode
 
-  case object WaitForDigitOrMinusAfterE extends NumberParseMode
+  case object ExpectDigitOrMinusAfterE extends NumberParseMode
 
-  case object WaitForDigitAfterE extends NumberParseMode
+  case object ExpectDigitAfterE extends NumberParseMode
 
   case object NumberParseFinished extends NumberParseMode
 
   def findNumberLiteral(line: String): Option[Token] =
     line
-      .scanLeft(WaitForFirstDigit: NumberParseMode) {
-        case (WaitForFirstDigit, char: Char) =>
-          if (isDigit(char)) WaitForDigitOrPoint else NumberParseFinished
-        case (WaitForDigitOrPoint, char: Char) =>
-          if (isDigit(char)) WaitForDigitOrPoint else if (char == '.') WaitForDigitAfterPoint else NumberParseFinished
-        case (WaitForDigitAfterPoint, char: Char) =>
-          if (isDigit(char)) WaitForDigitOrEAfterPoint else NumberParseFinished
-        case (WaitForDigitOrEAfterPoint, char: Char) =>
-          if (isDigit(char)) WaitForDigitOrEAfterPoint else if (char == 'e' || char == 'E') WaitForDigitOrMinusAfterE else NumberParseFinished
-        case (WaitForDigitOrMinusAfterE, char: Char) =>
-          if (isDigitOrMinus(char)) WaitForDigitAfterE else NumberParseFinished
-        case (WaitForDigitAfterE, char: Char) =>
-          if (isDigit(char)) WaitForDigitAfterE else NumberParseFinished
+      .scanLeft(ExpectFirstDigit: NumberParseMode) {
+        case (ExpectFirstDigit, char: Char) =>
+          if (isDigit(char)) ExpectDigitOrPoint else NumberParseFinished
+        case (ExpectDigitOrPoint, char: Char) =>
+          if (isDigit(char)) ExpectDigitOrPoint else if (char == '.') ExpectDigitAfterPoint else NumberParseFinished
+        case (ExpectDigitAfterPoint, char: Char) =>
+          if (isDigit(char)) ExpectDigitOrEAfterPoint else NumberParseFinished
+        case (ExpectDigitOrEAfterPoint, char: Char) =>
+          if (isDigit(char)) ExpectDigitOrEAfterPoint else if (char == 'e' || char == 'E') ExpectDigitOrMinusAfterE else NumberParseFinished
+        case (ExpectDigitOrMinusAfterE, char: Char) =>
+          if (isDigitOrMinus(char)) ExpectDigitAfterE else NumberParseFinished
+        case (ExpectDigitAfterE, char: Char) =>
+          if (isDigit(char)) ExpectDigitAfterE else NumberParseFinished
         case _ =>
           NumberParseFinished
       }
@@ -93,9 +94,9 @@ object Tokens {
         else {
           val len = result.size - 1
           result.last match {
-            case WaitForDigitOrPoint =>
+            case ExpectDigitOrPoint =>
               Some(WideToken(Integer(line.take(len).toLong), len))
-            case WaitForDigitOrEAfterPoint | WaitForDigitAfterE =>
+            case ExpectDigitOrEAfterPoint | ExpectDigitAfterE =>
               Some(WideToken(Floating(line.take(len).toDouble), len))
             case _ =>
               None
