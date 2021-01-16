@@ -36,7 +36,7 @@ trait Repl {
                       printlnError(evaluationError)
                       repl(block)
                     case Right(evaluated) =>
-                      println(evaluated.sortedElements)
+                      println(evaluated.elements)
                       repl(evaluated)
                   }
               }

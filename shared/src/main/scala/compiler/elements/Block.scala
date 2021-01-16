@@ -10,10 +10,6 @@ import scala.annotation.tailrec
 case class Block(elements: List[Element],
                  expression: Option[Expression],
                  parent: Option[Block] = None) {
-  def sortedElements: List[Element] =
-    elements
-      .sortBy(_.name.value)
-
   def add(element: Element, rest: List[Token]): Result[Block] =
     if (elements.exists(_.name.value == element.name.value))
       Result(Redefinition(element.name.value), rest)

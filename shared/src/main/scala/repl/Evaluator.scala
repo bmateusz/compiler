@@ -22,7 +22,7 @@ trait Evaluator {
                 setOutputError(evaluationError, Some(source))
               case Right(evaluatedBlock) =>
                 setOutput(
-                  evaluatedBlock.sortedElements,
+                  evaluatedBlock.elements,
                   newBlock.expression.map(_.evaluate(evaluatedBlock, FullEvaluation)),
                   source
                 )
