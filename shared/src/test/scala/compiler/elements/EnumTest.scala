@@ -2,7 +2,8 @@ package compiler.elements
 
 import compiler.CompilerSpecs
 import compiler.Errors.{EmptyEnum, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, NotUniqueEnumValues}
-import compiler.Tokens.{Add, Identifier, Operator}
+import compiler.Expression.FullEvaluation
+import compiler.Tokens.{Add, EnumInstance, EnumStatic, EvaluationError, Identifier, Operator, UnexpectedEnumValueAfterDot}
 
 class EnumTest extends CompilerSpecs {
 
@@ -66,6 +67,40 @@ class EnumTest extends CompilerSpecs {
   it should "report error for no name" in {
     val block = compileError("enum ")
     assert(block === List(ExpectedIdentifier(None)))
+  }
+
+  it should "evaluate enum value" in {
+    val block = compileSuccess("enum A(X,Y)")
+    val expr = parseExpressionSuccess("X")
+    assert(expr.evaluate(block, FullEvaluation) === EnumInstance(
+      Enum(Identifier("A"), List(Identifier("X"), Identifier("Y"))),
+      Identifier("X")
+    ))
+  }
+
+  it should "evaluate enum identifier" in {
+    val block = compileSuccess("enum A(X,Y)")
+    val expr = parseExpressionSuccess("A")
+    assert(expr.evaluate(block, FullEvaluation) === EnumStatic(
+      Enum(Identifier("A"), List(Identifier("X"), Identifier("Y")))
+    ))
+  }
+
+  it should "evaluate enum value after dot" in {
+    val block = compileSuccess("enum A(X,Y)")
+    val expr = parseExpressionSuccess("A.Y")
+    assert(expr.evaluate(block, FullEvaluation) === EnumInstance(
+      Enum(Identifier("A"), List(Identifier("X"), Identifier("Y"))),
+      Identifier("Y")
+    ))
+  }
+
+  it should "report unexpected enum value after dot" in {
+    val block = compileSuccess("enum A(X,Y)")
+    val expr = parseExpressionSuccess("A.Z")
+    assert(expr.evaluate(block, FullEvaluation) ===
+      EvaluationError(UnexpectedEnumValueAfterDot(Enum(Identifier("A"), List(Identifier("X"), Identifier("Y"))), Identifier("Z")))
+    )
   }
 
 }

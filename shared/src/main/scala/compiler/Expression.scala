@@ -4,7 +4,7 @@ import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis, UnmatchedRigh
 import compiler.Expression.{EvaluationMode, FullEvaluation, SimpleEvaluation}
 import compiler.Result.ResultEither
 import compiler.Tokens._
-import compiler.elements.{Assignment, Block, Class, Definition, Parameters}
+import compiler.elements.{Assignment, Block, Class, Definition, Enum, Parameters}
 
 import scala.annotation.tailrec
 import scala.util.chaining.scalaUtilChainingOps
@@ -25,6 +25,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
       parsedCall(ec.cls.innerBlock, pc, None, xs, em)
     case ((pc: ParsedCall) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
       dot(block, identifier, pc, xs, em)
+    case ((field: Identifier) :: (enms: EnumStatic) :: xs, Operator(Dot)) =>
+      dot(enms, field, xs)
     case (acc, pc: ParsedCall) =>
       parsedCall(block, pc, None, acc, em)
     case (acc, identifier: Identifier) =>
@@ -67,6 +69,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
         }
       case Some(cls: Class) =>
         ClassStatic(cls) :: acc
+      case Some(enm: Enum) =>
+        EnumStatic(enm) :: acc
       case Some(other) =>
         List(EvaluationError(UnexpectedIdentifier(other.name)))
       case None =>
@@ -187,6 +191,14 @@ case class Expression(tokens: List[EvaluatedToken]) {
           case None =>
             List(EvaluationError(UnexpectedIdentifier(ec.cls.name)))
         }
+    }
+
+  private def dot(enms: EnumStatic, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
+    enms.enm.get(field) match {
+      case Some(enumValue: Identifier) =>
+        EnumInstance(enms.enm, enumValue) :: xs
+      case None =>
+        List(EvaluationError(UnexpectedEnumValueAfterDot(enms.enm, field)))
     }
 
   @tailrec

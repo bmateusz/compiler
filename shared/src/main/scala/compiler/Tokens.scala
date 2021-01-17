@@ -461,6 +461,10 @@ object Tokens {
     override def value: String = element.name.value
   }
 
+  case class UnexpectedEnumValueAfterDot(element: Element, enumValue: Identifier) extends EvaluationErrorToken {
+    override def value: String = element.name.value
+  }
+
   case class NotStatic(className: Identifier, identifier: Identifier) extends EvaluationErrorToken {
     override def value: String = s"${className.value} ${identifier.value}"
   }
@@ -487,6 +491,14 @@ object Tokens {
 
   case class ClassStatic(cls: elements.Class) extends EvaluatedClass {
     override def value: String = s"static ${cls.name.value}"
+  }
+
+  case class EnumInstance(enm: elements.Enum, enumValue: Identifier) extends EvaluatedToken {
+    override def value: String = s"instance ${enm.name.value}(${enumValue.value})"
+  }
+
+  case class EnumStatic(enm: elements.Enum) extends EvaluatedToken {
+    override def value: String = s"static ${enm.name.value}"
   }
 
   case class CallDefinition(definition: elements.Definition, values: List[EvaluatedToken]) extends EvaluatedToken {

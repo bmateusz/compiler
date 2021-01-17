@@ -1,8 +1,9 @@
 package compiler.elements
 
 import compiler.Errors.{CompilerError, EmptyEnum, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, NotUniqueEnumValues}
-import compiler.Result
-import compiler.Tokens.{Comma, Identifier, Indentation, LeftParenthesis, RightParenthesis, Token, TokenListExtension}
+import compiler.Tokens.{Comma, EnumInstance, Identifier, Indentation, LeftParenthesis, RightParenthesis, Token, TokenListExtension}
+import compiler.Types.UnknownType
+import compiler.{Expression, Result}
 
 import scala.annotation.tailrec
 
@@ -11,8 +12,16 @@ case class Enum(name: Identifier,
   def add(identifier: Identifier): Enum =
     copy(values = values :+ identifier)
 
+  def get(field: Identifier) =
+    values.find(_.value == field.value)
+
   def notUniqueIdentifiers(): List[String] =
     Identifier.notUniqueIdentifiers(values)
+
+  def allElements: List[(String, Element)] =
+    (name.value -> this) ::
+      values
+        .map(v => v.value -> Assignment(v, Some(UnknownType(name.value)), Expression(List(EnumInstance(this, v)))))
 }
 
 object Enum {

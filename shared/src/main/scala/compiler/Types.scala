@@ -10,6 +10,7 @@ object Types {
   def fromEvaluatedToken(token: EvaluatedToken): Type =
     token match {
       case Tokens.ClassInstance(cls, values) => UnknownType(cls.name.value)
+      case Tokens.EnumInstance(enm, enumValue) => UnknownType(enm.name.value)
       case Tokens.CallDefinition(definition, values) => definition.returnType.getOrElse(Error)
       case Tokens.StringLiteral(value) => String
       case Tokens.Integer(value) => Integer

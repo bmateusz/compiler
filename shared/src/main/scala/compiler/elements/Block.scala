@@ -27,9 +27,19 @@ case class Block(elements: List[Element],
   def setParent(block: Block): Block =
     copy(parent = Some(block))
 
-  def get(identifier: Identifier): Option[Element] =
+  lazy val identifierMap: Map[String, Element] =
     elements
-      .find(_.name.value == identifier.value)
+      .flatMap {
+        case enm: Enum =>
+          enm.allElements
+        case other =>
+          List(other.name.value -> other)
+      }
+      .toMap
+
+
+  def get(identifier: Identifier): Option[Element] =
+    identifierMap.get(identifier.value)
       .orElse(parent.flatMap(_.get(identifier)))
 
   def evaluate(parent: Block = Block.empty, rest: List[Token] = Nil, em: EvaluationMode = FullEvaluation): Result[Block] =
