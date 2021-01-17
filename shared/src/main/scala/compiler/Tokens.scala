@@ -481,8 +481,13 @@ object Tokens {
     override val value: String = "pass"
   }
 
-  sealed trait EvaluatedClass extends EvaluatedToken {
-    val cls: elements.Class
+  sealed trait EvaluatedIdentifier extends EvaluatedToken {
+    def identifier: Identifier
+  }
+
+  sealed trait EvaluatedClass extends EvaluatedIdentifier {
+    def cls: elements.Class
+    override def identifier: Identifier = cls.name
   }
 
   case class ClassInstance(cls: elements.Class, values: List[EvaluatedToken]) extends EvaluatedClass {
@@ -493,11 +498,16 @@ object Tokens {
     override def value: String = s"static ${cls.name.value}"
   }
 
-  case class EnumInstance(enm: elements.Enum, enumValue: Identifier) extends EvaluatedToken {
+  sealed trait EvaluatedEnum extends EvaluatedIdentifier {
+    def enm: elements.Enum
+    override def identifier: Identifier = enm.name
+  }
+
+  case class EnumInstance(enm: elements.Enum, enumValue: Identifier) extends EvaluatedEnum {
     override def value: String = s"instance ${enm.name.value}(${enumValue.value})"
   }
 
-  case class EnumStatic(enm: elements.Enum) extends EvaluatedToken {
+  case class EnumStatic(enm: elements.Enum) extends EvaluatedEnum {
     override def value: String = s"static ${enm.name.value}"
   }
 
