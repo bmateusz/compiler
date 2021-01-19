@@ -254,4 +254,15 @@ class ClassTest extends CompilerSpecs {
     assert(expr.evaluate(evaluated, FullEvaluation) === Integer(7531))
   }
 
+  it should "parse multiple classes without parameters" in {
+    val evaluated = compileSuccess(
+      """
+        class A
+        class B
+      """)
+    assert(evaluated === Block(List(
+      elements.Class(Identifier("A"), Parameters.empty, Block.empty),
+      elements.Class(Identifier("B"), Parameters.empty, Block.empty),
+    ), None, None))
+  }
 }

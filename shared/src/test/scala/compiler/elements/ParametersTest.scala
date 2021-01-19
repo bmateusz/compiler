@@ -1,7 +1,7 @@
 package compiler.elements
 
 import compiler.Errors.{ExpectedColon, ExpectedIdentifier, ExpectedRightParenthesis, ExpectedType, NotUniqueParameters}
-import compiler.Tokens.{Colon, Equals, Identifier, Integer, RightParenthesis}
+import compiler.Tokens.{Colon, Equals, Identifier, Indentation, Integer, RightParenthesis}
 import compiler.Types.UnknownType
 import compiler.elements.Parameters.Parameter
 import compiler.{CompilerSpecs, Types}
@@ -60,7 +60,7 @@ class ParametersTest extends CompilerSpecs {
     assert(source.tokens.length === 5)
     val params = Parameters.parse(source.tokens)
     assert(params.right.value === (Parameters.empty, None))
-    assert(params.rest === List(Identifier("a"), Colon, Identifier("Float"), RightParenthesis))
+    assert(params.rest === List(Indentation(0), Identifier("a"), Colon, Identifier("Float"), RightParenthesis))
   }
 
   it should "parse type hint only" in {

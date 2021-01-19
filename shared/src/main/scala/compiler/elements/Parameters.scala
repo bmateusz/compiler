@@ -28,8 +28,10 @@ object Parameters {
   @tailrec
   def parse(tokens: List[Token]): Result[(Parameters, Option[Type])] =
     tokens match {
-      case Indentation(_) :: xs =>
-        parse(xs)
+      case Indentation(_) :: LeftParenthesis :: xs =>
+        parse(LeftParenthesis :: xs)
+      case Indentation(_) :: Colon :: xs =>
+        parse(Colon :: xs)
       case LeftParenthesis :: xs =>
         val (left, right) = xs.spanMatchingRightParenthesis()
         right match {
