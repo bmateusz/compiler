@@ -9,7 +9,7 @@ lazy val root = project.in(file(".")).
     publishLocal := {},
   )
 
-lazy val compiler = crossProject(JSPlatform, JVMPlatform)
+lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .in(file("."))
   .settings(
@@ -27,4 +27,7 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform)
   .jsSettings(
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "1.1.0"
     // Add JS-specific settings here
+  )
+  .nativeSettings(
+    // Add Native-specific settings here
   )
