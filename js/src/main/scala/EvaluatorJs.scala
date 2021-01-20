@@ -1,7 +1,8 @@
+import compiler.Expression.{FullEvaluation, SimpleEvaluation}
 import compiler.elements.Element
 import compiler.{Errors, SourceFile, Tokens}
 import org.scalajs.dom
-import org.scalajs.dom.html
+import org.scalajs.dom.{document, html, window}
 import repl.Evaluator
 
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
@@ -11,7 +12,8 @@ object EvaluatorJs {
 
   @JSExport
   def main(in: html.Input,
-           out: html.Div): Unit = {
+           out: html.Div,
+           evaluationMode: html.Input): Unit = {
 
     def listToUl(list: List[_]): String =
       list.map(e => s"<li>$e</li>").mkString("<ul>", "", "</ul>")
@@ -38,11 +40,24 @@ object EvaluatorJs {
 
     }
 
-    in.oninput = { (e: dom.Event) =>
-      evaluator.evaluate(in.value)
+    def evaluate(): Unit = {
+      evaluator.evaluate(
+        in.value,
+        if (evaluationMode.checked) FullEvaluation else SimpleEvaluation
+      )
     }
 
-    evaluator.evaluate(in.value)
+    evaluationMode.onchange = { (e: dom.Event) =>
+      evaluate()
+    }
+
+    in.oninput = { (e: dom.Event) =>
+      evaluate()
+    }
+
+    window.onload = { (e: dom.Event) =>
+      evaluate()
+    }
 
   }
 

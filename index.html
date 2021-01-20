@@ -4,10 +4,11 @@
     <title>Compiler</title>
 </head>
 <body>
-<textarea id="input" cols="60" rows="20"></textarea>
+<div><textarea id="input" cols="60" rows="20"></textarea></div>
+<div><label for="full-evaluation">Full evaluation</label><input type="checkbox" id="full-evaluation"></div>
 <div id="output"></div>
 <script type="text/javascript" src="./js/target/scala-2.13/compiler-fastopt/main.js"></script>
 <script type="text/javascript">
-    EvaluatorJs.main(document.getElementById("input"), document.getElementById("output"))
+    EvaluatorJs.main(document.getElementById("input"), document.getElementById("output"), document.getElementById("full-evaluation"))
 </script>
 </body>

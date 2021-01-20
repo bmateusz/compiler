@@ -1,7 +1,7 @@
 package repl
 
 import compiler.Errors.CompilerError
-import compiler.Expression.FullEvaluation
+import compiler.Expression.{EvaluationMode, FullEvaluation}
 import compiler.SourceFile
 import compiler.Tokens.EvaluatedToken
 import compiler.elements.{Block, Element}
@@ -12,18 +12,18 @@ trait Evaluator {
 
   def setOutputError(errors: List[CompilerError], source: Option[SourceFile]): Unit
 
-  def evaluate(string: String): Unit =
+  def evaluate(string: String, evaluationMode: EvaluationMode = FullEvaluation): Unit =
     SourceFile.parse(string) match {
       case Right(source) =>
         source.compile(Block.empty) match {
           case Right(newBlock) =>
-            newBlock.evaluate().finishedParsingTokens() match {
+            newBlock.evaluate(em = evaluationMode).finishedParsingTokens() match {
               case Left(evaluationError) =>
                 setOutputError(evaluationError, Some(source))
               case Right(evaluatedBlock) =>
                 setOutput(
                   evaluatedBlock.elements,
-                  newBlock.expression.map(_.evaluate(evaluatedBlock, FullEvaluation)),
+                  newBlock.expression.map(_.evaluate(evaluatedBlock, evaluationMode)),
                   source
                 )
             }
