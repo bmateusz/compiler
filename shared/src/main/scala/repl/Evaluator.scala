@@ -6,32 +6,37 @@ import compiler.SourceFile
 import compiler.Tokens.EvaluatedToken
 import compiler.elements.{Block, Element}
 
-trait Evaluator {
+object Evaluator {
 
-  def setOutput(elements: List[Element], token: Option[EvaluatedToken], source: SourceFile): Unit
+  sealed trait EvaluationResult
 
-  def setOutputError(errors: List[CompilerError], source: Option[SourceFile]): Unit
+  case class EvaluationSuccess(elements: List[Element],
+                               token: Option[EvaluatedToken],
+                               source: SourceFile) extends EvaluationResult
 
-  def evaluate(string: String, evaluationMode: EvaluationMode = FullEvaluation): Unit =
+  case class EvaluationFailure(errors: List[CompilerError],
+                               source: Option[SourceFile]) extends EvaluationResult
+
+  def evaluate(string: String, evaluationMode: EvaluationMode = FullEvaluation): EvaluationResult =
     SourceFile.parse(string) match {
       case Right(source) =>
         source.compile(Block.empty) match {
           case Right(newBlock) =>
             newBlock.evaluate(em = evaluationMode).finishedParsingTokens() match {
               case Left(evaluationError) =>
-                setOutputError(evaluationError, Some(source))
+                EvaluationFailure(evaluationError, Some(source))
               case Right(evaluatedBlock) =>
-                setOutput(
+                EvaluationSuccess(
                   evaluatedBlock.elements,
                   newBlock.expression.map(_.evaluate(evaluatedBlock, evaluationMode)),
                   source
                 )
             }
           case Left(compileError) =>
-            setOutputError(compileError, Some(source))
+            EvaluationFailure(compileError, Some(source))
         }
       case Left(compileError) =>
-        setOutputError(compileError, None)
+        EvaluationFailure(compileError, None)
     }
 
 }

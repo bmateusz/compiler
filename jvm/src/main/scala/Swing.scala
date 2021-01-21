@@ -1,7 +1,3 @@
-import compiler.Errors.CompilerError
-import compiler.SourceFile
-import compiler.Tokens.EvaluatedToken
-import compiler.elements.Element
 import repl.Evaluator
 
 import java.awt.event._
@@ -10,8 +6,6 @@ import javax.swing._
 import javax.swing.event.{DocumentEvent, DocumentListener}
 
 object Swing {
-
-  private val newline = "\n"
 
   private def createAndShowGUI(): Unit = {
     val frame = new JFrame("CompilerUi")
@@ -48,21 +42,6 @@ object Swing {
     add(inputScrollPane, c)
     add(outputScrollPane, c)
 
-    val evaluator: Evaluator = new Evaluator {
-      override def setOutput(elements: List[Element], token: Option[EvaluatedToken], source: SourceFile): Unit =
-        outputTextArea.setText(
-          elements.mkString("", newline, newline) +
-            token.map(newline + "Result: " + _ + newline).getOrElse("") +
-            source.tokens.mkString(newline + "Tokens: ", " ", newline)
-        )
-
-      override def setOutputError(errors: List[CompilerError], source: Option[SourceFile]): Unit =
-        outputTextArea.setText(
-          errors.mkString("", newline, newline) +
-            source.map(_.tokens.mkString("Tokens: ", " ", newline)).getOrElse("")
-        )
-    }
-
     class MyDocumentListener extends DocumentListener {
       val newline = "\n"
 
@@ -77,7 +56,19 @@ object Swing {
       override def changedUpdate(e: DocumentEvent): Unit = {}
 
       def update(e: DocumentEvent): Unit =
-        evaluator.evaluate(inputTextArea.getText)
+        Evaluator.evaluate(inputTextArea.getText) match {
+          case Evaluator.EvaluationSuccess(elements, token, source) =>
+            outputTextArea.setText(
+              elements.mkString("", newline, newline) +
+                token.map(newline + "Result: " + _ + newline).getOrElse("") +
+                source.tokens.mkString(newline + "Tokens: ", " ", newline)
+            )
+          case Evaluator.EvaluationFailure(errors, source) =>
+            outputTextArea.setText(
+              errors.mkString("", newline, newline) +
+                source.map(_.tokens.mkString("Tokens: ", " ", newline)).getOrElse("")
+            )
+        }
     }
 
     override def actionPerformed(evt: ActionEvent): Unit = {}
