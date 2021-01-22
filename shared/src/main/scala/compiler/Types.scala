@@ -10,19 +10,19 @@ object Types {
   def fromEvaluatedToken(token: EvaluatedToken): Type =
     token match {
       case evaluated: Tokens.EvaluatedIdentifier => UnknownType(evaluated.identifier.value)
-      case Tokens.CallDefinition(definition, values) => definition.returnType.getOrElse(Error)
+      case token@Tokens.CallDefinition(definition, values) => definition.returnType.getOrElse(Error(token))
       case Tokens.StringLiteral(value) => String
       case Tokens.Integer(value) => Integer
       case Tokens.Floating(value) => Floating
-      case _ => Error
+      case token => Error(token)
     }
 
   sealed trait Type {
     def name: String
   }
 
-  case object Error extends Type {
-    override val name: String = "Error"
+  case class Error(token: EvaluatedToken) extends Type {
+    override val name: String = s"Error(${token.value})"
   }
 
   case object Initial extends Type {

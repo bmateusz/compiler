@@ -125,7 +125,7 @@ class DefinitionTest extends CompilerSpecs {
         def x: String = 3
       """))
     val expr = parseExpressionSuccess("x")
-    assert(expr.evaluate(evaluated, FullEvaluation) === EvaluationError(DefinitionReturnTypeMismatch(Types.String, Types.Integer)))
+    assert(expr.evaluate(evaluated, FullEvaluation) === EvaluationError(DefinitionReturnTypeMismatch(Identifier("x"), Types.String, Types.Integer)))
   }
 
 }

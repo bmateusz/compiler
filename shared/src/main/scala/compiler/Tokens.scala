@@ -445,8 +445,8 @@ object Tokens {
     override def value: String = s"expected: ${expected}, got: ${got}"
   }
 
-  case class DefinitionReturnTypeMismatch(expected: Type, got: Type) extends EvaluationErrorToken {
-    override def value: String = s"expected: ${expected}, got: ${got}"
+  case class DefinitionReturnTypeMismatch(name: Identifier, expected: Type, got: Type) extends EvaluationErrorToken {
+    override def value: String = s"def ${name.value} expected: ${expected}, got: ${got}"
   }
 
   case object DivisionByZero extends EvaluationErrorToken {

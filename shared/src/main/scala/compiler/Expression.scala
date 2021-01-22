@@ -134,7 +134,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
               val typ = Types.fromEvaluatedToken(result)
               definition.returnType match {
                 case Some(returnType) if returnType != typ =>
-                  EvaluationError(DefinitionReturnTypeMismatch(definition.returnType.get, typ))
+                  EvaluationError(DefinitionReturnTypeMismatch(definition.name, definition.returnType.get, typ))
                 case _ =>
                   result
               }

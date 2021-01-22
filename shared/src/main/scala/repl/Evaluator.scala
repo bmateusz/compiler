@@ -8,14 +8,18 @@ import compiler.elements.{Block, Element}
 
 object Evaluator {
 
-  sealed trait EvaluationResult
+  sealed trait EvaluationResult {
+    def token: Option[EvaluatedToken]
+  }
 
   case class EvaluationSuccess(elements: List[Element],
                                token: Option[EvaluatedToken],
                                source: SourceFile) extends EvaluationResult
 
   case class EvaluationFailure(errors: List[CompilerError],
-                               source: Option[SourceFile]) extends EvaluationResult
+                               source: Option[SourceFile]) extends EvaluationResult {
+    val token: Option[EvaluatedToken] = None
+  }
 
   def evaluate(string: String, evaluationMode: EvaluationMode = FullEvaluation): EvaluationResult =
     SourceFile.parse(string) match {
