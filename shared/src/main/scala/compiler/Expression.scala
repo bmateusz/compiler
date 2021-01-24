@@ -315,7 +315,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
   def classInstanceToBlock(ec: EvaluatedClass): ResultEither[Block] = {
     ec match {
       case ClassInstance(cls, values) =>
-        cls.parameters.values.zip(values).foldLeft(Result(Block.empty)) {
+        cls.parameters.values.zip(values).foldLeft(Result(ec.cls.innerBlock)) {
           case (acc, (param, value)) =>
             acc.flatMapValue(
               _.add(Assignment(param.identifier, Some(param.typ), Expression(List(value))), Nil)
