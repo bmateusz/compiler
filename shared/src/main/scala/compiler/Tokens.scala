@@ -511,7 +511,7 @@ object Tokens {
     override def value: String = s"static ${enm.name.value}"
   }
 
-  case class CallDefinition(definition: elements.Definition, values: List[EvaluatedToken]) extends EvaluatedToken {
+  case class CallDefinition(definition: elements.Definition, values: List[EvaluatedToken], ec: Option[EvaluatedClass]) extends EvaluatedToken {
     override def value: String = s"call ${definition.name.value}($values)"
   }
 

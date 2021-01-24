@@ -156,8 +156,9 @@ class ClassTest extends CompilerSpecs {
       Parameters(List(Parameter(Identifier("n"), Types.Integer))),
       Block(List(definition), None, Some(Block(List(), None, None)))
     )
+    val classInstance = ClassInstance(cls, List(Integer(20)))
 
-    assert(expr.evaluate(evaluated) === EvaluatedDot(ClassInstance(cls, List(Integer(20))), CallDefinition(definition, List(Integer(300)))))
+    assert(expr.evaluate(evaluated) === EvaluatedDot(classInstance, CallDefinition(definition, List(Integer(300)), Some(classInstance))))
 
     assert(expr.evaluate(evaluated, FullEvaluation) === Integer(321))
   }
@@ -181,8 +182,9 @@ class ClassTest extends CompilerSpecs {
       Parameters(List(Parameter(Identifier("n"), Types.Integer))),
       Block(List(definition), None, Some(Block(List(), None, None)))
     )
+    val classInstance = ClassInstance(cls, List(Integer(20)))
 
-    assert(expr.evaluate(evaluated) === EvaluatedDot(ClassInstance(cls, List(Integer(20))), CallDefinition(definition, Nil)))
+    assert(expr.evaluate(evaluated) === EvaluatedDot(classInstance, CallDefinition(definition, Nil, Some(classInstance))))
 
     assert(expr.evaluate(evaluated, FullEvaluation) === Integer(21))
   }
@@ -206,7 +208,7 @@ class ClassTest extends CompilerSpecs {
       Block(List(definition), None, Some(Block(List(), None, None)))
     )
 
-    assert(expr.evaluate(evaluated) === EvaluatedDot(ClassStatic(cls), CallDefinition(definition, Nil)))
+    assert(expr.evaluate(evaluated) === EvaluatedDot(ClassStatic(cls), CallDefinition(definition, Nil, Some(ClassStatic(cls)))))
 
     assert(expr.evaluate(evaluated, FullEvaluation) === Integer(323))
   }

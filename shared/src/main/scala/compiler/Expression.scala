@@ -11,6 +11,10 @@ import scala.util.chaining.scalaUtilChainingOps
 
 case class Expression(tokens: List[EvaluatedToken]) {
 
+  private val debug = true
+
+  private def trace(string: => String): Unit = if (debug) println(string) else ()
+
   def evaluate(block: Block = Block.empty, em: EvaluationMode = SimpleEvaluation): EvaluatedToken =
     evaluate(tokens, block, em)
 
@@ -22,7 +26,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
     case ((field: Identifier) :: (ec: EvaluatedClass) :: xs, Operator(Dot)) =>
       dot(ec, field, xs)
     case ((pc: ParsedCall) :: (ec: EvaluatedClass) :: xs, Operator(Dot)) =>
-      parsedCall(ec.cls.innerBlock, pc, None, xs, em)
+      parsedCall(ec.cls.innerBlock, pc, Some(ec), xs, em)
     case ((pc: ParsedCall) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
       dot(block, identifier, pc, xs, em)
     case ((field: Identifier) :: (enms: EnumStatic) :: xs, Operator(Dot)) =>
@@ -65,7 +69,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
           case Some(evaluationError) =>
             List(evaluationError)
           case None =>
-            postEvaluation(CallDefinition(df, Nil), block, acc, em)
+            postEvaluation(CallDefinition(df, Nil, None), block, acc, em)
         }
       case Some(cls: Class) =>
         ClassStatic(cls) :: acc
@@ -115,7 +119,9 @@ case class Expression(tokens: List[EvaluatedToken]) {
         elem :: acc
     }
 
-  private def fullEvaluate(evaluatedToken: EvaluatedToken, block: Block): EvaluatedToken = evaluatedToken match {
+  private def fullEvaluate(evaluatedToken: EvaluatedToken, block: Block): EvaluatedToken = {
+    trace(s"full evaluate $evaluatedToken, $block")
+    evaluatedToken match {
     case identifier: Identifier =>
       block.get(identifier) match {
         case Some(asg: Assignment) =>
@@ -123,14 +129,21 @@ case class Expression(tokens: List[EvaluatedToken]) {
         case _ =>
           EvaluationError(UndefinedIdentifier(identifier))
       }
-    case cd@CallDefinition(definition, values) =>
+    case cd@CallDefinition(definition, values, ec) =>
       definition.call(values).value match {
         case Left(_) =>
           cd
         case Right(definitionBlock) =>
           definitionBlock.expression match {
             case Some(expr) =>
-              val result = expr.evaluate(definitionBlock.setParent(block), FullEvaluation)
+              val contextBlock = definitionBlock
+                .setParent(
+                  ec
+                    .flatMap(classInstanceToBlock(_).toOption)
+                    .map(block.setParent)
+                    .getOrElse(block)
+                )
+              val result = expr.evaluate(contextBlock, FullEvaluation)
               val typ = Types.fromEvaluatedToken(result)
               definition.returnType match {
                 case Some(returnType) if returnType != typ =>
@@ -143,12 +156,13 @@ case class Expression(tokens: List[EvaluatedToken]) {
           }
       }
     case cli@ClassInstance(cls, values) =>
-      classInstanceToBlock(cli) match {
-        case Left(error) =>
-          cli
-        case Right(cliBlock) =>
-          cli.copy(cls = cls.copy(innerBlock = cliBlock.setParent(cls.innerBlock)))
-      }
+//      classInstanceToBlock(cli) match {
+//        case Left(error) =>
+//          cli
+//        case Right(cliBlock) =>
+//          cli.copy(cls = cls.copy(innerBlock = cliBlock.setParent(cls.innerBlock)))
+//      }
+      cli
     case ed@EvaluatedDot(cli, child) =>
       classInstanceToBlock(cli) match {
         case Left(error) =>
@@ -177,6 +191,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
     case other =>
       other
   }
+  }
 
   private def dot(ec: EvaluatedClass, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
     ec.cls.parameters.findParameter(field) match {
@@ -190,7 +205,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case None =>
         ec.cls.innerBlock.get(field) match {
           case Some(df: Definition) =>
-            EvaluatedDot(ec, CallDefinition(df, Nil)) :: xs
+            EvaluatedDot(ec, CallDefinition(df, Nil, Some(ec))) :: xs
           case Some(asg: Assignment) =>
             EvaluatedDot(ec, asg.singleTokenOrIdentifier()) :: xs
           case Some(other) =>
@@ -243,7 +258,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
         List(EvaluationError(UnexpectedIdentifier(identifier)))
     }
 
-  def parsedCall(block: Block, pc: ParsedCall, parent: Option[ClassInstance], acc: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
+  def parsedCall(block: Block, pc: ParsedCall, parentClass: Option[EvaluatedClass], acc: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
     block.get(pc.identifier) match {
       case Some(cls: Class) =>
         pc.expression
@@ -270,8 +285,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
               case Some(evaluationError) =>
                 List(evaluationError)
               case None =>
-                val cd = CallDefinition(df, tokens)
-                val elem = parent match {
+                val cd = CallDefinition(df, tokens, parentClass)
+                val elem = parentClass match {
                   case Some(value) =>
                     EvaluatedDot(value, cd)
                   case None =>
