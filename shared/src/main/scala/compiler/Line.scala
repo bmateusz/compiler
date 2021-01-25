@@ -1,7 +1,7 @@
 package compiler
 
 import compiler.Errors.InvalidToken
-import compiler.Tokens.{CommentEnd, CommentInline, CommentLine, CommentStart, CommentStartLiteral, Indentation, SingleComment, SingleCommentLiteral, Token, WideToken}
+import compiler.Tokens.{CommentEnd, CommentInline, CommentLine, CommentStart, CommentStartLiteral, Indentation, MultilineString, MultilineStringPart, SingleComment, SingleCommentLiteral, Token, TripleQuote, WideToken}
 
 import java.lang.Character.isWhitespace
 import scala.annotation.tailrec
@@ -18,6 +18,16 @@ class Line(val tokens: List[Token],
 
   def startsWithCommentEnd: Boolean = tokens.headOption.exists {
     case _: CommentEnd => true
+    case _ => false
+  }
+
+  def endsWithMultilineString: Boolean = tokens.lastOption.exists {
+    case _: MultilineStringPart => true
+    case _ => false
+  }
+
+  def startsWithMultilineString: Boolean = tokens.headOption.exists {
+    case _: MultilineStringPart => true
     case _ => false
   }
 }
@@ -48,6 +58,14 @@ object Line {
       Tokens.parse(line) match {
         case Some(SingleCommentLiteral) =>
           Right(tokens :+ SingleComment(line.drop(2)))
+        case Some(TripleQuote) =>
+          findTripleQuoteEnd(line.drop(3)) match {
+            case None =>
+              Right(tokens :+ MultilineStringPart(line))
+            case Some(n) =>
+              val (begin, end) = line.splitAt(n)
+              tokenize(end.dropWhile(isWhitespace), tokens :+ MultilineString(begin.drop(3).dropRight(3)))
+          }
         case Some(CommentStartLiteral) =>
           findCommentEnd(line) match {
             case None =>
@@ -79,6 +97,22 @@ object Line {
     string.indexOf("*/") match {
       case -1 => None
       case n => Some(n + 2)
+    }
+
+  def parseInMultilineString(line: String, number: Int): Result[Line] =
+    findTripleQuoteEnd(line) match {
+      case None =>
+        Result(new Line(MultilineStringPart(line) :: Nil, number))
+      case Some(n) =>
+        val (begin, end) = line.splitAt(n)
+        parse(end, number)
+          .map(result => new Line(MultilineString(begin) :: result.tokens, result.number))
+    }
+
+  def findTripleQuoteEnd(string: String): Option[Int] =
+    string.indexOf(TripleQuote.value) match {
+      case -1 => None
+      case n => Some(n + TripleQuote.value.length)
     }
 
 }

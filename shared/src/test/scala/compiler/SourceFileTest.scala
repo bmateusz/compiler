@@ -1,7 +1,7 @@
 package compiler
 
 import compiler.Errors.{CommentNotClosed, InvalidToken}
-import compiler.Tokens.{CommentEnd, CommentInline, CommentLine, CommentStart, Indentation, Integer}
+import compiler.Tokens.{CommentEnd, CommentInline, CommentLine, CommentStart, Indentation, Integer, MultilineString, MultilineStringPart}
 
 class SourceFileTest extends CompilerSpecs {
 
@@ -50,6 +50,18 @@ class SourceFileTest extends CompilerSpecs {
     assert(errors === List(
       CommentNotClosed()
     ))
+  }
 
+  it should "parse multiline string" in {
+    val source = parseSuccess("1 \"\"\"hello\n \nworld\"\"\" 2")
+    assert(source.tokens === List(
+      Indentation(0),
+      Integer(1),
+      MultilineStringPart("\"\"\"hello"),
+      MultilineStringPart(" "),
+      MultilineString("world\"\"\""),
+      Indentation(1),
+      Integer(2)
+    ))
   }
 }

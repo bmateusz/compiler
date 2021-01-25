@@ -29,7 +29,9 @@ object SourceFile {
 
   case object Normal extends LineParseMode
 
-  case object MultiLineComment extends LineParseMode
+  case object MultilineComment extends LineParseMode
+
+  case object MultilineString extends LineParseMode
 
   def parse(lines: Iterator[String]): Either[List[CompilerError], SourceFile] =
     lines
@@ -37,13 +39,24 @@ object SourceFile {
       .foldLeft((List.empty[Result[Line]], Normal: LineParseMode)) {
         case ((acc, Normal), (string, num)) =>
           val parsedLine = Line.parse(string, num)
-          (parsedLine :: acc, if (endsWithCommentStart(parsedLine)) MultiLineComment else Normal)
-        case ((acc, MultiLineComment), (string, num)) =>
+          (
+            parsedLine :: acc,
+            if (endsWithCommentStart(parsedLine))
+              MultilineComment
+            else if (endsWithMultilineStringPart(parsedLine))
+              MultilineString
+            else
+              Normal
+          )
+        case ((acc, MultilineComment), (string, num)) =>
           val parsedLine = Line.parseInMultilineComment(string, num)
-          (parsedLine :: acc, if (endMultilineCommentParsing(parsedLine)) Normal else MultiLineComment)
+          (parsedLine :: acc, if (endMultilineCommentParsing(parsedLine)) Normal else MultilineComment)
+        case ((acc, MultilineString), (string, num)) =>
+          val parsedLine = Line.parseInMultilineString(string, num)
+          (parsedLine :: acc, if (endMultilineStringParsing(parsedLine)) Normal else MultilineString)
       }
       .pipe {
-        case (x :: xs, MultiLineComment) if !endMultilineCommentParsing(x) =>
+        case (x :: xs, MultilineComment) if !endMultilineCommentParsing(x) =>
           Result[Line](CommentNotClosed()) :: xs
         case (result, _) =>
           result
@@ -59,6 +72,12 @@ object SourceFile {
 
   private def endMultilineCommentParsing(parsedLine: Result[Line]) =
     parsedLine.map(p => p.startsWithCommentEnd && !p.endsWithCommentStart).getOrElse(true)
+
+  private def endsWithMultilineStringPart(parsedLine: Result[Line]) =
+    parsedLine.map(_.endsWithMultilineString).getOrElse(false)
+
+  private def endMultilineStringParsing(parsedLine: Result[Line]) =
+    parsedLine.map(p => p.startsWithMultilineString && !p.endsWithMultilineString).getOrElse(true)
 
   private def flattenLines(rights: List[Line]): List[Token] =
     rights.flatMap(_.tokens)

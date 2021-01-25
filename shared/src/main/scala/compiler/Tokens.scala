@@ -223,6 +223,18 @@ object Tokens {
     override def value: String = s"$string*/"
   }
 
+  case object TripleQuote extends Token {
+    override def value: String = "\"\"\""
+  }
+
+  case class MultilineStringPart(string: String) extends Token {
+    override def value: String = "\"\"\"" + string
+  }
+
+  case class MultilineString(string: String) extends Token {
+    override def value: String = "\"\"\"" + string + "\"\"\""
+  }
+
   case object Def extends Token {
     override val value: String = "def"
   }
@@ -337,6 +349,7 @@ object Tokens {
   object SimpleTokens {
     val `//`: Token = SingleCommentLiteral
     val `/*`: Token = CommentStartLiteral
+    val `"""`: Token = TripleQuote
     val `def`: Token = Def
     val `class`: Token = Class
     val `enum`: Token = Enum
@@ -361,6 +374,7 @@ object Tokens {
     val simpleTokens = List(
       `//`,
       `/*`,
+      `"""`,
       `def`,
       `:`,
       `=`,

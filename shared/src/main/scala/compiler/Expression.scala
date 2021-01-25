@@ -11,7 +11,7 @@ import scala.util.chaining.scalaUtilChainingOps
 
 case class Expression(tokens: List[EvaluatedToken]) {
 
-  private val debug = true
+  private val debug = false
 
   private def trace(string: => String): Unit = if (debug) println(string) else ()
 
