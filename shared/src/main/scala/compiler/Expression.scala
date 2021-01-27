@@ -398,6 +398,17 @@ object Expression {
         parse(xs, outputStack, operatorStack, lastToken)
       case (_: Comment) :: xs =>
         parse(xs, outputStack, operatorStack, lastToken)
+      case (multilineStringPart: MultilineStringPart) :: xs =>
+        parse(xs, outputStack, multilineStringPart :: operatorStack, lastToken)
+      case (multilineString: MultilineString) :: xs =>
+        operatorStack.span {
+          case _: MultilineStringPart => true
+          case _ => false
+        } match {
+          case (left, right) =>
+            val stringLiteral = StringLiteral((multilineString :: left).reverse.map(_.value).mkString("\n"))
+            parse(xs, outputStack :+ stringLiteral, right, lastToken)
+        }
       case Indentation(_) :: _ =>
         finishExpression(tokens, outputStack, operatorStack)
       case other :: xs =>

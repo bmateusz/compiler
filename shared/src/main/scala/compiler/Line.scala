@@ -61,9 +61,9 @@ object Line {
         case Some(TripleQuote) =>
           findTripleQuoteEnd(line.drop(3)) match {
             case None =>
-              Right(tokens :+ MultilineStringPart(line))
+              Right(tokens :+ MultilineStringPart(line.drop(3)))
             case Some(n) =>
-              val (begin, end) = line.splitAt(n)
+              val (begin, end) = line.splitAt(n + 3)
               tokenize(end.dropWhile(isWhitespace), tokens :+ MultilineString(begin.drop(3).dropRight(3)))
           }
         case Some(CommentStartLiteral) =>
@@ -106,13 +106,13 @@ object Line {
       case Some(n) =>
         val (begin, end) = line.splitAt(n)
         parse(end, number)
-          .map(result => new Line(MultilineString(begin) :: result.tokens, result.number))
+          .map(result => new Line(MultilineString(begin.dropRight(3)) :: result.tokens, result.number))
     }
 
   def findTripleQuoteEnd(string: String): Option[Int] =
     string.indexOf(TripleQuote.value) match {
       case -1 => None
-      case n => Some(n + TripleQuote.value.length)
+      case n => Some(n + 3)
     }
 
 }

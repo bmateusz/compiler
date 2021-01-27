@@ -227,13 +227,9 @@ object Tokens {
     override def value: String = "\"\"\""
   }
 
-  case class MultilineStringPart(string: String) extends Token {
-    override def value: String = "\"\"\"" + string
-  }
+  case class MultilineStringPart(value: String) extends Token
 
-  case class MultilineString(string: String) extends Token {
-    override def value: String = "\"\"\"" + string + "\"\"\""
-  }
+  case class MultilineString(value: String) extends Token
 
   case object Def extends Token {
     override val value: String = "def"

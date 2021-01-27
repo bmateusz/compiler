@@ -141,4 +141,14 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
     assert(expr.evaluate(block) === Integer(98))
   }
 
+  it should "evaluate triplequote" in {
+    val expr = parseExpressionSuccess("\"\"\"aaaa\"\"\"")
+    assert(expr.tokens === List(StringLiteral("aaaa")))
+  }
+
+  it should "evaluate multiline triplequote" in {
+    val expr = parseExpressionSuccess("\"\"\"aaaa\nbbbb\ncccc\"\"\"")
+    assert(expr.tokens === List(StringLiteral("aaaa\nbbbb\ncccc")))
+  }
+
 }

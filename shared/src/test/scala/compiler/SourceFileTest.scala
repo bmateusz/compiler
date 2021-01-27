@@ -52,14 +52,24 @@ class SourceFileTest extends CompilerSpecs {
     ))
   }
 
-  it should "parse multiline string" in {
+  it should "parse triplequote string" in {
+    val source = parseSuccess("1 \"\"\"hello\"\"\" 2")
+    assert(source.tokens === List(
+      Indentation(0),
+      Integer(1),
+      MultilineString("hello"),
+      Integer(2)
+    ))
+  }
+
+  it should "parse multiline triplequote string" in {
     val source = parseSuccess("1 \"\"\"hello\n \nworld\"\"\" 2")
     assert(source.tokens === List(
       Indentation(0),
       Integer(1),
-      MultilineStringPart("\"\"\"hello"),
+      MultilineStringPart("hello"),
       MultilineStringPart(" "),
-      MultilineString("world\"\"\""),
+      MultilineString("world"),
       Indentation(1),
       Integer(2)
     ))
