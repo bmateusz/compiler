@@ -1,0 +1,22 @@
+{
+  "name": "compiler",
+  "version": "1.0.0",
+  "description": "![Scala CI](https://github.com/bmateusz/compiler/workflows/Scala%20CI/badge.svg)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bmateusz/compiler.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bmateusz/compiler/issues"
+  },
+  "homepage": "https://github.com/bmateusz/compiler#readme",
+  "dependencies": {
+    "monaco-editor": "^0.22.1"
+  }
+}

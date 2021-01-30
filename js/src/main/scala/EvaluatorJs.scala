@@ -2,13 +2,21 @@ import compiler.Expression.{FullEvaluation, SimpleEvaluation}
 import org.scalajs.dom.{Event, html, window}
 import repl.Evaluator
 
+import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 @JSExportTopLevel("EvaluatorJs")
 object EvaluatorJs {
 
+  @js.native
+  trait MonacoEditor extends js.Object {
+    def getValue(): String = js.native
+
+    def onDidChangeModelContent(fn: js.Function1[Event, _]): Unit = js.native
+  }
+
   @JSExport
-  def main(in: html.Input,
+  def main(in: MonacoEditor,
            out: html.Div,
            evaluationMode: html.Input): Unit = {
 
@@ -20,7 +28,7 @@ object EvaluatorJs {
 
     def evaluate: Event => Unit = { (e: Event) =>
       Evaluator.evaluate(
-        in.value,
+        in.getValue(),
         if (evaluationMode.checked) FullEvaluation else SimpleEvaluation
       ) match {
         case Evaluator.EvaluationSuccess(elements, token, source) =>
@@ -40,7 +48,7 @@ object EvaluatorJs {
     }
 
     evaluationMode.onchange = evaluate
-    in.oninput = evaluate
+    in.onDidChangeModelContent(evaluate)
     window.onload = evaluate
 
   }
