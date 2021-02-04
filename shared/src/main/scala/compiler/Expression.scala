@@ -155,14 +155,6 @@ case class Expression(tokens: List[EvaluatedToken]) {
               cd
           }
       }
-    case cli@ClassInstance(cls, values) =>
-//      classInstanceToBlock(cli) match {
-//        case Left(error) =>
-//          cli
-//        case Right(cliBlock) =>
-//          cli.copy(cls = cls.copy(innerBlock = cliBlock.setParent(cls.innerBlock)))
-//      }
-      cli
     case ed@EvaluatedDot(cli, child) =>
       classInstanceToBlock(cli) match {
         case Left(error) =>
