@@ -34,7 +34,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
     case (acc, pc: ParsedCall) =>
       parsedCall(block, pc, None, acc, em)
     case (acc, identifier: Identifier) =>
-      evaluateIdentifier(block, identifier, acc, em)
+      // evaluateIdentifier(block, identifier, acc, em)
+      identifier :: acc
     case (acc, cli: ClassInstance) =>
       cli :: acc
     case (acc, token: ValueToken) =>
@@ -55,7 +56,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case FullEvaluation =>
         fullEvaluate(token, block)
       case SimpleEvaluation =>
-        token
+        simpleEvaluate(token, block)
     }
     case more => EvaluationError(TooManyEvaluatedTokens(more))
   }
@@ -119,6 +120,18 @@ case class Expression(tokens: List[EvaluatedToken]) {
         elem :: acc
     }
 
+  private def simpleEvaluate(evaluatedToken: EvaluatedToken, block: Block): EvaluatedToken =
+    evaluatedToken match {
+      case identifier: Identifier =>
+        evaluateIdentifier(block, identifier, Nil, SimpleEvaluation) match {
+          case Nil => Pass
+          case head :: Nil => head
+          case more => EvaluationError(TooManyEvaluatedTokens(more))
+        }
+      case _ =>
+        evaluatedToken
+    }
+
   private def fullEvaluate(evaluatedToken: EvaluatedToken, block: Block): EvaluatedToken = {
     trace(s"full evaluate $evaluatedToken, $block")
     evaluatedToken match {
@@ -126,6 +139,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
       block.get(identifier) match {
         case Some(asg: Assignment) =>
           asg.singleTokenOrIdentifier()
+        case Some(definition: Definition) =>
+          fullEvaluate(CallDefinition(definition, Nil, None), block)
         case _ =>
           EvaluationError(UndefinedIdentifier(identifier))
       }
@@ -203,7 +218,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
           case Some(other) =>
             List(EvaluationError(UnexpectedIdentifierAfterDot(other)))
           case None =>
-            List(EvaluationError(UnexpectedIdentifier(ec.cls.name)))
+            List(EvaluationError(UnexpectedIdentifierAfterDot(ec.cls)))
         }
     }
 
@@ -227,7 +242,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
           case (identifier: Identifier) :: Nil =>
             dot(block, identifier, field, xs)
           case other =>
-            List(EvaluationError(UnexpectedIdentifier(field)))
+            List(EvaluationError(UnexpectedIdentifierAfterDot(asg)))
         }
       case Some(other) =>
         List(EvaluationError(UnexpectedIdentifierAfterDot(other)))
