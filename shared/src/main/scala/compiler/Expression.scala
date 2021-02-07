@@ -40,12 +40,12 @@ case class Expression(tokens: List[EvaluatedToken]) {
       cli :: acc
     case (acc, token: ValueToken) =>
       token :: acc
-    case ((x: ValueToken) :: xs, Operator(op@Negate)) =>
-      unaryOperator(x) :: xs
+    // case ((x: ValueToken) :: xs, Operator(op@Negate)) =>
+    //   unaryOperator(x) :: xs
     case ((x: EvaluatedToken) :: xs, Operator(op@Negate)) =>
       EvaluatedUnaryOperator(op, x) :: xs
-    case ((x: ValueToken) :: (y: ValueToken) :: ys, Operator(op)) =>
-      operator(x, y, op) :: ys
+    // case ((x: ValueToken) :: (y: ValueToken) :: ys, Operator(op)) =>
+    //   operator(x, y, op) :: ys
     case ((x: EvaluatedToken) :: (y: EvaluatedToken) :: ys, Operator(op)) =>
       EvaluatedOperator(x, y, op) :: ys
     case (acc, other) =>
@@ -82,7 +82,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
         identifier :: acc
     }
 
-  def unaryOperator(x: ValueToken): EvaluatedToken =
+  def unaryOperator(x: ValueToken, op: Operators): EvaluatedToken =
     x match {
       case Integer(integer) => Integer(-integer)
       case Floating(double) => Floating(-double)
@@ -117,7 +117,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case FullEvaluation =>
         fullEvaluate(elem, block) :: acc
       case SimpleEvaluation =>
-        elem :: acc
+        simpleEvaluate(elem, block) :: acc
     }
 
   private def simpleEvaluate(evaluatedToken: EvaluatedToken, block: Block): EvaluatedToken =
@@ -127,6 +127,26 @@ case class Expression(tokens: List[EvaluatedToken]) {
           case Nil => Pass
           case head :: Nil => head
           case more => EvaluationError(TooManyEvaluatedTokens(more))
+        }
+      case euo@EvaluatedUnaryOperator(op, a) =>
+        simpleEvaluate(a, block) match {
+          case x: ValueToken =>
+            unaryOperator(x, op)
+          case (err: EvaluationError) =>
+            err
+          case _ =>
+            euo
+        }
+      case eo@EvaluatedOperator(a, b, op) =>
+        (simpleEvaluate(a, block), simpleEvaluate(b, block)) match {
+          case (x: ValueToken, y: ValueToken) =>
+            operator(x, y, op)
+          case (err: EvaluationError, _) =>
+            err
+          case (_, err: EvaluationError) =>
+            err
+          case _ =>
+            eo
         }
       case _ =>
         evaluatedToken
@@ -180,7 +200,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
     case EvaluatedUnaryOperator(op: Operators, a: EvaluatedToken) =>
       fullEvaluate(a, block) match {
         case x: ValueToken =>
-          unaryOperator(x)
+          unaryOperator(x, op)
         case x: EvaluatedToken =>
           EvaluatedUnaryOperator(op, x)
       }
