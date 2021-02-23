@@ -1,6 +1,6 @@
 logBuffered in Test := false
 
-ThisBuild / scalaVersion := "2.13.4"
+ThisBuild / scalaVersion := "2.13.5"
 
 lazy val root = project.in(file(".")).
   aggregate(compiler.js, compiler.jvm).
