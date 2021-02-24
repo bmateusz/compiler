@@ -21,31 +21,18 @@ case class Expression(tokens: List[EvaluatedToken]) {
   def evaluate(tokens: List[EvaluatedToken], block: Block, em: EvaluationMode): EvaluatedToken = tokens.foldLeft(Nil: List[EvaluatedToken]) {
     case ((ee: EvaluationError) :: xs, _) =>
       List(ee)
-    case ((field: Identifier) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
-      dot(block, identifier, field, xs)
-    case ((field: Identifier) :: (ec: EvaluatedClass) :: xs, Operator(Dot)) =>
-      dot(ec, field, xs)
-    case ((pc: ParsedCall) :: (ec: EvaluatedClass) :: xs, Operator(Dot)) =>
-      parsedCall(ec.cls.innerBlock, pc, Some(ec), xs, em)
-    case ((pc: ParsedCall) :: (identifier: Identifier) :: xs, Operator(Dot)) =>
-      dot(block, identifier, pc, xs, em)
-    case ((field: Identifier) :: (enms: EnumStatic) :: xs, Operator(Dot)) =>
-      dot(enms, field, xs)
-    case (acc, pc: ParsedCall) =>
-      parsedCall(block, pc, None, acc, em)
+    case ((child: EvaluatedToken) :: (parent: EvaluatedToken) :: xs, Operator(Dot)) =>
+      dot(block, parent, child, xs, em)
     case (acc, identifier: Identifier) =>
-      // evaluateIdentifier(block, identifier, acc, em)
       identifier :: acc
+    case (acc, pc: ParsedCall) =>
+      pc :: acc
     case (acc, cli: ClassInstance) =>
       cli :: acc
     case (acc, token: ValueToken) =>
       token :: acc
-    // case ((x: ValueToken) :: xs, Operator(op@Negate)) =>
-    //   unaryOperator(x) :: xs
     case ((x: EvaluatedToken) :: xs, Operator(op@Negate)) =>
       EvaluatedUnaryOperator(op, x) :: xs
-    // case ((x: ValueToken) :: (y: ValueToken) :: ys, Operator(op)) =>
-    //   operator(x, y, op) :: ys
     case ((x: EvaluatedToken) :: (y: EvaluatedToken) :: ys, Operator(op)) =>
       EvaluatedOperator(x, y, op) :: ys
     case (acc, other) =>
@@ -64,7 +51,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
   def evaluateIdentifier(block: Block, identifier: Identifier, acc: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
     block.get(identifier) match {
       case Some(asg: Assignment) =>
-        asg.constantOrIdentifier ++ acc
+        EvaluatedAssignment(asg) :: acc
       case Some(df: Definition) =>
         checkParameterList(df.parameters, Nil) match {
           case Some(evaluationError) =>
@@ -79,7 +66,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case Some(other) =>
         List(EvaluationError(UnexpectedIdentifier(other.name)))
       case None =>
-        identifier :: acc
+        List(EvaluationError(UnexpectedIdentifierInBlock(identifier)))
     }
 
   def unaryOperator(x: ValueToken, op: Operators): EvaluatedToken =
@@ -120,14 +107,19 @@ case class Expression(tokens: List[EvaluatedToken]) {
         simpleEvaluate(elem, block) :: acc
     }
 
+  private def simpleEvaluateIdentifier(block: Block, identifier: Identifier): EvaluatedToken =
+    evaluateIdentifier(block, identifier, Nil, SimpleEvaluation) match {
+      case Nil => Pass
+      case head :: Nil => head
+      case more => EvaluationError(TooManyEvaluatedTokens(more))
+    }
+
   private def simpleEvaluate(evaluatedToken: EvaluatedToken, block: Block): EvaluatedToken =
     evaluatedToken match {
       case identifier: Identifier =>
-        evaluateIdentifier(block, identifier, Nil, SimpleEvaluation) match {
-          case Nil => Pass
-          case head :: Nil => head
-          case more => EvaluationError(TooManyEvaluatedTokens(more))
-        }
+        simpleEvaluateIdentifier(block, identifier)
+      case pc: ParsedCall =>
+        parsedCall(block, pc, None, Nil, SimpleEvaluation).head
       case euo@EvaluatedUnaryOperator(op, a) =>
         simpleEvaluate(a, block) match {
           case x: ValueToken =>
@@ -159,10 +151,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
       block.get(identifier) match {
         case Some(asg: Assignment) =>
           asg.singleTokenOrIdentifier()
-        case Some(definition: Definition) =>
-          fullEvaluate(CallDefinition(definition, Nil, None), block)
-        case _ =>
-          EvaluationError(UndefinedIdentifier(identifier))
+        case other =>
+          evaluateIdentifier(block, identifier, Nil, FullEvaluation).head
       }
     case cd@CallDefinition(definition, values, ec) =>
       definition.call(values).value match {
@@ -215,10 +205,76 @@ case class Expression(tokens: List[EvaluatedToken]) {
         case (x: EvaluatedToken, y: EvaluatedToken) =>
           EvaluatedOperator(x, y, op)
       }
+    case pc: ParsedCall =>
+      parsedCall(block, pc, None, Nil, FullEvaluation).head
     case other =>
       other
   }
   }
+
+  private def dot(block: Block, parent: EvaluatedToken, child: EvaluatedToken, xs: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
+    parent match {
+      case parentIdentifier: Identifier =>
+        simpleEvaluateIdentifier(block, parentIdentifier)
+          .pipe(dot(block, _, child, xs, em))
+      case ec: EvaluatedClass =>
+        child match {
+          case field: Identifier =>
+            dot(ec, field, xs)
+          case pc: ParsedCall =>
+            parsedCall(block, pc, Some(ec), xs, em)
+          case other =>
+            List(Pass)
+        }
+      case enumStatic: EnumStatic =>
+        child match {
+          case field: Identifier =>
+            enumStatic.enm.get(field) match {
+              case Some(enumValue: Identifier) =>
+                EnumInstance(enumStatic.enm, enumValue) :: xs
+              case None =>
+                EvaluationError(UnexpectedEnumValueAfterDot(enumStatic.enm, field)) :: xs
+            }
+          case other =>
+            List(Pass)
+        }
+      case EvaluatedAssignment(asg) =>
+        child match {
+          case field: Identifier =>
+            asg.expression.tokens match {
+              case (v: ValueToken) :: Nil =>
+                v :: xs
+              case (cli: ClassInstance) :: Nil =>
+                dot(cli, field, xs)
+              case (identifier: Identifier) :: Nil =>
+                dot(block, identifier, field, xs, em)
+              case other =>
+                List(EvaluationError(UnexpectedIdentifierAfterDot(asg)))
+            }
+          case pc: ParsedCall =>
+            asg.expression.tokens match {
+              case (cli: ClassInstance) :: Nil =>
+                parsedCall(cli.cls.innerBlock, pc, Some(cli), xs, em)
+              case other =>
+                List(EvaluationError(UnexpectedIdentifier(pc.identifier)))
+            }
+          case other =>
+            List(Pass)
+        }
+      case pc: ParsedCall =>
+        parsedCall(block, pc, None, xs, em) match {
+          case oneEvaluatedParent :: Nil =>
+            dot(block, oneEvaluatedParent, child, xs, em)
+          case _ =>
+            List(Pass)
+        }
+      case ee: EvaluationError =>
+        List(ee)
+      case Pass =>
+        List(Pass)
+      case other =>
+        List(Pass)
+    }
 
   private def dot(ec: EvaluatedClass, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
     ec.cls.parameters.findParameter(field) match {
@@ -242,51 +298,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
         }
     }
 
-  private def dot(enms: EnumStatic, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
-    enms.enm.get(field) match {
-      case Some(enumValue: Identifier) =>
-        EnumInstance(enms.enm, enumValue) :: xs
-      case None =>
-        List(EvaluationError(UnexpectedEnumValueAfterDot(enms.enm, field)))
-    }
-
-  @tailrec
-  private def dot(block: Block, identifier: Identifier, field: Identifier, xs: List[EvaluatedToken]): List[EvaluatedToken] =
-    block.get(identifier) match {
-      case Some(asg: Assignment) =>
-        asg.expression.tokens match {
-          case (v: ValueToken) :: Nil =>
-            v :: xs
-          case (cli: ClassInstance) :: Nil =>
-            dot(cli, field, xs)
-          case (identifier: Identifier) :: Nil =>
-            dot(block, identifier, field, xs)
-          case other =>
-            List(EvaluationError(UnexpectedIdentifierAfterDot(asg)))
-        }
-      case Some(other) =>
-        List(EvaluationError(UnexpectedIdentifierAfterDot(other)))
-      case None =>
-        List(EvaluationError(UnexpectedIdentifier(identifier)))
-    }
-
-  private def dot(block: Block, identifier: Identifier, pc: ParsedCall, xs: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
-    block.get(identifier) match {
-      case Some(asg: Assignment) =>
-        asg.expression.tokens match {
-          case (cli: ClassInstance) :: Nil =>
-            parsedCall(cli.cls.innerBlock, pc, Some(cli), xs, em)
-          case other =>
-            List(EvaluationError(UnexpectedIdentifier(pc.identifier)))
-        }
-      case Some(other) =>
-        List(EvaluationError(UnexpectedIdentifierAfterDot(other)))
-      case None =>
-        List(EvaluationError(UnexpectedIdentifier(identifier)))
-    }
-
   def parsedCall(block: Block, pc: ParsedCall, parentClass: Option[EvaluatedClass], acc: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =
-    block.get(pc.identifier) match {
+    parentClass.flatMap(_.cls.innerBlock.get(pc.identifier)).orElse(block.get(pc.identifier)) match {
       case Some(cls: Class) =>
         pc.expression
           .tokens

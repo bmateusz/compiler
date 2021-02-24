@@ -439,10 +439,6 @@ object Tokens {
     override def value: String = s"${operator.value} ${token.value}"
   }
 
-  case class UndefinedIdentifier(identifier: Identifier) extends EvaluationErrorToken {
-    override def value: String = s"${identifier.value}"
-  }
-
   case class OperatorError(operator: Operators, a: EvaluatedToken, b: EvaluatedToken) extends EvaluationErrorToken {
     override def value: String = s"${a.value} ${operator.value} ${b.value}"
   }
@@ -464,6 +460,10 @@ object Tokens {
   }
 
   case class UnexpectedIdentifier(token: Token) extends EvaluationErrorToken {
+    override def value: String = token.value
+  }
+
+  case class UnexpectedIdentifierInBlock(token: Token) extends EvaluationErrorToken {
     override def value: String = token.value
   }
 
@@ -506,6 +506,11 @@ object Tokens {
 
   case class ClassStatic(cls: elements.Class) extends EvaluatedClass {
     override def value: String = s"static ${cls.name.value}"
+  }
+
+  case class EvaluatedAssignment(asg: elements.Assignment) extends EvaluatedIdentifier {
+    override def value: String = s"assignment ${asg.name.value}"
+    override def identifier: Identifier = asg.name
   }
 
   sealed trait EvaluatedEnum extends EvaluatedIdentifier {

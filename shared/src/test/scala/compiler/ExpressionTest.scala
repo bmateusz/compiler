@@ -127,8 +127,8 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
       Nil,
       None
     )
-    assert(expr.evaluate(block) === EvaluatedOperator(Integer(3), EvaluatedOperator(Identifier("x"), Integer(1), Add), Subtract))
-    assert(expr.evaluate(block, FullEvaluation) === EvaluationError(UndefinedIdentifier(Identifier("x"))))
+    assert(expr.evaluate(block) === EvaluationError(UnexpectedIdentifierInBlock(Identifier("x"))))
+    assert(expr.evaluate(block, FullEvaluation) === EvaluationError(UnexpectedIdentifierInBlock(Identifier("x"))))
   }
 
   it should "evaluate identifier" in {
@@ -138,7 +138,7 @@ class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {
       List(Assignment(Identifier("x"), None, Expression(List(Integer(100))))),
       None
     )
-    assert(expr.evaluate(block) === Integer(98))
+    assert(expr.evaluate(block, FullEvaluation) === Integer(98))
   }
 
   it should "evaluate triplequote" in {
