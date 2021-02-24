@@ -219,8 +219,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
           .pipe(dot(block, _, child, xs, em))
       case ec: EvaluatedClass =>
         child match {
-          case field: Identifier =>
-            dot(ec, field, xs)
+          case childIdentifier: Identifier =>
+            dot(ec, childIdentifier, xs)
           case pc: ParsedCall =>
             parsedCall(block, pc, Some(ec), xs, em)
           case other =>
@@ -228,26 +228,26 @@ case class Expression(tokens: List[EvaluatedToken]) {
         }
       case enumStatic: EnumStatic =>
         child match {
-          case field: Identifier =>
-            enumStatic.enm.get(field) match {
+          case childIdentifier: Identifier =>
+            enumStatic.enm.get(childIdentifier) match {
               case Some(enumValue: Identifier) =>
                 EnumInstance(enumStatic.enm, enumValue) :: xs
               case None =>
-                EvaluationError(UnexpectedEnumValueAfterDot(enumStatic.enm, field)) :: xs
+                EvaluationError(UnexpectedEnumValueAfterDot(enumStatic.enm, childIdentifier)) :: xs
             }
           case other =>
             List(Pass)
         }
       case EvaluatedAssignment(asg) =>
         child match {
-          case field: Identifier =>
+          case childIdentifier: Identifier =>
             asg.expression.tokens match {
               case (v: ValueToken) :: Nil =>
-                v :: xs
+                dot(block, v, childIdentifier, xs, em)
               case (cli: ClassInstance) :: Nil =>
-                dot(cli, field, xs)
+                dot(cli, childIdentifier, xs)
               case (identifier: Identifier) :: Nil =>
-                dot(block, identifier, field, xs, em)
+                dot(block, identifier, childIdentifier, xs, em)
               case other =>
                 List(EvaluationError(UnexpectedIdentifierAfterDot(asg)))
             }
