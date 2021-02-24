@@ -10,10 +10,10 @@ object Types {
   def fromEvaluatedToken(token: EvaluatedToken): Type =
     token match {
       case evaluated: Tokens.EvaluatedIdentifier => UnknownType(evaluated.identifier.value)
-      case token@Tokens.CallDefinition(definition, values, ec) => definition.returnType.getOrElse(Error(token))
-      case Tokens.StringLiteral(value) => String
-      case Tokens.Integer(value) => Integer
-      case Tokens.Floating(value) => Floating
+      case token@Tokens.CallDefinition(definition, _, _) => definition.returnType.getOrElse(Error(token))
+      case Tokens.StringLiteral(_) => String
+      case Tokens.Integer(_) => Integer
+      case Tokens.Floating(_) => Floating
       case token => Error(token)
     }
 

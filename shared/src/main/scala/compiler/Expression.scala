@@ -19,7 +19,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
     evaluate(tokens, block, em)
 
   def evaluate(tokens: List[EvaluatedToken], block: Block, em: EvaluationMode): EvaluatedToken = tokens.foldLeft(Nil: List[EvaluatedToken]) {
-    case ((ee: EvaluationError) :: xs, _) =>
+    case ((ee: EvaluationError) :: _, _) =>
       List(ee)
     case ((child: EvaluatedToken) :: (parent: EvaluatedToken) :: xs, Operator(Dot)) =>
       dot(block, parent, child, xs, em)
@@ -70,10 +70,15 @@ case class Expression(tokens: List[EvaluatedToken]) {
     }
 
   def unaryOperator(x: ValueToken, op: Operators): EvaluatedToken =
-    x match {
-      case Integer(integer) => Integer(-integer)
-      case Floating(double) => Floating(-double)
-      case value: StringLiteral => EvaluationError(UnaryOperatorError(Negate, value))
+    op match {
+      case Tokens.Negate =>
+        x match {
+          case Integer(integer) => Integer(-integer)
+          case Floating(double) => Floating(-double)
+          case value: StringLiteral => EvaluationError(UnaryOperatorError(Negate, value))
+        }
+      case _ =>
+        EvaluationError(UnaryOperatorError(op, x))
     }
 
   def operator(x: ValueToken, y: ValueToken, op: Operators): EvaluatedToken =
@@ -114,7 +119,8 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case more => EvaluationError(TooManyEvaluatedTokens(more))
     }
 
-  private def simpleEvaluate(evaluatedToken: EvaluatedToken, block: Block): EvaluatedToken =
+  private def simpleEvaluate(evaluatedToken: EvaluatedToken, block: Block): EvaluatedToken = {
+    trace(s"simple evaluate $evaluatedToken, $block")
     evaluatedToken match {
       case identifier: Identifier =>
         simpleEvaluateIdentifier(block, identifier)
@@ -124,7 +130,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
         simpleEvaluate(a, block) match {
           case x: ValueToken =>
             unaryOperator(x, op)
-          case (err: EvaluationError) =>
+          case err: EvaluationError =>
             err
           case _ =>
             euo
@@ -143,6 +149,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       case _ =>
         evaluatedToken
     }
+  }
 
   private def fullEvaluate(evaluatedToken: EvaluatedToken, block: Block): EvaluatedToken = {
     trace(s"full evaluate $evaluatedToken, $block")
@@ -151,7 +158,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       block.get(identifier) match {
         case Some(asg: Assignment) =>
           asg.singleTokenOrIdentifier()
-        case other =>
+        case _ =>
           evaluateIdentifier(block, identifier, Nil, FullEvaluation).head
       }
     case cd@CallDefinition(definition, values, ec) =>
@@ -182,7 +189,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
       }
     case ed@EvaluatedDot(cli, child) =>
       classInstanceToBlock(cli) match {
-        case Left(error) =>
+        case Left(_) =>
           ed
         case Right(cliBlock) =>
           fullEvaluate(child, cliBlock)
@@ -223,7 +230,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
             dot(ec, childIdentifier, xs)
           case pc: ParsedCall =>
             parsedCall(block, pc, Some(ec), xs, em)
-          case other =>
+          case _ =>
             List(Pass)
         }
       case enumStatic: EnumStatic =>
@@ -235,7 +242,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
               case None =>
                 EvaluationError(UnexpectedEnumValueAfterDot(enumStatic.enm, childIdentifier)) :: xs
             }
-          case other =>
+          case _ =>
             List(Pass)
         }
       case EvaluatedAssignment(asg) =>
@@ -248,17 +255,17 @@ case class Expression(tokens: List[EvaluatedToken]) {
                 dot(cli, childIdentifier, xs)
               case (identifier: Identifier) :: Nil =>
                 dot(block, identifier, childIdentifier, xs, em)
-              case other =>
+              case _ =>
                 List(EvaluationError(UnexpectedIdentifierAfterDot(asg)))
             }
           case pc: ParsedCall =>
             asg.expression.tokens match {
               case (cli: ClassInstance) :: Nil =>
                 parsedCall(cli.cls.innerBlock, pc, Some(cli), xs, em)
-              case other =>
+              case _ =>
                 List(EvaluationError(UnexpectedIdentifier(pc.identifier)))
             }
-          case other =>
+          case _ =>
             List(Pass)
         }
       case pc: ParsedCall =>
@@ -272,7 +279,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
         List(ee)
       case Pass =>
         List(Pass)
-      case other =>
+      case _ =>
         List(Pass)
     }
 
@@ -280,7 +287,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
     ec.cls.parameters.findParameter(field) match {
       case Some((parameter, n)) =>
         ec match {
-          case ClassInstance(cls, values) =>
+          case ClassInstance(_, values) =>
             values(n) :: xs
           case ClassStatic(cls) =>
             List(EvaluationError(NotStatic(cls.name, parameter.identifier)))
@@ -361,7 +368,7 @@ case class Expression(tokens: List[EvaluatedToken]) {
               _.add(Assignment(param.identifier, Some(param.typ), Expression(List(value))), Nil)
             )
         }.finishedParsingTokens()
-      case ClassStatic(cls) =>
+      case ClassStatic(_) =>
         Right(Block.empty)
     }
   }

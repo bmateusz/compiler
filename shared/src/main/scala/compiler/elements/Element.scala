@@ -10,7 +10,7 @@ trait Element {
 
   def evaluate(block: Block, rest: List[Token], em: EvaluationMode): Result[Element] =
     block.get(name) match {
-      case Some(value) =>
+      case Some(_) =>
         Result(Redefinition(name.value), rest)
       case None =>
         Result(this, rest)

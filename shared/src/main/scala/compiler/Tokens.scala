@@ -436,7 +436,7 @@ object Tokens {
   }
 
   case class UnaryOperatorError(operator: Operators, token: EvaluatedToken) extends EvaluationErrorToken {
-    override def value: String = s"${operator.value} ${token.value}"
+    override def value: String = s"${operator.value}${token.value}"
   }
 
   case class OperatorError(operator: Operators, a: EvaluatedToken, b: EvaluatedToken) extends EvaluationErrorToken {
@@ -448,11 +448,11 @@ object Tokens {
   }
 
   case class ParameterTypeMismatchError(expected: List[Parameter], got: List[EvaluatedToken]) extends EvaluationErrorToken {
-    override def value: String = s"expected: ${expected}, got: ${got}"
+    override def value: String = s"expected: $expected, got: $got"
   }
 
   case class DefinitionReturnTypeMismatch(name: Identifier, expected: Type, got: Type) extends EvaluationErrorToken {
-    override def value: String = s"def ${name.value} expected: ${expected}, got: ${got}"
+    override def value: String = s"def ${name.value} expected: $expected, got: $got"
   }
 
   case object DivisionByZero extends EvaluationErrorToken {

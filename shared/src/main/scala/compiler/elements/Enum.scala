@@ -12,7 +12,7 @@ case class Enum(name: Identifier,
   def add(identifier: Identifier): Enum =
     copy(values = values :+ identifier)
 
-  def get(field: Identifier) =
+  def get(field: Identifier): Option[Identifier] =
     values.find(_.value == field.value)
 
   def notUniqueIdentifiers(): List[String] =

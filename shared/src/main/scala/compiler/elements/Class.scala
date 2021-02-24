@@ -10,7 +10,7 @@ case class Class(name: Identifier,
                  innerBlock: Block) extends Element {
   override def evaluate(block: Block, rest: List[Token], em: EvaluationMode): Result[Element] =
     block.get(name) match {
-      case Some(value) =>
+      case Some(_) =>
         Result(Redefinition(name.value), rest)
       case None =>
         Result(copy(innerBlock = innerBlock.setParent(block)), rest)

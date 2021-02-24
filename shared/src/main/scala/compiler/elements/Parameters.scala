@@ -1,6 +1,6 @@
 package compiler.elements
 
-import compiler.Errors.{CompilerError, ExpectedColon, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, ExpectedType, NotUniqueParameters}
+import compiler.Errors.{CompilerError, ExpectedColon, ExpectedIdentifier, ExpectedRightParenthesis, ExpectedType, NotUniqueParameters}
 import compiler.Tokens.{TokenListExtension, _}
 import compiler.Types.Type
 import compiler.elements.Parameters.Parameter
@@ -64,9 +64,9 @@ object Parameters {
         checkParameters(pl.addParameter(name, typ))
       case Nil =>
         checkParameters(pl)
-      case Identifier(name) :: Colon :: tokens =>
+      case Identifier(_) :: Colon :: tokens =>
         Left(List(ExpectedType(tokens.headOption)))
-      case Identifier(name) :: tokens =>
+      case Identifier(_) :: tokens =>
         Left(List(ExpectedColon(tokens.headOption)))
       case tokens =>
         Left(List(ExpectedIdentifier(tokens.headOption)))
