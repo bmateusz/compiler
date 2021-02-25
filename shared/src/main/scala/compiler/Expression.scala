@@ -1,10 +1,10 @@
 package compiler
 
+import compiler.Elements.{Assignment, Block, Class, Definition, Enum, Parameters}
 import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Expression.{EvaluationMode, FullEvaluation, SimpleEvaluation}
 import compiler.Result.ResultEither
 import compiler.Tokens._
-import compiler.elements.{Assignment, Block, Class, Definition, Enum, Parameters}
 
 import scala.annotation.tailrec
 import scala.util.chaining.scalaUtilChainingOps
@@ -154,69 +154,69 @@ case class Expression(tokens: List[EvaluatedToken]) {
   private def fullEvaluate(evaluatedToken: EvaluatedToken, block: Block): EvaluatedToken = {
     trace(s"full evaluate $evaluatedToken, $block")
     evaluatedToken match {
-    case identifier: Identifier =>
-      block.get(identifier) match {
-        case Some(asg: Assignment) =>
-          asg.singleTokenOrIdentifier()
-        case _ =>
-          evaluateIdentifier(block, identifier, Nil, FullEvaluation).head
-      }
-    case cd@CallDefinition(definition, values, ec) =>
-      definition.call(values).value match {
-        case Left(_) =>
-          cd
-        case Right(definitionBlock) =>
-          definitionBlock.expression match {
-            case Some(expr) =>
-              val contextBlock = definitionBlock
-                .setParent(
-                  ec
-                    .flatMap(classInstanceToBlock(_).toOption)
-                    .map(block.setParent)
-                    .getOrElse(block)
-                )
-              val result = expr.evaluate(contextBlock, FullEvaluation)
-              val typ = Types.fromEvaluatedToken(result)
-              definition.returnType match {
-                case Some(returnType) if returnType != typ =>
-                  EvaluationError(DefinitionReturnTypeMismatch(definition.name, definition.returnType.get, typ))
-                case _ =>
-                  result
-              }
-            case None =>
-              cd
-          }
-      }
-    case ed@EvaluatedDot(cli, child) =>
-      classInstanceToBlock(cli) match {
-        case Left(_) =>
-          ed
-        case Right(cliBlock) =>
-          fullEvaluate(child, cliBlock)
-      }
-    case EvaluatedUnaryOperator(op: Operators, a: EvaluatedToken) =>
-      fullEvaluate(a, block) match {
-        case x: ValueToken =>
-          unaryOperator(x, op)
-        case x: EvaluatedToken =>
-          EvaluatedUnaryOperator(op, x)
-      }
-    case EvaluatedOperator(a: EvaluatedToken, b: EvaluatedToken, op: Operators) =>
-      (fullEvaluate(a, block), fullEvaluate(b, block)) match {
-        case (x: ValueToken, y: ValueToken) =>
-          operator(x, y, op)
-        case (err: EvaluationError, _) =>
-          err
-        case (_, err: EvaluationError) =>
-          err
-        case (x: EvaluatedToken, y: EvaluatedToken) =>
-          EvaluatedOperator(x, y, op)
-      }
-    case pc: ParsedCall =>
-      parsedCall(block, pc, None, Nil, FullEvaluation).head
-    case other =>
-      other
-  }
+      case identifier: Identifier =>
+        block.get(identifier) match {
+          case Some(asg: Assignment) =>
+            asg.singleTokenOrIdentifier()
+          case _ =>
+            evaluateIdentifier(block, identifier, Nil, FullEvaluation).head
+        }
+      case cd@CallDefinition(definition, values, ec) =>
+        definition.call(values).value match {
+          case Left(_) =>
+            cd
+          case Right(definitionBlock) =>
+            definitionBlock.expression match {
+              case Some(expr) =>
+                val contextBlock = definitionBlock
+                  .setParent(
+                    ec
+                      .flatMap(classInstanceToBlock(_).toOption)
+                      .map(block.setParent)
+                      .getOrElse(block)
+                  )
+                val result = expr.evaluate(contextBlock, FullEvaluation)
+                val typ = Types.fromEvaluatedToken(result)
+                definition.returnType match {
+                  case Some(returnType) if returnType != typ =>
+                    EvaluationError(DefinitionReturnTypeMismatch(definition.name, definition.returnType.get, typ))
+                  case _ =>
+                    result
+                }
+              case None =>
+                cd
+            }
+        }
+      case ed@EvaluatedDot(cli, child) =>
+        classInstanceToBlock(cli) match {
+          case Left(_) =>
+            ed
+          case Right(cliBlock) =>
+            fullEvaluate(child, cliBlock)
+        }
+      case EvaluatedUnaryOperator(op: Operators, a: EvaluatedToken) =>
+        fullEvaluate(a, block) match {
+          case x: ValueToken =>
+            unaryOperator(x, op)
+          case x: EvaluatedToken =>
+            EvaluatedUnaryOperator(op, x)
+        }
+      case EvaluatedOperator(a: EvaluatedToken, b: EvaluatedToken, op: Operators) =>
+        (fullEvaluate(a, block), fullEvaluate(b, block)) match {
+          case (x: ValueToken, y: ValueToken) =>
+            operator(x, y, op)
+          case (err: EvaluationError, _) =>
+            err
+          case (_, err: EvaluationError) =>
+            err
+          case (x: EvaluatedToken, y: EvaluatedToken) =>
+            EvaluatedOperator(x, y, op)
+        }
+      case pc: ParsedCall =>
+        parsedCall(block, pc, None, Nil, FullEvaluation).head
+      case other =>
+        other
+    }
   }
 
   private def dot(block: Block, parent: EvaluatedToken, child: EvaluatedToken, xs: List[EvaluatedToken], em: EvaluationMode): List[EvaluatedToken] =

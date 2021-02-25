@@ -1,9 +1,9 @@
 package compiler.elements
 
+import compiler.Elements._
 import compiler.Errors.{UnexpectedToken, UnparsedTokens}
-import compiler.Tokens.{Add, Comma, Def, Equals, Identifier, Indentation, Integer, Operator, StringLiteral}
-import compiler.elements.Parameters.Parameter
-import compiler.{CompilerSpecs, Expression, Types, elements}
+import compiler.Tokens.{Add, Def, Equals, Identifier, Indentation, Integer, Operator}
+import compiler.{CompilerSpecs, Expression, Types}
 
 class AssignmentTest extends CompilerSpecs {
 
@@ -35,7 +35,7 @@ class AssignmentTest extends CompilerSpecs {
       """)
     assert(block === Block(
       List(
-        elements.Assignment(Identifier("x"), None, Expression(List(Integer(3), Integer(3), Operator(Add))))
+        Assignment(Identifier("x"), None, Expression(List(Integer(3), Integer(3), Operator(Add))))
       ),
       None
     ))

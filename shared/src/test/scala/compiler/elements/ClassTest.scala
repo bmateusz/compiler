@@ -1,11 +1,12 @@
 package compiler.elements
 
+import compiler.Elements.Parameters.Parameter
+import compiler.Elements._
 import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType, UnparsedTokens}
 import compiler.Expression.FullEvaluation
 import compiler.Tokens.{Add, CallDefinition, ClassInstance, ClassStatic, Colon, Comma, Dot, EvaluatedDot, Identifier, Integer, LeftParenthesis, Operator, ParsedCall, RightParenthesis, StringLiteral, Subtract}
 import compiler.Types.UnknownType
-import compiler.elements.Parameters.Parameter
-import compiler.{CompilerSpecs, Expression, Types, elements}
+import compiler.{CompilerSpecs, Expression, Types}
 
 class ClassTest extends CompilerSpecs {
 
@@ -85,17 +86,17 @@ class ClassTest extends CompilerSpecs {
       """)
     assert(block === Block(
       List(
-        elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String))), Block.empty),
-        elements.Assignment(Identifier("a"), None, Expression(List(ParsedCall(Identifier("A"), Expression(List(Integer(33), Comma, StringLiteral("str")))))))
+        Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String))), Block.empty),
+        Assignment(Identifier("a"), None, Expression(List(ParsedCall(Identifier("A"), Expression(List(Integer(33), Comma, StringLiteral("str")))))))
       ),
       None
     ))
     val evaluated = evaluateBlock(block)
-    val cls = elements.Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String))), Block(List(), None, Some(Block(List(), None, None))))
+    val cls = Class(Identifier("A"), Parameters(List(Parameter(Identifier("n"), Types.Integer), Parameter(Identifier("s"), Types.String))), Block(List(), None, Some(Block(List(), None, None))))
     assert(evaluated === Block(
       List(
         cls,
-        elements.Assignment(Identifier("a"), Some(UnknownType("A")), Expression(List(ClassInstance(cls, List(Integer(33), StringLiteral("str"))))))),
+        Assignment(Identifier("a"), Some(UnknownType("A")), Expression(List(ClassInstance(cls, List(Integer(33), StringLiteral("str"))))))),
       None
     ))
     val expr = parseExpressionSuccess("a.n")
@@ -151,7 +152,7 @@ class ClassTest extends CompilerSpecs {
       Some(Types.Integer),
       Some(Block(List(), Some(Expression(List(Identifier("m"), Identifier("n"), Operator(Add), Integer(1), Operator(Add)))), None))
     )
-    val cls = elements.Class(
+    val cls = Class(
       Identifier("A"),
       Parameters(List(Parameter(Identifier("n"), Types.Integer))),
       Block(List(definition), None, Some(Block(List(), None, None)))
@@ -177,7 +178,7 @@ class ClassTest extends CompilerSpecs {
       Some(Types.Integer),
       Some(Block(List(), Some(Expression(List(Identifier("n"), Integer(1), Operator(Add)))), None))
     )
-    val cls = elements.Class(
+    val cls = Class(
       Identifier("A"),
       Parameters(List(Parameter(Identifier("n"), Types.Integer))),
       Block(List(definition), None, Some(Block(List(), None, None)))
@@ -202,7 +203,7 @@ class ClassTest extends CompilerSpecs {
       Some(Types.Integer),
       Some(Block(List(), Some(Expression(List(Integer(323)))), None))
     )
-    val cls = elements.Class(
+    val cls = Class(
       Identifier("A"),
       Parameters.empty,
       Block(List(definition), None, Some(Block(List(), None, None)))
@@ -221,7 +222,7 @@ class ClassTest extends CompilerSpecs {
       """))
     val expr = parseExpressionSuccess("A.x")
     val assignment = Assignment(Identifier("x"), Some(Types.Integer), Expression(List(Integer(324))))
-    val cls = elements.Class(
+    val cls = Class(
       Identifier("A"),
       Parameters.empty,
       Block(List(assignment), None, Some(Block(List(), None, None)))
@@ -263,8 +264,8 @@ class ClassTest extends CompilerSpecs {
         class B
       """)
     assert(evaluated === Block(List(
-      elements.Class(Identifier("A"), Parameters.empty, Block.empty),
-      elements.Class(Identifier("B"), Parameters.empty, Block.empty),
+      Class(Identifier("A"), Parameters.empty, Block.empty),
+      Class(Identifier("B"), Parameters.empty, Block.empty),
     ), None, None))
   }
 }

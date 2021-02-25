@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Tokens.{EvaluatedToken, EvaluationErrorToken, Token}
+import compiler.Tokens.{EvaluationErrorToken, Token}
 import compiler.Types.Type
 
 object Errors {

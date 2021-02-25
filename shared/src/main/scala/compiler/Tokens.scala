@@ -1,8 +1,8 @@
 package compiler
 
+import compiler.Elements.Element
+import compiler.Elements.Parameters.Parameter
 import compiler.Types.Type
-import compiler.elements.Element
-import compiler.elements.Parameters.Parameter
 
 import scala.util.chaining.scalaUtilChainingOps
 
@@ -496,37 +496,40 @@ object Tokens {
   }
 
   sealed trait EvaluatedClass extends EvaluatedIdentifier {
-    def cls: elements.Class
+    def cls: Elements.Class
+
     override def identifier: Identifier = cls.name
   }
 
-  case class ClassInstance(cls: elements.Class, values: List[EvaluatedToken]) extends EvaluatedClass {
+  case class ClassInstance(cls: Elements.Class, values: List[EvaluatedToken]) extends EvaluatedClass {
     override def value: String = s"instance ${cls.name.value}($values)"
   }
 
-  case class ClassStatic(cls: elements.Class) extends EvaluatedClass {
+  case class ClassStatic(cls: Elements.Class) extends EvaluatedClass {
     override def value: String = s"static ${cls.name.value}"
   }
 
-  case class EvaluatedAssignment(asg: elements.Assignment) extends EvaluatedIdentifier {
+  case class EvaluatedAssignment(asg: Elements.Assignment) extends EvaluatedIdentifier {
     override def value: String = s"assignment ${asg.name.value}"
+
     override def identifier: Identifier = asg.name
   }
 
   sealed trait EvaluatedEnum extends EvaluatedIdentifier {
-    def enm: elements.Enum
+    def enm: Elements.Enum
+
     override def identifier: Identifier = enm.name
   }
 
-  case class EnumInstance(enm: elements.Enum, enumValue: Identifier) extends EvaluatedEnum {
+  case class EnumInstance(enm: Elements.Enum, enumValue: Identifier) extends EvaluatedEnum {
     override def value: String = s"instance ${enm.name.value}(${enumValue.value})"
   }
 
-  case class EnumStatic(enm: elements.Enum) extends EvaluatedEnum {
+  case class EnumStatic(enm: Elements.Enum) extends EvaluatedEnum {
     override def value: String = s"static ${enm.name.value}"
   }
 
-  case class CallDefinition(definition: elements.Definition, values: List[EvaluatedToken], ec: Option[EvaluatedClass]) extends EvaluatedToken {
+  case class CallDefinition(definition: Elements.Definition, values: List[EvaluatedToken], ec: Option[EvaluatedClass]) extends EvaluatedToken {
     override def value: String = s"call ${definition.name.value}($values)"
   }
 

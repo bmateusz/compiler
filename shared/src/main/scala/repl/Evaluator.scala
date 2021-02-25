@@ -1,10 +1,10 @@
 package repl
 
+import compiler.Elements.{Block, Element}
 import compiler.Errors.CompilerError
 import compiler.Expression.{EvaluationMode, FullEvaluation}
 import compiler.SourceFile
 import compiler.Tokens.EvaluatedToken
-import compiler.elements.{Block, Element}
 
 object Evaluator {
 

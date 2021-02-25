@@ -1,9 +1,9 @@
 package compiler
 
+import compiler.Elements.{Assignment, Block}
 import compiler.Errors.{UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Expression.FullEvaluation
 import compiler.Tokens._
-import compiler.elements.{Assignment, Block}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class ExpressionTest extends CompilerSpecs with ScalaCheckPropertyChecks {

@@ -1,5 +1,5 @@
 import compiler.Errors.{CompilerError, FileError}
-import compiler.elements.Element
+import compiler.Elements.Element
 import compiler.{SourceFile, Tokens}
 import repl.Repl
 

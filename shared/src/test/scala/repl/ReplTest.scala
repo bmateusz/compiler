@@ -1,7 +1,7 @@
 package repl
 
+import compiler.Elements.Element
 import compiler._
-import compiler.elements.Element
 
 import scala.collection.mutable
 

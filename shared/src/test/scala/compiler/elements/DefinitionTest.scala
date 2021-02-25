@@ -1,10 +1,11 @@
 package compiler.elements
 
+import compiler.Elements.Parameters.Parameter
+import compiler.Elements._
 import compiler.Errors.{ExpectedIdentifier, UnexpectedToken, UnparsedTokens}
 import compiler.Expression.{FullEvaluation, SimpleEvaluation}
 import compiler.Tokens.{Add, CallDefinition, Colon, Comma, DefinitionReturnTypeMismatch, EvaluationError, Floating, Identifier, Integer, LeftParenthesis, Operator, ParameterTypeError, ParameterTypeMismatchError, ParsedCall, RightParenthesis, StringLiteral, Subtract}
-import compiler.elements.Parameters.Parameter
-import compiler.{CompilerSpecs, Expression, Types, elements}
+import compiler.{CompilerSpecs, Expression, Types}
 
 class DefinitionTest extends CompilerSpecs {
 
@@ -22,7 +23,7 @@ class DefinitionTest extends CompilerSpecs {
     val block = compileSuccess("def x(): Int = 2")
     assert(block === Block(
       List(
-        elements.Definition(
+        Definition(
           Identifier("x"),
           Parameters(List()),
           Some(Types.Integer),
@@ -93,7 +94,7 @@ class DefinitionTest extends CompilerSpecs {
       Identifier("x"),
       Parameters(List(Parameter(Identifier("n"), Types.Integer))),
       None,
-      Some(Block(List(), Some(Expression(List(Integer(3), Identifier("n"), Operator(Add)))), Some(Block(List(),None,None))))
+      Some(Block(List(), Some(Expression(List(Integer(3), Identifier("n"), Operator(Add)))), Some(Block(List(), None, None))))
     )
     assert(expr.evaluate(evaluated, SimpleEvaluation) === CallDefinition(definition, List(Integer(4)), None))
     assert(expr.evaluate(evaluated, FullEvaluation) === Integer(7))
