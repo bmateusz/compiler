@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Elements.{Assignment, Block, Class, Definition, Enum, Parameters}
+import compiler.Elements.{Assignment, Class, Definition, Enum}
 import compiler.Errors.{UnexpectedToken, UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Expression.{EvaluationMode, FullEvaluation, SimpleEvaluation}
 import compiler.Result.ResultEither

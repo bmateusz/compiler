@@ -1,6 +1,5 @@
 package compiler
 
-import compiler.Elements.Block
 import compiler.Errors.{CommentNotClosed, CompilerError}
 import compiler.Result.ResultEither
 import compiler.Tokens.Token

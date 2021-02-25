@@ -1,14 +1,25 @@
 package compiler
 
-import compiler.Elements.Parameters.Parameter
 import compiler.Errors._
-import compiler.Expression.{EvaluationMode, FullEvaluation}
-import compiler.Tokens.{Colon, Comma, Comment, Def, EnumInstance, Equals, EvaluatedToken, EvaluationError, Identifier, Indentation, LeftParenthesis, RightParenthesis, Token, TokenListExtension, ValueToken}
+import compiler.Expression.EvaluationMode
+import compiler.Tokens.{Comma, EnumInstance, Equals, EvaluatedToken, EvaluationError, Identifier, Indentation, LeftParenthesis, RightParenthesis, Token, TokenListExtension, ValueToken}
 import compiler.Types.{Type, UnknownType}
 
 import scala.annotation.tailrec
 
 object Elements {
+
+  sealed trait Element {
+    def name: Identifier
+
+    def evaluate(block: Block, rest: List[Token], em: EvaluationMode): Result[Element] =
+      block.get(name) match {
+        case Some(_) =>
+          Result(Redefinition(name.value), rest)
+        case None =>
+          Result(this, rest)
+      }
+  }
 
   case class Assignment(name: Identifier,
                         typ: Option[Type],
@@ -58,129 +69,6 @@ object Elements {
               Result(Assignment(identifier, typ.map(t => Types.parse(t.value)), expression), rest)
             }
       }
-
-  }
-
-  case class Block(elements: List[Element],
-                   expression: Option[Expression],
-                   parent: Option[Block] = None) {
-    def add(element: Element, rest: List[Token]): Result[Block] =
-      if (elements.exists(_.name.value == element.name.value))
-        Result(Redefinition(element.name.value), rest)
-      else
-        Result(
-          copy(
-            elements = elements :+ element
-          ),
-          rest
-        )
-
-    def setExpression(expression: Expression): Block =
-      copy(expression = Some(expression))
-
-    def setParent(block: Block): Block =
-      copy(parent = Some(block))
-
-    lazy val identifierMap: Map[String, Element] =
-      elements
-        .flatMap {
-          case enm: Enum =>
-            enm.allElements
-          case other =>
-            List(other.name.value -> other)
-        }
-        .toMap
-
-
-    def get(identifier: Identifier): Option[Element] =
-      identifierMap.get(identifier.value)
-        .orElse(parent.flatMap(_.get(identifier)))
-
-    def evaluate(parent: Block = Block.empty, rest: List[Token] = Nil, em: EvaluationMode = FullEvaluation): Result[Block] =
-      elements.foldLeft(Result(parent, rest)) {
-        case (Result(Right(block), rest), curr) =>
-          curr
-            .evaluate(block, rest, em)
-            .flatMap {
-              case (newElement, rest) =>
-                block.add(newElement, rest)
-            }
-        case (left@Result(_, _), _) =>
-          left
-      }
-  }
-
-  object Block {
-
-    val empty: Block =
-      Block(Nil, None)
-
-    def parse(result: Result[Block], indentation: Option[Indentation], exprs: Boolean): Result[Block] =
-      result.flatMap((block, rest) => parse(rest, block, indentation, exprs))
-
-    @tailrec
-    def parse(tokens: List[Token], block: Block, indentation: Option[Indentation], exprs: Boolean): Result[Block] =
-      tokens match {
-        case (current: Indentation) :: xs =>
-          indentation match {
-            case Some(Indentation(previousLength)) =>
-              if (current.length >= previousLength)
-                parse(xs, block, Some(current), exprs)
-              else
-                finishBlock(block, tokens)
-            case None =>
-              parse(xs, block, Some(current), exprs)
-          }
-        case Def :: xs =>
-          Definition
-            .parse(xs, top(indentation))
-            .flatMap { (definition, rest) =>
-              parse(block.add(definition, rest), indentation, exprs)
-            }
-        case Tokens.Class :: xs =>
-          compiler.Elements.Class
-            .parse(xs, top(indentation))
-            .flatMap { (cls, rest) =>
-              parse(block.add(cls, rest), indentation, exprs)
-            }
-        case Tokens.Enum :: xs =>
-          compiler.Elements.Enum
-            .parse(xs)
-            .flatMap { (enm, rest) =>
-              parse(block.add(enm, rest), indentation, exprs)
-            }
-        case (identifier: Identifier) :: Colon :: (typ: Identifier) :: Equals :: xs =>
-          Assignment
-            .parse(identifier, Some(typ), xs)
-            .flatMap { (assignment, rest) =>
-              parse(block.add(assignment, rest), indentation, exprs)
-            }
-        case (identifier: Identifier) :: Equals :: xs =>
-          Assignment
-            .parse(identifier, None, xs)
-            .flatMap { (assignment, rest) =>
-              parse(block.add(assignment, rest), indentation, exprs)
-            }
-        case (_: Comment) :: xs =>
-          parse(xs, block, indentation, exprs)
-        case Nil =>
-          finishBlock(block, Nil)
-        case others =>
-          if (exprs)
-            Expression
-              .parse(others)
-              .flatMap { (expr, rest) =>
-                finishBlock(block.setExpression(expr), rest)
-              }
-          else
-            finishBlock(block, others)
-      }
-
-    private def finishBlock(block: Block, others: List[Token]) =
-      Result(block, others)
-
-    private def top(indentations: Option[Indentation]) =
-      indentations.getOrElse(Indentation(0))
 
   }
 
@@ -278,19 +166,6 @@ object Elements {
 
   }
 
-  sealed trait Element {
-    def name: Identifier
-
-    def evaluate(block: Block, rest: List[Token], em: EvaluationMode): Result[Element] =
-      block.get(name) match {
-        case Some(_) =>
-          Result(Redefinition(name.value), rest)
-        case None =>
-          Result(this, rest)
-      }
-  }
-
-
   case class Enum(name: Identifier,
                   values: List[Identifier]) extends Element {
     def add(identifier: Identifier): Enum =
@@ -360,78 +235,6 @@ object Elements {
         case tokens =>
           Left(List(ExpectedIdentifier(tokens.headOption)))
       }
-  }
-
-  case class Parameters(values: List[Parameter]) {
-    def addParameter(name: String, typ: String): Parameters =
-      copy(values = values :+ Parameter(Identifier(name), Types.parse(typ)))
-
-    def notUniqueIdentifiers(): List[String] =
-      Identifier.notUniqueIdentifiers(values.map(_.identifier))
-
-    def findParameter(identifier: Identifier): Option[(Parameter, Int)] =
-      values.zipWithIndex.find(_._1.identifier == identifier)
-  }
-
-  object Parameters {
-
-    case class Parameter(identifier: Identifier, typ: Type)
-
-    val empty: Parameters = Parameters(Nil)
-
-    @tailrec
-    def parse(tokens: List[Token]): Result[(Parameters, Option[Type])] =
-      tokens match {
-        case Indentation(_) :: LeftParenthesis :: xs =>
-          parse(LeftParenthesis :: xs)
-        case Indentation(_) :: Colon :: xs =>
-          parse(Colon :: xs)
-        case LeftParenthesis :: xs =>
-          val (left, right) = xs.spanMatchingRightParenthesis()
-          right match {
-            case RightParenthesis :: Colon :: Identifier(returnType) :: rest =>
-              Result(
-                parseParameters(left, empty).map((_, Some(Types.parse(returnType)))),
-                rest
-              )
-            case RightParenthesis :: rest =>
-              Result(parseParameters(left, empty).map((_, None)), rest)
-            case _ =>
-              Result(ExpectedRightParenthesis(None))
-          }
-        case Colon :: Identifier(returnType) :: rest =>
-          Result((Parameters.empty, Some(Types.parse(returnType))), rest)
-        case rest =>
-          Result((Parameters.empty, None), rest)
-      }
-
-    @tailrec
-    def parseParameters(tokens: List[Token], pl: Parameters): Either[List[CompilerError], Parameters] =
-      tokens match {
-        case Indentation(_) :: xs =>
-          parseParameters(xs, pl)
-        case Identifier(name) :: Colon :: Identifier(typ) :: Indentation(_) :: rest =>
-          parseParameters(rest, pl.addParameter(name, typ))
-        case Identifier(name) :: Colon :: Identifier(typ) :: Comma :: rest =>
-          parseParameters(rest, pl.addParameter(name, typ))
-        case Identifier(name) :: Colon :: Identifier(typ) :: Nil =>
-          checkParameters(pl.addParameter(name, typ))
-        case Nil =>
-          checkParameters(pl)
-        case Identifier(_) :: Colon :: tokens =>
-          Left(List(ExpectedType(tokens.headOption)))
-        case Identifier(_) :: tokens =>
-          Left(List(ExpectedColon(tokens.headOption)))
-        case tokens =>
-          Left(List(ExpectedIdentifier(tokens.headOption)))
-      }
-
-    def checkParameters(parameters: Parameters): Either[List[CompilerError], Parameters] =
-      parameters.notUniqueIdentifiers() match {
-        case Nil => Right(parameters)
-        case xs => Left(List(NotUniqueParameters(xs)))
-      }
-
   }
 
 }

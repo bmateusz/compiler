@@ -1,10 +1,10 @@
 package repl
 
-import compiler.Elements.{Block, Element}
+import compiler.Elements.Element
 import compiler.Errors.CompilerError
 import compiler.Expression.FullEvaluation
 import compiler.Tokens.EvaluatedToken
-import compiler.{Expression, SourceFile}
+import compiler.{Block, Expression, SourceFile}
 
 import scala.annotation.tailrec
 

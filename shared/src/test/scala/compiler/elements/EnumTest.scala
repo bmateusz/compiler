@@ -1,6 +1,6 @@
 package compiler.elements
 
-import compiler.CompilerSpecs
+import compiler.{Block, CompilerSpecs}
 import compiler.Elements._
 import compiler.Errors.{EmptyEnum, ExpectedIdentifier, ExpectedLeftParenthesis, ExpectedRightParenthesis, NotUniqueEnumValues}
 import compiler.Expression.FullEvaluation

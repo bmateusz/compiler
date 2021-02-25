@@ -1,6 +1,5 @@
 package compiler
 
-import compiler.Elements.Block
 import compiler.Errors.CompilerError
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec

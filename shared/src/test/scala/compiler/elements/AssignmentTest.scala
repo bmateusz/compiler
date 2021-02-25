@@ -3,7 +3,7 @@ package compiler.elements
 import compiler.Elements._
 import compiler.Errors.{UnexpectedToken, UnparsedTokens}
 import compiler.Tokens.{Add, Def, Equals, Identifier, Indentation, Integer, Operator}
-import compiler.{CompilerSpecs, Expression, Types}
+import compiler.{Block, CompilerSpecs, Expression, Types}
 
 class AssignmentTest extends CompilerSpecs {
 

@@ -1,11 +1,11 @@
 package compiler.elements
 
-import compiler.Elements.Parameters.Parameter
 import compiler.Elements._
 import compiler.Errors.{ExpectedIdentifier, UnexpectedToken, UnparsedTokens}
 import compiler.Expression.{FullEvaluation, SimpleEvaluation}
+import compiler.Parameters.Parameter
 import compiler.Tokens.{Add, CallDefinition, Colon, Comma, DefinitionReturnTypeMismatch, EvaluationError, Floating, Identifier, Integer, LeftParenthesis, Operator, ParameterTypeError, ParameterTypeMismatchError, ParsedCall, RightParenthesis, StringLiteral, Subtract}
-import compiler.{CompilerSpecs, Expression, Types}
+import compiler.{Block, CompilerSpecs, Expression, Parameters, Types}
 
 class DefinitionTest extends CompilerSpecs {
 

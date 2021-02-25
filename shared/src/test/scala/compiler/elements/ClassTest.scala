@@ -1,12 +1,12 @@
 package compiler.elements
 
-import compiler.Elements.Parameters.Parameter
 import compiler.Elements._
 import compiler.Errors.{ExpectedIdentifier, UnexpectedReturnType, UnparsedTokens}
 import compiler.Expression.FullEvaluation
+import compiler.Parameters.Parameter
 import compiler.Tokens.{Add, CallDefinition, ClassInstance, ClassStatic, Colon, Comma, Dot, EvaluatedDot, Identifier, Integer, LeftParenthesis, Operator, ParsedCall, RightParenthesis, StringLiteral, Subtract}
 import compiler.Types.UnknownType
-import compiler.{CompilerSpecs, Expression, Types}
+import compiler.{Block, CompilerSpecs, Expression, Parameters, Types}
 
 class ClassTest extends CompilerSpecs {
 

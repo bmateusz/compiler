@@ -1,7 +1,7 @@
 package compiler
 
 import compiler.Elements.Element
-import compiler.Elements.Parameters.Parameter
+import compiler.Parameters.Parameter
 import compiler.Types.Type
 
 import scala.util.chaining.scalaUtilChainingOps

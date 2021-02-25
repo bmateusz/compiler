@@ -1,11 +1,9 @@
-package compiler.elements
+package compiler
 
-import compiler.Elements.Parameters.Parameter
-import compiler.Elements._
 import compiler.Errors.{ExpectedColon, ExpectedIdentifier, ExpectedRightParenthesis, ExpectedType, NotUniqueParameters}
+import compiler.Parameters.Parameter
 import compiler.Tokens.{Colon, Equals, Identifier, Indentation, Integer, RightParenthesis}
 import compiler.Types.UnknownType
-import compiler.{CompilerSpecs, Types}
 
 class ParametersTest extends CompilerSpecs {
 

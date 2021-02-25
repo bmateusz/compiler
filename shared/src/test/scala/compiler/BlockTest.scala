@@ -1,10 +1,9 @@
-package compiler.elements
+package compiler
 
-import compiler.Elements.Parameters.Parameter
 import compiler.Elements._
 import compiler.Errors.{Redefinition, TypeError}
+import compiler.Parameters.Parameter
 import compiler.Tokens.{Floating, Identifier, Integer, Multiply, Operator, StringLiteral}
-import compiler.{CompilerSpecs, Expression, Types}
 
 class BlockTest extends CompilerSpecs {
 

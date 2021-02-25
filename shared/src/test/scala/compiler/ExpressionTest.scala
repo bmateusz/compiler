@@ -1,6 +1,6 @@
 package compiler
 
-import compiler.Elements.{Assignment, Block}
+import compiler.Elements.Assignment
 import compiler.Errors.{UnmatchedLeftParenthesis, UnmatchedRightParenthesis}
 import compiler.Expression.FullEvaluation
 import compiler.Tokens._
