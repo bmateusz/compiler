@@ -23,14 +23,20 @@ jobs:
     - name: Build and run tests 🔧
       run: sbt test
 
+    - name: Build page 🔧
+      if: github.event == 'push'
+      run: |
+        sbt compilerJS/fullOptJS
+        npm --prefix js install
+        mkdir -p js/target/deploy/target/scala-2.13/compiler-opt
+        mkdir -p js/target/deploy/node_modules/monaco-editor/min
+        cp js/target/scala-2.13/compiler-opt/main.js js/target/deploy/target/scala-2.13/compiler-opt/main.js
+        cp -R js/node_modules/monaco-editor/min js/target/deploy/node_modules/monaco-editor
+        cp js/index.html js/target/deploy/index.html
+
     - name: Deploy 🚀
       if: github.event == 'push'
       uses: JamesIves/github-pages-deploy-action@4.0.0
       with:
-        branch: gh-pages # The branch the action should deploy to.
-        folder: js/target/deploy # The folder the action should deploy.
-      run: |
-        sbt compilerJS/fullOptJS
-        npm --prefix js install
-        mkdir js/target/deploy
-        cp js/target/scala-2.13/compiler-opt/main.js js/node_modules/monaco-editor/min/vs/loader.js js/index.html js/target/deploy
+        branch: gh-pages
+        folder: js/target/deploy
