@@ -12,10 +12,25 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up JDK 11
+    - name: Checkout 🛎️
+      uses: actions/checkout@v2
+
+    - name: Set up JDK 11 ☕️
       uses: actions/setup-java@v1
       with:
         java-version: 11
-    - name: Run tests
+
+    - name: Build and run tests 🔧
       run: sbt test
+
+    - name: Deploy 🚀
+      if: github.event == 'push'
+      uses: JamesIves/github-pages-deploy-action@4.0.0
+      with:
+        branch: gh-pages # The branch the action should deploy to.
+        folder: js/target/deploy # The folder the action should deploy.
+      run: |
+        sbt compilerJS/fullOptJS
+        npm --prefix js install
+        mkdir js/target/deploy
+        cp js/target/scala-2.13/compiler-opt/main.js js/node_modules/monaco-editor/min/vs/loader.js js/index.html js/target/deploy

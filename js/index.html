@@ -11,10 +11,10 @@
 
 <div id="output"></div>
 
-<script src="./node_modules/monaco-editor/min/vs/loader.js"></script>
-<script type="text/javascript" src="./js/target/scala-2.13/compiler-fastopt/main.js"></script>
+<script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+<script type="text/javascript" src="target/scala-2.13/compiler-opt/main.js"></script>
 <script>
-    require.config({ paths: { vs: './node_modules/monaco-editor/min/vs' } });
+    require.config({ paths: { vs: 'node_modules/monaco-editor/min/vs' } });
 
     require(['vs/editor/editor.main'], function () {
         var editor = monaco.editor.create(document.getElementById('input'), {

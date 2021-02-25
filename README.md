@@ -7,10 +7,10 @@ Recreational programming in scala for fun.
 ## Build instructions
 
 * Run tests `sbt test`
-* Test coverage: `sbt clean coverage test coverageReport`
+* Test coverage: `sbt clean "project compiler" coverage test coverageReport`
 * Run CLI REPL: `sbt "compiler/runMain Main"`
 * Run Swing UI: `sbt "compiler/runMain Swing"`
-* Scala JS: `npm install` to fetch monaco editor, `sbt ~compilerJS/fastLinkJS` and open index.html
+* Scala JS: `npm --prefix js install` to fetch monaco editor, `sbt ~compilerJS/fastLinkJS` and open js/index.html
 * Scala Native: `sbt ~compilerNative/nativeLink` and run `./native/target/scala-2.13/compiler-out`
 
 ## Example code
