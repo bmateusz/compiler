@@ -30,6 +30,7 @@ jobs:
         npm --prefix js install
         mkdir -p js/target/deploy/target/scala-2.13/compiler-opt
         mkdir -p js/target/deploy/node_modules/monaco-editor/min
+        touch js/target/deploy/.nojekyll
         cp js/target/scala-2.13/compiler-opt/main.js js/target/deploy/target/scala-2.13/compiler-opt/main.js
         cp -R js/node_modules/monaco-editor/min js/target/deploy/node_modules/monaco-editor
         cp js/index.html js/target/deploy/index.html
@@ -40,3 +41,4 @@ jobs:
       with:
         branch: gh-pages
         folder: js/target/deploy
+        single-commit: true

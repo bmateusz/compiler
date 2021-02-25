@@ -2,7 +2,9 @@
 
 ![Scala CI](https://github.com/bmateusz/compiler/workflows/Scala%20CI/badge.svg)
 
-Recreational programming in scala for fun.
+Recreational programming in Scala for fun.
+
+### [Try it out in the browser](https://bmateusz.github.io/compiler/)
 
 ## Build instructions
 
