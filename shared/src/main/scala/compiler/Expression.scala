@@ -23,18 +23,12 @@ case class Expression(tokens: List[EvaluatedToken]) {
       List(ee)
     case ((child: EvaluatedToken) :: (parent: EvaluatedToken) :: xs, Operator(Dot)) =>
       dot(block, parent, child, xs, em)
-    case (acc, identifier: Identifier) =>
-      identifier :: acc
-    case (acc, pc: ParsedCall) =>
-      pc :: acc
-    case (acc, cli: ClassInstance) =>
-      cli :: acc
-    case (acc, token: ValueToken) =>
-      token :: acc
     case ((x: EvaluatedToken) :: xs, Operator(op@Negate)) =>
       EvaluatedUnaryOperator(op, x) :: xs
     case ((x: EvaluatedToken) :: (y: EvaluatedToken) :: ys, Operator(op)) =>
       EvaluatedOperator(x, y, op) :: ys
+    case (acc, acceptedToken@(_: Identifier | _: ParsedCall | _: ClassInstance | _: ValueToken)) =>
+      acceptedToken :: acc
     case (acc, other) =>
       List(EvaluationError(UnexpectedEvaluation(acc, other)))
   }.pipe {
