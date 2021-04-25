@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <title>Compiler</title>
+</head>
+<body>
+
+<div id="input" style="width: 800px; height: 600px; border: 1px solid grey"></div>
+
+<div><label for="full-evaluation">Full evaluation</label><input type="checkbox" id="full-evaluation"></div>
+
+<div id="output"></div>
+
+<script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+<script type="text/javascript" src="target/scala-2.13/compiler-opt/main.js"></script>
+<script>
+    require.config({ paths: { vs: 'node_modules/monaco-editor/min/vs' } });
+
+    require(['vs/editor/editor.main'], function () {
+        var editor = monaco.editor.create(document.getElementById('input'), {
+            value: ['class A(x: Int)', 'a = A(3)', '', 'a.x + 2'].join('\n'),
+            language: null
+        });
+        window.editor = editor
+        EvaluatorJs.main(
+            editor,
+            document.getElementById("output"),
+            document.getElementById("full-evaluation")
+        )
+    });
+</script>
+</body>
+</html>
