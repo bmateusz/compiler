@@ -1,5 +1,3 @@
-logBuffered in Test := false
-
 ThisBuild / scalaVersion := "2.13.5"
 
 lazy val root = project.in(file(".")).
@@ -16,9 +14,9 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     name := "compiler",
     version := "0.1-SNAPSHOT",
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.2.5" % "test",
+      "org.scalatest" %% "scalatest" % "3.2.8" % "test",
       "org.scalacheck" %% "scalacheck" % "1.15.3" % "test",
-      "org.scalatestplus" %% "scalacheck-1-15" % "3.2.5.0" % "test"
+      "org.scalatestplus" %% "scalacheck-1-15" % "3.2.8.0" % "test"
     )
   )
   .jvmSettings(
